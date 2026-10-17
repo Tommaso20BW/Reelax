@@ -130,6 +130,19 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .opt.on .ck{border-color:transparent;background:var(--grad)}
 .opt.on .ck::after{content:"";width:6px;height:11px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
 @media (hover:hover){.opt:hover{border-color:var(--line2)}}
+.opts.g2{grid-template-columns:1fr 1fr;grid-auto-rows:minmax(104px,1fr);gap:12px}
+.opts.g2 .opt{flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:8px;padding:14px 10px;border-radius:var(--r3)}
+.opts.g2 .opt .em{width:auto;height:auto;font-size:2.5rem;line-height:1}
+.opts.g2 .opt .tx{flex:none;align-items:center;gap:3px}
+.opts.g2 .opt .t{font-size:1.05rem}
+.opts.g2 .opt .s{font-size:.76rem}
+.segw{flex:none;display:flex;flex-direction:column;gap:8px}
+.segw[hidden]{display:none}
+.segq{font:700 .72rem var(--fb);letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
+.seg{display:flex;gap:8px}
+.seg button{flex:1;height:48px;border-radius:14px;border:1px solid var(--line2);background:var(--s2);font-weight:700;font-size:.95rem;transition:transform .1s,border-color .15s,background .15s}
+.seg button:active{transform:scale(.96)}
+.seg button.on{border-color:var(--red);background:linear-gradient(135deg,rgba(255,61,82,.26),rgba(143,98,248,.22));box-shadow:0 0 0 1px var(--red) inset}
 
 /* caricamento / errore */
 .load{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;text-align:center}
@@ -396,18 +409,17 @@ const IC={
 /* ---------- Dati ---------- */
 const CATS=[["film","🎬","Film","Dal grande cinema"],["serie","📺","Serie TV","Dal piccolo schermo"],["anime","⛩️","Anime","Serie e film giapponesi"],["cartoni","🎨","Cartoni","Animazione di ogni tipo"]];
 const MOOD=[
-  ["feelgood","😊","Leggero","Mi tira su il morale"],["laugh","😂","Ridere","Voglio ridere forte"],
-  ["love","❤️","Amore","Cuori e romanticismo"],["cry","🥺","Lacrime","Mi voglio commuovere"],
-  ["scare","😱","Paura","Brividi e tensione"],["thrill","⚡","Azione","Adrenalina pura"],
-  ["mindbend","🧠","Twist","Che mi spacchi la testa"],["epic","🏰","Epico","Mondi e grandi imprese"]
+  ["laugh","😂","Ridere",""],["love","❤️","Amore",""],
+  ["cry","🥺","Commuovermi",""],["scare","😱","Paura",""],
+  ["thrill","⚡","Azione",""],["mind","🧠","Mistero e fantasy",""]
 ];
 const FMT=[["movie","🎬","Film","Si chiude in una serata"],["tv","📺","Serie","Episodi da seguire"],["any","🔥","Indifferente","Film o serie, scegli tu"]];
-const TIME_FILM=[["short","⏱️","Corto","Sotto 90 minuti"],["mid","🎬","Normale","Tra 90 e 120 minuti"],["long","🍿","Lungo","Oltre 2 ore"],["any","🔥","Non importa","Qualsiasi durata"]];
-const TIME_SERIE=[["short","⏱️","Brevi","Puntate sotto i 30 minuti"],["mid","🎬","Normali","Puntate da 30 a 50 minuti"],["long","🍿","Lunghe","Puntate oltre i 50 minuti"],["any","🔥","Non importa","Qualsiasi durata"]];
-const TIME_ANIME_TV=[["short","⚡","Breve","Fino a 13 episodi"],["mid","📺","Una stagione","Fino a 26 episodi"],["long","🍿","Saga lunga","Oltre 26 episodi"],["any","🔥","Non importa","Qualsiasi lunghezza"]];
+const TIME_FILM=[["short","⚡","Al volo","Meno di 90 minuti"],["mid","🌙","Una serata","Circa due ore"],["long","🍿","Senza fretta","Oltre due ore"],["any","🤷","Non importa","Qualsiasi durata"]];
+const TIME_SERIE=[["short","⚡","Al volo","Puntate brevi"],["mid","🌙","Una serata","Puntate normali"],["long","🍿","Senza fretta","Puntate lunghe"],["any","🤷","Non importa","Qualsiasi durata"]];
+const TIME_ANIME_TV=[["short","⚡","Breve","Fino a 13 episodi"],["mid","📺","Una stagione","Fino a 26 episodi"],["long","🍿","Saga lunga","Oltre 26 episodi"],["any","🤷","Non importa","Qualsiasi lunghezza"]];
 const isAnim=()=>S.cat==="anime"||S.cat==="cartoni";
-const timeShown=()=>S.cat==="film"||S.cat==="serie"||(isAnim()&&S.fmt==="movie");
-const timeOpts=()=>(S.cat==="film"||S.fmt==="movie")?TIME_FILM:TIME_SERIE;
+const timeShown=()=>S.cat==="film"||S.cat==="serie"||(S.cat==="anime"&&S.fmt!=="any")||(S.cat==="cartoni"&&S.fmt==="movie");
+const timeOpts=()=>(S.cat==="film"||S.fmt==="movie")?TIME_FILM:S.cat==="anime"?TIME_ANIME_TV:TIME_SERIE;
 const WHO=[["solo","🧍","Da solo","Decido solo io"],["couple","💑","In coppia","Serata a due"],["friends","🍻","Con amici","In compagnia"],["family","👨‍👩‍👧","In famiglia","Adatto ai ragazzi"]];
 const EFFORT=[["0","🥱","Sono cotto","Niente da capire"],["1","🙂","Normale","Si segue bene"],["2","🧐","Sono sveglio","Qualcosa di profondo"]];
 const ERA=[["new","🆕","Novità","Usciti dal 2020 a oggi"],["mid","📼","Recenti","Anni 2000 e 2010"],["old","🎞️","Classici","Prima del 2000"],["any","🔥","Non importa","Qualsiasi epoca"]];
@@ -523,18 +535,15 @@ function setBd(u){const b=$("bd");if(u){b.firstElementChild.style.backgroundImag
 /* ---------- Scelta a pagine ---------- */
 const STEPS=[
   {k:"cat",q:"Cosa guardi stasera?",get:()=>CATS},
-  {k:"fmt",q:()=>S.cat==="anime"?"Film o serie anime?":"Film o serie animata?",get:()=>FMT,skip:()=>!isAnim()},
   {k:"mood",q:"Che voglia hai?",get:()=>MOOD},
-  {k:"time",q:()=>(S.cat==="film"||S.fmt==="movie")?"Quanto dura la serata?":"Quanto durano le puntate?",get:timeOpts,skip:()=>!timeShown()},
-  {k:"era",q:"Novità o classici?",get:()=>ERA},
-  {k:"who",q:"Con chi guardi?",get:()=>WHO},
-  {k:"style",q:"Famoso o da scoprire?",get:()=>STYLE}
+  {k:"time",q:()=>S.cat==="anime"?"Quanto è lunga la storia?":"Quanto tempo hai?",get:timeOpts,skip:()=>!timeShown()},
+  {k:"era",q:"Novità o classici?",get:()=>ERA}
 ];
 const steps=()=>STEPS.filter(s=>!(s.skip&&s.skip()));
 function gkey(cat,a){cat=cat==="cartoni"?(a&&a.fmt==="movie"?"film":"serie"):cat; return cat==="film"?"film":cat==="anime"?"anime":"serie";}
 const without=(cat,a)=>{cat=gkey(cat,a);let w=[];(a.avoid||[]).forEach(k=>{if(G[cat].avoid[k]) w=w.concat(G[cat].avoid[k]);}); if(a.who==="family") w=w.concat(cat==="film"?["horror film","erotic film","war film"]:cat==="anime"?["Horror","Ecchi","Hentai"]:["Horror","War","Crime"]); return uniq(w);};
 
-function opt(g,o,on,i){return '<button type="button" class="opt'+(on?' on':'')+'" style="--i:'+i+'" data-g="'+g+'" data-v="'+o[0]+'" aria-pressed="'+(on?'true':'false')+'"><span class="em">'+o[1]+'</span><span class="tx"><span class="t">'+esc(o[2])+'</span>'+(o[3]?'<span class="s">'+esc(o[3])+'</span>':'')+'</span><span class="ck" aria-hidden="true"></span></button>';}
+function opt(g,o,on,i){const sub=(g==="time"||g==="era")&&o[3]?'<span class="s">'+esc(o[3])+'</span>':'';return '<button type="button" class="opt'+(on?' on':'')+'" style="--i:'+i+'" data-g="'+g+'" data-v="'+o[0]+'" aria-pressed="'+(on?'true':'false')+'"><span class="em">'+o[1]+'</span><span class="tx"><span class="t">'+esc(o[2])+'</span>'+sub+'</span></button>';}
 function restart(){Object.assign(S,{cat:"",fmt:"",mood:"",time:"",who:"",effort:"",era:"",style:"",step:0,seen:[],cands:[],cur:null});DIR=-1;home();}
 function surpriseAll(){
   S.cat=pick(CATS)[0];S.fmt="any";S.mood=pick(MOOD)[0];S.time="any";S.who="solo";S.effort="1";S.era="any";S.style="surprise";S.step=steps().length-1;
@@ -544,30 +553,41 @@ function home(anim){
   setBd(null);
   const ST=steps();
   if(S.step>ST.length-1)S.step=ST.length-1;
-  const dx=DIR*100;DIR=1;
+  DIR=1;
   const st=ST[S.step],items=st.get(),n=items.length,q=typeof st.q==="function"?st.q():st.q;
+  const seg=st.k==="cat"?'<div class="segw" id="segw"'+(isAnim()?'':' hidden')+'><span class="segq">Film o serie?</span><div class="seg">'+FMT.map(f=>'<button type="button" class="'+(S.fmt===f[0]?'on':'')+'" data-f="'+f[0]+'">'+({movie:"Film",tv:"Serie",any:"Indifferente"})[f[0]]+'</button>').join('')+'</div></div>':'';
   SWQ=true;
-  swap('<div class="page"><h1>'+esc(q)+'</h1><div class="opts n'+n+'" role="group" aria-label="'+esc(q)+'">'+items.map((o,i)=>opt(st.k,o,S[st.k]===o[0],i)).join('')+'</div></div>',anim,dx);
-  const acts={back:()=>{if(S.step>0){S.step--;DIR=-1;home();}},sur:surpriseAll,logout:doLogout,search:searchPage};
+  swap('<div class="page"><h1>'+esc(q)+'</h1><div class="opts g2 n'+n+'" role="group" aria-label="'+esc(q)+'">'+items.map((o,i)=>opt(st.k,o,S[st.k]===o[0],i)).join('')+'</div>'+seg+'</div>',anim);
+  const acts={back:()=>{if(S.step>0){S.step--;home();}},sur:surpriseAll,logout:doLogout,search:searchPage};
   if(S.step===0)delete acts.back;
   ui({
     l:S.step>0?tbtn('back','back','Indietro'):tbtn('logout','out','Esci'),
     r:(S.step===0&&tmdbOn())?tbtn('search','search','Cerca un titolo'):'',
     d:bb('sur',IC.dice+'Sorprendimi','primary'),
-    p:(()=>{const eff=STEPS.filter(x=>x.k!=="fmt"||isAnim());return [eff.length+1,Math.max(0,eff.indexOf(st))];})(),
+    p:[STEPS.length+1,Math.max(0,STEPS.indexOf(st))],
     a:acts
   });
   let lock=false;
+  const mark=el=>{stage.querySelectorAll('.opt').forEach(x=>{const on=x===el;x.classList.toggle('on',on);x.setAttribute('aria-pressed',on?'true':'false');});};
+  const go=()=>{lock=true;setTimeout(()=>{if(S.step<steps().length-1){S.step++;home();}else{S.seen=[];S.cands=[];run(false,true);}},230);};
   stage.querySelectorAll('.opt').forEach(b=>{b.onclick=()=>{
-    if(lock)return;lock=true;tap();
+    if(lock)return;tap();
     const g=b.dataset.g,v=b.dataset.v;
     if(g==="cat"&&S.cat!==v){S.time="";S.fmt="";}
-    if(g==="fmt"&&S.fmt!==v)S.time="";
-    S[g]=v;
-    stage.querySelectorAll('.opt').forEach(x=>{const on=x===b;x.classList.toggle('on',on);x.setAttribute('aria-pressed',on?'true':'false');});
-    b.classList.add('hit');
-    setTimeout(()=>{if(S.step<steps().length-1){S.step++;home();}else{S.seen=[];S.cands=[];run(false,true);}},230);
+    S[g]=v;mark(b);b.classList.add('hit');
+    if(g==="cat"&&(v==="anime"||v==="cartoni")){      // formato scelto sulla stessa schermata
+      const sw=$("segw");
+      if(sw){
+        sw.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x.dataset.f===S.fmt));
+        if(sw.hidden){sw.hidden=false;if(!RM()&&sw.animate)sw.animate([{opacity:0,transform:"translateY(10px)"},{opacity:1,transform:"none"}],{duration:320,easing:"cubic-bezier(.22,1,.36,1)"});}
+      }
+      return;
+    }
+    const sw=$("segw");if(sw)sw.hidden=true;
+    go();
   };});
+  const sw=$("segw");
+  if(sw)sw.onclick=e=>{const b=e.target.closest&&e.target.closest("button[data-f]");if(!b||lock)return;tap();S.fmt=b.dataset.f;S.time="";sw.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));go();};
 }
 
 /* ---------- Ricerca manuale (TMDB) ---------- */
@@ -796,6 +816,7 @@ const TM_FILM={35:"comedy film",10751:"family film",10749:"romance film",18:"dra
 const TM_TV={35:["Comedy"],10751:["Family"],18:["Drama"],9648:["Mystery"],80:["Crime"],10759:["Action","Adventure"],10765:["Fantasy","Science-Fiction"],10768:["War"]};
 const TM_MOOD_FILM={feelgood:"35|10751",laugh:"35",love:"10749",cry:"18|10749",scare:"27",thrill:"28|53|12",mindbend:"9648|53|878",epic:"14|878|12"};
 const TM_MOOD_TV={feelgood:"35|10751",laugh:"35",love:"18",cry:"18",scare:"9648",thrill:"10759|80|9648",mindbend:"9648|10765",epic:"10765|10759"};
+TM_MOOD_FILM.mind="9648|53|878|14";TM_MOOD_TV.mind="9648|10765";G.film.mood.mind=G.film.mood.mindbend.concat(G.film.mood.epic);G.serie.mood.mind=G.serie.mood.mindbend.concat(G.serie.mood.epic);G.anime.mood.mind=G.anime.mood.mindbend.concat(G.anime.mood.epic);MOOD_TXT.mind="mistero e mondi fantastici";
 const TM_ANIME={35:["Comedy"],18:["Drama"],10749:["Romance"],27:["Horror"],28:["Action"],12:["Adventure"],14:["Fantasy"],878:["Sci-Fi"],9648:["Mystery"],53:["Suspense"],10759:["Action","Adventure"],10765:["Fantasy","Sci-Fi"],10751:["Slice of Life"]};
 const KWC={};
 async function tmKw(q){if(KWC[q]!==undefined)return KWC[q];try{const r=await tm("/3/search/keyword",{query:q,page:1});KWC[q]=(r.results&&r.results[0]&&r.results[0].id)||null;}catch(e){KWC[q]=null;}return KWC[q];}
@@ -810,11 +831,14 @@ async function tmDiscover(kind,a,anim,ja){
   const p={sort_by:tier===2?"vote_average.desc":"popularity.desc",include_adult:"false","vote_count.gte":band[0],"vote_average.gte":tier===2?6.4:6};
   if(band[1])p["vote_count.lte"]=band[1];
   const mood=(film?TM_MOOD_FILM:TM_MOOD_TV)[a.mood]||"18";
-  if(anim){p.with_genres="16,"+pick(mood.split("|"));if(ja)p.with_original_language="ja";}
+  // TMDB per le serie non ha il genere "Romance" (e l'horror è debole): per amore/paura uso la parola chiave
+  const kw=(!film&&(a.mood==="love"||a.mood==="scare"))?await tmKw(a.mood==="love"?"romance":"horror"):null;
+  if(anim){p.with_genres=kw?"16":"16,"+pick(mood.split("|"));if(ja)p.with_original_language="ja";}
   else{p.with_genres=mood;}
+  if(kw)p.with_keywords=kw;
   // generi da escludere in base all'umore (es. "ridere" senza horror/thriller, "lacrime" senza commedie)
-  const MEX=film?{feelgood:[27,53,10752,80],laugh:[27,53,10752,80],love:[27,53,10752],cry:[35,27],scare:[35,10751,10749],thrill:[10749,10751,35],mindbend:[10749,35,10751],epic:[10749]}
-    :{feelgood:[80,9648,10768],laugh:[80,9648,10768],love:[80,9648,10768],cry:[35,10751],scare:[35,10751],thrill:[35,10751],mindbend:[35,10751],epic:[35]};
+  const MEX=film?{feelgood:[27,53,10752,80],laugh:[27,53,10752,80],love:[27,53,10752],cry:[35,27],scare:[35,10751,10749],thrill:[10749,10751,35],mindbend:[10749,35,10751],epic:[10749],mind:[10749,35,10751]}
+    :{feelgood:[80,9648,10768],laugh:[80,9648,10768],love:[80,9648,10768],cry:[35,10751],scare:[35,10751],thrill:[35,10751],mindbend:[35,10751],epic:[35],mind:[35,10751]};
   const exAll=uniq((MEX[a.mood]||[]).concat(a.who==="family"?(film?[27,10752,80]:[80,10768]):[]).concat(anim?[]:[16])).filter(x=>mood.split("|").indexOf(String(x))<0);
   if(exAll.length)p.without_genres=exAll.join("|");
   if(film){
@@ -825,8 +849,6 @@ async function tmDiscover(kind,a,anim,ja){
     if(a.time==="short")p["with_runtime.lte"]=30;
     if(a.time==="mid"){p["with_runtime.gte"]=30;p["with_runtime.lte"]=55;}
     if(a.time==="long")p["with_runtime.gte"]=50;
-    const kw=a.mood==="scare"?await tmKw("horror"):a.mood==="love"?await tmKw("romance"):null;
-    if(kw)p.with_keywords=kw;
   }
   if(a.era&&a.era!=="any"){
     const er=ERA_R[a.era],k=film?"primary_release_date":"first_air_date";
@@ -851,7 +873,7 @@ async function tmDiscover(kind,a,anim,ja){
   const okBand=base.filter(m=>(m.vote_count||0)>=band[0]&&(!band[1]||(m.vote_count||0)<=band[1]));if(okBand.length>=3)base=okBand;
   return base.map(m=>({
     id:"tm"+kind+m.id,tid:m.id,src:"tmdb",movie:film,anim:!!anim,title:film?m.title:m.name,
-    year:((film?m.release_date:m.first_air_date)||"").slice(0,4),genres:gen(m.genre_ids),
+    kwm:!!kw,year:((film?m.release_date:m.first_air_date)||"").slice(0,4),genres:gen(m.genre_ids),
     rating:m.vote_average||0,vc:m.vote_count||0,image:m.poster_path?TMDB_IMG+m.poster_path:null,summary:m.overview}));
 }
 const RN=(()=>{try{return new Intl.DisplayNames(["it"],{type:"region"});}catch(e){return null;}})();
@@ -991,7 +1013,7 @@ function fbPoster(t,y){const h=Array.from(t).reduce((a,ch)=>((a*31+ch.charCodeAt
 function why(r,sur){
   const a=S.a,d=r.d,m=r.m,g=m.genres||[],gs=G[S.cat==="cartoni"?(isFilmItem(m)?"film":"serie"):gkey(S.cat,a)],o=[];
   if(sur)o.push('È una scelta volutamente fuori dalla tua comfort zone.');
-  if(hit(g,gs.mood[a.mood]))o.push('Cercavi '+MOOD_TXT[a.mood]+(d.glist&&d.glist.length?" e i suoi generi ("+d.glist.slice(0,3).join(', ')+") vanno in quella direzione.":"."));
+  if(hit(g,gs.mood[a.mood])||m.kwm)o.push('Cercavi '+MOOD_TXT[a.mood]+(d.glist&&d.glist.length?" e i suoi generi ("+d.glist.slice(0,3).join(', ')+") vanno in quella direzione.":"."));
   else o.push('Non è il genere più ovvio per chi cerca '+MOOD_TXT[a.mood]+(d.glist&&d.glist.length?" ("+d.glist.slice(0,3).join(', ')+")":"")+': lo propongo per gli altri criteri.');
   if(a.who==="family")o.push('Escluso il materiale più adatto a un pubblico adulto.');
   if(a.era&&a.era!=="any"&&d.year)o.push('Del '+d.year+', nella fascia di anni che volevi.');
