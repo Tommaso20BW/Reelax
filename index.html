@@ -17,6 +17,8 @@
 <meta name="format-detection" content="telephone=no">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Reelax">
+<link rel="preconnect" href="https://image.tmdb.org" crossorigin>
+<link rel="dns-prefetch" href="https://image.tmdb.org">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=Instrument+Sans:wght@400;500;600;700&display=swap">
@@ -94,9 +96,9 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
   border:1px solid var(--line2);background:var(--s2);font-weight:700;font-size:1rem;white-space:nowrap;text-decoration:none;color:var(--fg);transition:transform .1s,filter .15s}
 .btn:active{transform:scale(.96);filter:brightness(1.2)}
 .btn svg{width:20px;height:20px;flex:none}
-.dock-in:not(.out) .btn{animation:btnIn .6s cubic-bezier(.22,1,.36,1) backwards;animation-delay:.07s}
-.dock-in:not(.out) .btn:nth-child(2){animation-delay:.12s}
-.dock-in:not(.out) .btn:nth-child(3){animation-delay:.17s}
+.dock-in:not(.out) .btn{animation:btnIn .42s cubic-bezier(.22,1,.36,1) backwards;animation-delay:.05s}
+.dock-in:not(.out) .btn:nth-child(2){animation-delay:.09s}
+.dock-in:not(.out) .btn:nth-child(3){animation-delay:.13s}
 .dock-in.out{pointer-events:none}
 .dock-in.noa .btn{animation:none!important}
 @keyframes btnIn{from{opacity:0;transform:translateY(14px) scale(.96)}}
@@ -130,6 +132,9 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .opt.on .ck{border-color:transparent;background:var(--grad)}
 .opt.on .ck::after{content:"";width:6px;height:11px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
 @media (hover:hover){.opt:hover{border-color:var(--line2)}}
+.opts.sel .opt{transition:opacity .18s ease,transform .18s ease,border-color .15s,background .15s,box-shadow .2s}
+.opts.sel .opt:not(.on){opacity:.3;transform:scale(.97)}
+.opts.sel .opt.on{transform:scale(1.02)}
 .opts.g2{grid-template-columns:1fr 1fr;grid-auto-rows:minmax(104px,1fr);gap:12px}
 .opts.g2 .opt{flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:8px;padding:14px 10px;border-radius:var(--r3)}
 .opts.g2 .opt .em{width:auto;height:auto;font-size:2.5rem;line-height:1}
@@ -557,13 +562,12 @@ function swap(h,anim,dx){
   if(fade){
     const E="cubic-bezier(.22,1,.36,1)";
     if(!RM()&&stage.animate){
-      if(dxs){   // tra due domande: scorrimento leggero (avanti da destra, indietro da sinistra) con i pulsanti che arrivano a cascata
-        const W=Math.min(44,Math.round(stage.clientWidth*.09));
-        stage.animate([{opacity:0,transform:"translate3d("+(dxs*W)+"px,0,0)"},{opacity:1,transform:"none"}],{duration:420,easing:E});
+      if(dxs){   // tra due domande: la vecchia sfuma e scivola un poco via, la nuova arriva dalla parte giusta (avanti da destra, indietro da sinistra)
+        const D=22,mv=x=>"translate3d("+x+"px,0,0)";
         const h1=stage.querySelector("h1");
-        if(h1)h1.animate([{opacity:0,transform:"translate3d("+(dxs*26)+"px,0,0)"},{opacity:1,transform:"none"}],{duration:480,easing:E,fill:"backwards"});
-        stage.querySelectorAll(".opt").forEach((el,i)=>el.animate([{opacity:0,transform:"translate3d("+(dxs*22)+"px,0,0) scale(.96)"},{opacity:1,transform:"none"}],{duration:480,delay:50+i*45,easing:E,fill:"backwards"}));
-        if(ghost){const g=ghost;g.animate([{opacity:1,transform:"none"},{opacity:0,transform:"translate3d("+(-dxs*W)+"px,0,0)"}],{duration:260,easing:"cubic-bezier(.4,0,.6,1)",fill:"forwards"}).onfinish=()=>g.remove();setTimeout(()=>g.remove(),800);}
+        if(h1)h1.animate([{opacity:0,transform:mv(dxs*D)},{opacity:1,transform:"none"}],{duration:320,easing:E,fill:"backwards"});
+        stage.querySelectorAll(".opt").forEach((el,i)=>el.animate([{opacity:0,transform:mv(dxs*D)},{opacity:1,transform:"none"}],{duration:340,delay:30+i*28,easing:E,fill:"backwards"}));
+        if(ghost){const g=ghost;g.animate([{opacity:1,transform:"none"},{opacity:0,transform:mv(-dxs*D)}],{duration:170,easing:"cubic-bezier(.4,0,1,1)",fill:"forwards"}).onfinish=()=>g.remove();setTimeout(()=>g.remove(),600);}
       }else stage.animate([{opacity:0,transform:"translate3d(0,10px,0) scale(.99)"},{opacity:1,transform:"none"}],{duration:340,easing:E});
     }else if(ghost)ghost.remove();
     return;
@@ -582,7 +586,7 @@ const tbtn=(act,ic,label)=>'<button type="button" class="tb" data-act="'+act+'" 
 const bb=(act,label,cls)=>'<button type="button" class="btn'+(cls?' '+cls:'')+'" data-act="'+act+'">'+label+'</button>';
 function ui(o){
   const tl=$("tl"),tr=$("tr"),dk=$("dockin"),pg=$("prog");
-  const fade=(el,h)=>{el.innerHTML=h||"";if(h&&!RM()&&!NOANIM&&el.animate&&el._seen)el.animate([{opacity:0,transform:"scale(.85)",filter:"blur(5px)"},{opacity:1,transform:"none",filter:"blur(0)"}],{duration:420,easing:"cubic-bezier(.22,1,.36,1)"});el._seen=1;};
+  const fade=(el,h)=>{el.innerHTML=h||"";if(h&&!RM()&&!NOANIM&&el.animate&&el._seen)el.animate([{opacity:0,transform:"scale(.88)"},{opacity:1,transform:"none"}],{duration:300,easing:"cubic-bezier(.22,1,.36,1)"});el._seen=1;};
   if(tl._h!==o.l){fade(tl,o.l);tl._h=o.l;}
   if(tr._h!==o.r){fade(tr,o.r);tr._h=o.r;}
   if(dk._h!==o.d){
@@ -591,7 +595,7 @@ function ui(o){
       c.style.cssText="position:absolute;left:"+dk.offsetLeft+"px;top:"+dk.offsetTop+"px;width:"+dk.offsetWidth+"px;";
       dk.parentNode.appendChild(c);
       const rm=()=>c.remove();
-      c.animate([{opacity:1,transform:"none",filter:"blur(0)"},{opacity:0,transform:"translateY(6px) scale(.97)",filter:"blur(8px)"}],{duration:300,easing:"cubic-bezier(.4,0,.6,1)",fill:"forwards"}).onfinish=rm;
+      c.animate([{opacity:1,transform:"none"},{opacity:0,transform:"translateY(5px)"}],{duration:170,easing:"cubic-bezier(.4,0,1,1)",fill:"forwards"}).onfinish=rm;
       setTimeout(rm,700);
     }
     dk.classList.toggle("noa",NOANIM);
@@ -658,7 +662,7 @@ function home(anim){
   });
   let lock=false;
   const mark=el=>{stage.querySelectorAll('.opt').forEach(x=>{const on=x===el;x.classList.toggle('on',on);x.setAttribute('aria-pressed',on?'true':'false');});};
-  const go=d=>{lock=true;setTimeout(()=>{if(S.step<steps().length-1){S.step++;home();}else{S.seen=[];S.cands=[];run(false,true);}},d||230);};
+  const go=d=>{lock=true;const oo=stage.querySelector(".opts");if(oo)oo.classList.add("sel");setTimeout(()=>{if(S.step<steps().length-1){S.step++;home();}else{S.seen=[];S.cands=[];run(false,true);}},d||210);};
   stage.querySelectorAll('.opt').forEach(b=>{b.onclick=()=>{
     if(lock)return;tap();
     const g=b.dataset.g,v=b.dataset.v;
@@ -1149,6 +1153,23 @@ async function rank(a){let list=await SRC[S.cat](a);if(!list||!list.length)throw
   return mix;}
 const pickFrom=(r,sur)=>{const p=r.filter(x=>S.seen.indexOf(x.m.id)<0);if(!p.length)return null;return sur?pick(p.slice(0,10)):p[0];};
 
+/* precarica una locandina (scarica e decodifica) prima di mostrarla: niente riquadro vuoto */
+const IMGC=new Map();
+function preImg(u,ms){
+  if(!u)return Promise.resolve();
+  return new Promise(res=>{
+    let done=false;const fin=()=>{if(!done){done=true;res();}};
+    let im=IMGC.get(u);
+    if(!im){
+      im=new Image();im.decoding="async";im.referrerPolicy="no-referrer";im.src=u;
+      IMGC.set(u,im);if(IMGC.size>40)IMGC.delete(IMGC.keys().next().value);   // tengo solo le ultime
+    }
+    setTimeout(fin,ms||2500);
+    if(im.complete&&im.naturalWidth){fin();return;}
+    im.addEventListener("load",fin,{once:true});im.addEventListener("error",fin,{once:true});
+    if(im.decode)im.decode().then(fin,()=>{});
+  });
+}
 let RUN=0;
 async function run(surprise,fresh){
   const my=++RUN;
@@ -1163,6 +1184,7 @@ async function run(surprise,fresh){
       if(!surprise)S.cands=ranked;
       cand=pickFrom(ranked,surprise)||pick(ranked);
     }
+    (ranked||S.cands||[]).filter(x=>x.m.id!==cand.m.id&&S.seen.indexOf(x.m.id)<0).slice(0,3).forEach(x=>{if(x.m.image)preImg(x.m.image,8000);});
     let d,tries=0;
     for(;;){
       S.seen.push(cand.m.id);d=await detailsOf(cand.m);
@@ -1170,7 +1192,7 @@ async function run(surprise,fresh){
       const pool=ranked||S.cands,nx=pickFrom(pool,false);
       if(!nx)break;cand=nx;
     }
-    await wait;stop();if(my!==RUN)return;show({d,m:cand.m,s:cand.s},surprise);
+    await Promise.all([wait,preImg(d.poster,2800)]);stop();if(my!==RUN)return;show({d,m:cand.m,s:cand.s},surprise);
   }catch(e){await wait;stop();if(my!==RUN)return;showError(e);}
 }
 
@@ -1481,6 +1503,10 @@ function show(r,sur,man,quiet){
   if(quiet===true)stage.classList.remove('in');   // niente animazioni di ingresso al secondo disegno
   swap(h,quiet===true?false:undefined,quiet==="fade"?"fade":undefined);
   if(quiet===true)stage.scrollTop=sy;
+  {   // riuso la locandina già scaricata e decodificata (niente seconda richiesta, niente riquadro vuoto)
+    const pi=stage.querySelector('.poster img'),pre=d.poster&&IMGC.get(d.poster);
+    if(pi&&pre&&pre.complete&&pre.naturalWidth){pre.alt=pi.alt;pre.className=pi.className;pre.setAttribute('referrerpolicy','no-referrer');pi.replaceWith(pre);}
+  }
   if(man)stage.querySelectorAll('.card').forEach(c=>{const h3=c.querySelector('h3');if(c.classList.contains('compat')||(h3&&h3.textContent==='Perché fa per te'))c.remove();});
   const rs=stage.querySelectorAll('.res>*');rs.forEach((el,i)=>el.style.setProperty('--k',i));
   polish(p,r);
