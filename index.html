@@ -391,7 +391,8 @@ body.pre #app{opacity:0}
 @media (min-width:900px){.load p{font-size:1.9rem}}
 .ldw .prow2{height:var(--ph)}
 .ldw .pc{width:calc(var(--ph)*2/3);height:var(--ph);border-radius:calc(var(--ph)*.08);box-shadow:none;animation:none}
-.ldw::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(44% 22% at 50% 50%,rgba(9,7,15,.96) 0,rgba(9,7,15,.6) 62%,transparent 100%),linear-gradient(var(--bg),transparent 18%,transparent 76%,var(--bg))}
+.ldw::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(44% 22% at 50% 50%,rgba(9,7,15,.96) 0,rgba(9,7,15,.6) 62%,transparent 100%),linear-gradient(to bottom,rgba(0,0,0,.88) 0,rgba(0,0,0,.72) calc(var(--sat) + 90px),rgba(0,0,0,.38) calc(var(--sat) + 170px),transparent 33%,transparent 66%,rgba(0,0,0,.3) 77%,rgba(0,0,0,.62) 89%,rgba(0,0,0,.86) 100%)}
+.ldw::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px);-webkit-mask-image:linear-gradient(to bottom,#000 0,#000 calc(var(--sat) + 100px),transparent 31%,transparent 69%,#000 92%);mask-image:linear-gradient(to bottom,#000 0,#000 calc(var(--sat) + 100px),transparent 31%,transparent 69%,#000 92%)}
 </style>
 </head>
 <body class="pre">
@@ -807,10 +808,10 @@ async function personPage(p,backFn,soft){
 }
 
 /* ---------- Parete di locandine (caricamento) ----------
-   RISERVA di WRN=96 locandine già scaricate sul dispositivo (Cache API + elenco in localStorage).
-   Ogni muro ne consuma WN=24: quelle usate vengono buttate e al loro posto se ne scaricano altre, in background,
+   RISERVA di WRN=108 locandine già scaricate sul dispositivo (Cache API + elenco in localStorage).
+   Ogni muro ne consuma WN=36: quelle usate vengono buttate e al loro posto se ne scaricano altre, in background,
    piano piano e MAI durante il caricamento. Così le locandine sono sempre pronte e sempre nuove. */
-const WN=24,WRN=96,WRES="rx_res",WSEEN="rx_seen",WCACHE="rx-wall-v2",PU="https://image.tmdb.org/t/p/w154";
+const WN=36,WRN=108,WRES="rx_res",WSEEN="rx_seen",WCACHE="rx-wall-v2",PU="https://image.tmdb.org/t/p/w154";
 let WRS=[],WSN=[],WURL={},WQ=[],WUSED=[],WPOOL=[],WFILL=null,WLOAD=false,WINIT=false,WPG=0;
 try{WRS=JSON.parse(localStorage.getItem(WRES)||"[]");WSN=JSON.parse(localStorage.getItem(WSEEN)||"[]");localStorage.removeItem("rx_wall");localStorage.removeItem("rx_wall2");if(window.caches)caches.delete("rx-wall-v1");}catch(e){}
 const shuf=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=rand(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;};
