@@ -442,7 +442,7 @@ function swap(h,anim,dx){
   const old=stage.innerHTML,app=$("app");
   const prevQ=!!stage.querySelector(".opts"),toQ=SWQ;SWQ=false;
   document.querySelectorAll(".ghost").forEach(g=>g.remove());
-  const fade=dx==="fade"||!(prevQ&&toQ),move=anim!==false&&!RM()&&!fade;
+  const fade=true,move=false;
   let ghost=null;
   if(move&&old.trim()){
     const ar=app.getBoundingClientRect(),sr=stage.getBoundingClientRect();
@@ -467,7 +467,7 @@ function swap(h,anim,dx){
     return;
   }
   FIRST=false;
-  if(fade){if(!RM()&&stage.animate)stage.animate([{opacity:0,transform:"scale(.985)"},{opacity:1,transform:"none"}],{duration:260,easing:"cubic-bezier(.22,1,.36,1)"});return;}
+  if(fade){if(!RM()&&stage.animate)stage.animate([{opacity:0,transform:"translate3d(0,10px,0) scale(.99)"},{opacity:1,transform:"none"}],{duration:340,easing:"cubic-bezier(.22,1,.36,1)"});return;}
   if(!move)return;
   const d=dx==null?100:dx,o={duration:650,easing:"cubic-bezier(.45,.05,.2,1)"};
   stage.animate([{transform:"translate3d("+d+"%,0,0)"},{transform:"none"}],o);
@@ -476,7 +476,7 @@ function swap(h,anim,dx){
 let ACT={};
 /* gesto/tasto "indietro" del telefono = tasto indietro dell'app (una voce di cronologia per ogni schermata non iniziale) */
 let ARMED=false,SKIP=0;
-function armBack(){if(ARMED)return;ARMED=true;try{history.pushState({app:1},"");}catch(e){ARMED=false;}}
+function armBack(){return;if(ARMED)return;ARMED=true;try{history.pushState({app:1},"");}catch(e){ARMED=false;}}
 function unarmBack(){if(!ARMED)return;ARMED=false;SKIP++;try{history.back();}catch(e){SKIP--;}}
 const tbtn=(act,ic,label)=>'<button type="button" class="tb" data-act="'+act+'" aria-label="'+label+'">'+IC[ic]+'</button>';
 const bb=(act,label,cls)=>'<button type="button" class="btn'+(cls?' '+cls:'')+'" data-act="'+act+'">'+label+'</button>';
