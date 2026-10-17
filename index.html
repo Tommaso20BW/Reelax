@@ -834,8 +834,10 @@ async function tmDiscover(kind,a,anim,ja){
   // TMDB per le serie non ha il genere "Romance" (e l'horror è debole): per amore/paura uso la parola chiave
   const kwl=(!film&&(a.mood==="love"||a.mood==="scare"))?(await Promise.all((a.mood==="love"?["romance","love","romantic"]:["horror","supernatural horror","psychological horror","ghost","demon","slasher"]).map(tmKw))).filter(Boolean):[];
   const kw=kwl.length?uniq(kwl).join("|"):null;
-  if(anim){p.with_genres=kw?"16":"16,"+pick(mood.split("|"));if(ja)p.with_original_language="ja";}
-  else{p.with_genres=mood;}
+  // genere di ripiego: usato quando la parola chiave non c'è o viene tolta (mai un titolo "a caso")
+  const gFall=anim?"16,"+pick(mood.split("|")):mood;
+  if(anim){p.with_genres=kw?"16":gFall;if(ja)p.with_original_language="ja";}
+  else if(!kw){p.with_genres=mood;}   // serie normali con parola chiave: niente genere obbligatorio (es. Mistero AND horror restringeva troppo)
   if(kw)p.with_keywords=kw;
   // generi da escludere in base all'umore (es. "ridere" senza horror/thriller, "lacrime" senza commedie)
   const MEX=film?{feelgood:[27,53,10752,80],laugh:[27,53,10752,80],love:[27,53,10752],cry:[35,27],scare:[35,10751,10749],thrill:[10749,10751,35],mindbend:[10749,35,10751],epic:[10749],mind:[10749,35,10751]}
@@ -866,7 +868,7 @@ async function tmDiscover(kind,a,anim,ja){
     // nessun risultato con i filtri: li allargo un po' alla volta invece di dare errore
     const loose=Object.assign({},p,{"vote_average.gte":0,"vote_count.gte":10});
     const keepKw=Object.assign({},loose,{"vote_count.gte":3});delete keepKw["vote_count.lte"];delete keepKw["with_runtime.lte"];delete keepKw["with_runtime.gte"];delete keepKw["first_air_date.gte"];delete keepKw["first_air_date.lte"];
-    const looser=Object.assign({},keepKw);delete looser.with_keywords;
+    const looser=Object.assign({},keepKw);delete looser.with_keywords;looser.with_genres=gFall;
     const widest=Object.assign({},looser,{"vote_count.gte":5});delete widest.without_genres;widest.sort_by="popularity.desc";
     for(const q of [p,loose,keepKw,looser,widest]){const x=await tm(path,Object.assign({page:1},q));raw=x.results||[];if(raw.length){if(!q.with_keywords)kwUsed=false;break;}}
   }
