@@ -832,7 +832,8 @@ async function tmDiscover(kind,a,anim,ja){
   if(band[1])p["vote_count.lte"]=band[1];
   const mood=(film?TM_MOOD_FILM:TM_MOOD_TV)[a.mood]||"18";
   // TMDB per le serie non ha il genere "Romance" (e l'horror è debole): per amore/paura uso la parola chiave
-  const kw=(!film&&(a.mood==="love"||a.mood==="scare"))?await tmKw(a.mood==="love"?"romance":"horror"):null;
+  const kwl=(!film&&(a.mood==="love"||a.mood==="scare"))?(await Promise.all((a.mood==="love"?["romance","love","romantic"]:["horror","supernatural horror","psychological horror","ghost","demon","slasher"]).map(tmKw))).filter(Boolean):[];
+  const kw=kwl.length?uniq(kwl).join("|"):null;
   if(anim){p.with_genres=kw?"16":"16,"+pick(mood.split("|"));if(ja)p.with_original_language="ja";}
   else{p.with_genres=mood;}
   if(kw)p.with_keywords=kw;
@@ -860,12 +861,14 @@ async function tmDiscover(kind,a,anim,ja){
   let lists=await Promise.all(pages.map(pg=>tm(path,Object.assign({page:pg},p)).then(x=>x.results||[]).catch(()=>null)));
   if(lists.every(x=>x===null))throw new Error("TMDB non raggiungibile"+(LASTERR?" ("+LASTERR+")":""));
   let raw=[].concat(...lists.map(x=>x||[]));
+  let kwUsed=!!kw;
   if(!raw.length){
     // nessun risultato con i filtri: li allargo un po' alla volta invece di dare errore
     const loose=Object.assign({},p,{"vote_average.gte":0,"vote_count.gte":10});
-    const looser=Object.assign({},loose,{"vote_count.gte":3});delete looser.with_keywords;delete looser["with_runtime.lte"];delete looser["with_runtime.gte"];
-    const widest=Object.assign({},looser,{"vote_count.gte":5});delete widest["vote_count.lte"];delete widest.without_genres;widest.sort_by="popularity.desc";
-    for(const q of [p,loose,looser,widest]){const x=await tm(path,Object.assign({page:1},q));raw=x.results||[];if(raw.length)break;}
+    const keepKw=Object.assign({},loose,{"vote_count.gte":3});delete keepKw["vote_count.lte"];delete keepKw["with_runtime.lte"];delete keepKw["with_runtime.gte"];delete keepKw["first_air_date.gte"];delete keepKw["first_air_date.lte"];
+    const looser=Object.assign({},keepKw);delete looser.with_keywords;
+    const widest=Object.assign({},looser,{"vote_count.gte":5});delete widest.without_genres;widest.sort_by="popularity.desc";
+    for(const q of [p,loose,keepKw,looser,widest]){const x=await tm(path,Object.assign({page:1},q));raw=x.results||[];if(raw.length){if(!q.with_keywords)kwUsed=false;break;}}
   }
   const gen=ids=>ja?[].concat(...(ids||[]).map(i=>TM_ANIME[i]||[])):film?(ids||[]).map(i=>TM_FILM[i]).filter(Boolean):[].concat(...(ids||[]).map(i=>TM_TV[i]||[]));
   let base=raw.filter(m=>m.overview&&m.overview.length>25&&(!anim||ja||m.original_language!=="ja"));
@@ -873,7 +876,7 @@ async function tmDiscover(kind,a,anim,ja){
   const okBand=base.filter(m=>(m.vote_count||0)>=band[0]&&(!band[1]||(m.vote_count||0)<=band[1]));if(okBand.length>=3)base=okBand;
   return base.map(m=>({
     id:"tm"+kind+m.id,tid:m.id,src:"tmdb",movie:film,anim:!!anim,title:film?m.title:m.name,
-    kwm:!!kw,year:((film?m.release_date:m.first_air_date)||"").slice(0,4),genres:gen(m.genre_ids),
+    kwm:!!kw&&kwUsed,year:((film?m.release_date:m.first_air_date)||"").slice(0,4),genres:gen(m.genre_ids),
     rating:m.vote_average||0,vc:m.vote_count||0,image:m.poster_path?TMDB_IMG+m.poster_path:null,summary:m.overview}));
 }
 const RN=(()=>{try{return new Intl.DisplayNames(["it"],{type:"region"});}catch(e){return null;}})();
