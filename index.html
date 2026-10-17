@@ -390,7 +390,7 @@ body.pre #app{opacity:0}
 .ldw.on{opacity:1}
 @media (min-width:900px){.load p{font-size:1.9rem}}
 .ldw .prow2{height:var(--ph)}
-.ldw .pc{width:calc(var(--ph)*2/3);height:var(--ph);border-radius:calc(var(--ph)*.08);box-shadow:none}
+.ldw .pc{width:calc(var(--ph)*2/3);height:var(--ph);border-radius:calc(var(--ph)*.08);box-shadow:none;animation:none}
 .ldw::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(44% 22% at 50% 50%,rgba(9,7,15,.96) 0,rgba(9,7,15,.6) 62%,transparent 100%),linear-gradient(var(--bg),transparent 18%,transparent 76%,var(--bg))}
 </style>
 </head>
@@ -642,7 +642,7 @@ function surpriseAll(){
   S.seen=[];S.cands=[];run(true,true);
 }
 function home(anim){
-  setBd(null);posterPool();
+  setBd(null);wallIdle();
   const ST=steps();
   if(S.step>ST.length-1)S.step=ST.length-1;
   DIR=1;
@@ -806,31 +806,76 @@ async function personPage(p,backFn,soft){
   }
 }
 
-/* ---------- Parete di locandine (caricamento) ---------- */
-let PPOOL=[],PBUSY=false,WPOOL=[];
+/* ---------- Parete di locandine (caricamento) ----------
+   RISERVA di WRN=96 locandine già scaricate sul dispositivo (Cache API + elenco in localStorage).
+   Ogni muro ne consuma WN=24: quelle usate vengono buttate e al loro posto se ne scaricano altre, in background,
+   piano piano e MAI durante il caricamento. Così le locandine sono sempre pronte e sempre nuove. */
+const WN=24,WRN=96,WRES="rx_res",WSEEN="rx_seen",WCACHE="rx-wall-v2",PU="https://image.tmdb.org/t/p/w154";
+let WRS=[],WSN=[],WURL={},WQ=[],WUSED=[],WPOOL=[],WFILL=null,WLOAD=false,WINIT=false,WPG=0;
+try{WRS=JSON.parse(localStorage.getItem(WRES)||"[]");WSN=JSON.parse(localStorage.getItem(WSEEN)||"[]");localStorage.removeItem("rx_wall");localStorage.removeItem("rx_wall2");if(window.caches)caches.delete("rx-wall-v1");}catch(e){}
 const shuf=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=rand(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;};
-async function posterPool(force){
-  if(!tmdbOn()||PBUSY||(PPOOL.length>=60&&!force))return;
-  PBUSY=true;
-  try{
-    const q=(kind,vc,sort,max)=>tm("/3/discover/"+kind,{sort_by:sort,"vote_count.gte":vc,include_adult:"false",page:1+rand(max)}).catch(()=>null);
-    const rs=await Promise.all([q("movie",300,"popularity.desc",20),q("tv",200,"popularity.desc",15),q("movie",1500,"vote_average.desc",12),q("tv",500,"vote_average.desc",8)]);
-    const urls=[];rs.forEach(r=>r&&(r.results||[]).forEach(m=>{if(m.poster_path)urls.push(m.poster_path);}));
-    PPOOL=shuf(uniq(PPOOL.concat(urls))).slice(0,160);
-  }catch(e){}
-  PBUSY=false;
+const wnap=ms=>new Promise(r=>setTimeout(r,ms));
+const wsave=()=>{try{localStorage.setItem(WRES,JSON.stringify(WRS));localStorage.setItem(WSEEN,JSON.stringify(WSN.slice(-300)));}catch(e){}};
+const wcache=()=>window.caches?caches.open(WCACHE).catch(()=>null):Promise.resolve(null);
+const wallUrl=p=>WURL[p]||(PU+p);
+async function wallMore(){   // nuovi candidati (mai usati di recente): una pagina TMDB alla volta, film/serie e popolari/più votati alternati
+  if(!tmdbOn())return;
+  const k=WPG++%4,tv=k%2===1,top=k>1;
+  const r=await tm("/3/discover/"+(tv?"tv":"movie"),{sort_by:top?"vote_average.desc":"popularity.desc","vote_count.gte":top?(tv?500:1500):(tv?200:300),include_adult:"false",page:1+rand(top?(tv?8:12):(tv?15:20))}).catch(()=>null);
+  ((r&&r.results)||[]).forEach(m=>{const p=m.poster_path;if(p&&WRS.indexOf(p)<0&&WSN.indexOf(p)<0&&WQ.indexOf(p)<0)WQ.push(p);});
 }
-const PU="https://image.tmdb.org/t/p/w185";
+async function wallDl(p,c){
+  try{const r=await fetch(PU+p,{mode:"cors",priority:"low"});if(!r.ok)throw 0;if(c)await c.put(PU+p,r.clone());return true;}
+  catch(e){return new Promise(res=>{const im=new Image();im.referrerPolicy="no-referrer";im.fetchPriority="low";im.onload=()=>res(true);im.onerror=()=>res(false);im.src=PU+p;});}   // senza CORS: scalda la cache HTTP
+}
+function wallFill(){   // porta la riserva a WRN: due locandine alla volta, con pausa; si ferma mentre c'è il caricamento
+  return WFILL||(WFILL=(async()=>{
+    const c=await wcache();let miss=0;
+    while(WRS.length<WRN&&miss<8){
+      while(WLOAD&&WRS.length>=WN)await wnap(300);
+      if(WQ.length<2){await wallMore();if(!WQ.length){miss++;await wnap(400);continue;}}
+      miss=0;
+      const b=WQ.splice(0,2),ok=await Promise.all(b.map(p=>wallDl(p,c)));
+      b.forEach((p,i)=>{if(ok[i])WRS.push(p);});wsave();
+      await wnap(80);
+    }
+  })().catch(()=>{}).finally(()=>{WFILL=null;}));
+}
+async function wallPrep(){   // rende pronte (URL locale) le prossime WN locandine
+  const c=await wcache();
+  for(let i=0,n=0;i<WRS.length&&n<WN;){
+    const p=WRS[i];
+    if(!WURL[p]){
+      try{const r=c&&await c.match(PU+p);
+        if(r)WURL[p]=URL.createObjectURL(await r.blob());
+        else if(c){WRS.splice(i,1);continue;}
+        else WURL[p]=PU+p;
+      }catch(e){WURL[p]=PU+p;}
+    }
+    n++;i++;
+  }
+}
+function wallTake(){   // le prossime WN escono subito dalla riserva: il muro dopo ne userà altre
+  const t=WRS.slice(0,WN);WRS=WRS.filter(p=>t.indexOf(p)<0);t.forEach(p=>WSN.push(p));WUSED.push(...t);wsave();return t;
+}
+async function wallRelease(){   // a transizione finita: butta le usate, prepara le prossime, rifornisce la riserva
+  const u=WUSED.splice(0),c=await wcache();
+  u.forEach(p=>{if(WURL[p]&&WURL[p].indexOf("blob:")===0)URL.revokeObjectURL(WURL[p]);delete WURL[p];if(c)c.delete(PU+p);});
+  await wallPrep();wallFill().then(wallPrep);
+}
+const wallInit=()=>wallPrep().then(()=>wallFill()).then(wallPrep);
+function wallIdle(){if(WINIT)return;WINIT=true;setTimeout(()=>(window.requestIdleCallback?f=>requestIdleCallback(f,{timeout:5000}):f=>f())(wallInit),1500);}
+async function wallWait(){for(let i=0;i<20&&WRS.length<WN;i++){if(!WFILL)wallInit();await wnap(300);}}   // solo al primissimo avvio
 function wallDims(){   // righe e locandine per riga in base alla finestra: copre sempre tutto lo schermo, con il minimo di elementi
   const big=innerWidth>=900,ph=big?Math.max(170,Math.min(300,innerHeight*.22)):Math.max(140,Math.min(230,innerHeight*.17)),pw=ph*2/3+12;
   return{ph:Math.round(ph),rows:Math.min(9,Math.ceil(innerHeight*1.4/(ph+12))+1),per:Math.min(24,Math.max(9,Math.ceil(innerWidth*1.65/pw)))};
 }
 function pcHtml(k,hue,d){
-  const u=WPOOL.length?WPOOL[k%WPOOL.length]:"";
-  return '<i class="pc" data-k="'+k+'" style="--h:'+hue+';--d:'+d+'ms">'+(u?'<img src="'+PU+esc(u)+'" alt="" decoding="async" referrerpolicy="no-referrer" onload="this.classList.add(\'ld\')" onerror="this.remove()">':'')+'</i>';
+  const u=WPOOL.length?wallUrl(WPOOL[k%WPOOL.length]):"";
+  return '<i class="pc" data-k="'+k+'" style="--h:'+hue+';--d:'+d+'ms">'+(u?'<img src="'+esc(u)+'" alt="" decoding="async" fetchpriority="low" referrerpolicy="no-referrer" onload="this.classList.add(\'ld\')" onerror="this.remove()">':'')+'</i>';
 }
 function wallHtml(){
-  WPOOL=shuf(PPOOL);
+  WPOOL=shuf(wallTake());
   const D=wallDims(),base=rand(2),hue0=rand(360);let k=0,h='<div class="wall" id="wall" aria-hidden="true">';
   for(let r=0;r<D.rows;r++){
     const t=((8+Math.random()*6)*D.per/9).toFixed(2),dir=((r+base)%2)?"reverse":"normal",o=(-Math.random()*t).toFixed(2);
@@ -840,14 +885,15 @@ function wallHtml(){
   }
   return h+'</div>';
 }
-function fillWall(){
-  const w=$("wall");if(!w||!PPOOL.length)return;
-  if(!WPOOL.length)WPOOL=shuf(PPOOL);
+function fillWall(){   // solo al primissimo avvio: le celle vuote ricevono le locandine appena sono pronte
+  const w=$("wall");if(!w)return;
+  if(!WPOOL.length)WPOOL=shuf(wallTake());
+  if(!WPOOL.length)return;
   w.querySelectorAll(".pc").forEach(c=>{
     if(c.querySelector("img"))return;
-    const im=new Image();im.decoding="async";im.referrerPolicy="no-referrer";im.alt="";
+    const im=new Image();im.decoding="async";im.referrerPolicy="no-referrer";im.fetchPriority="low";im.alt="";
     im.onload=()=>im.classList.add("ld");im.onerror=()=>im.remove();
-    im.src=PU+WPOOL[(+c.dataset.k)%WPOOL.length];c.appendChild(im);
+    im.src=wallUrl(WPOOL[(+c.dataset.k)%WPOOL.length]);c.appendChild(im);
   });
 }
 
@@ -869,9 +915,9 @@ function loading(){
   const cancel=()=>{RUN++;DIR=-1;home();};
   ui({l:tbtn('cancel','x','Annulla'),r:'',d:bb('cancel','Annulla'),p:[1,1],a:{cancel,back:cancel}});
   swap('<div class="load"><p id="lt">'+esc(t[0])+'</p></div>');wallOn();
-  if(!WPOOL.length)posterPool().then(fillWall);
+  WLOAD=true;if(!WPOOL.length)wallWait().then(fillWall);
   let i=0;const iv=setInterval(()=>{i=(i+1)%t.length;const p=$('lt');if(p){p.textContent=t[i];if(p.animate)p.animate([{opacity:0,transform:'translateY(8px)'},{opacity:1,transform:'none'}],{duration:320,easing:'ease-out'});}},1300);
-  return ()=>{clearInterval(iv);setTimeout(()=>posterPool(true),500);};
+  return ()=>{clearInterval(iv);WLOAD=false;setTimeout(wallRelease,2500);};
 }
 
 function showError(e){
@@ -1170,10 +1216,16 @@ function preImg(u,ms){
     if(im.decode)im.decode().then(fin,()=>{});
   });
 }
+function leaveLoad(){   // testo di caricamento fuori + muro che si dissolve (~.45s) PRIMA che entri il risultato: niente sovrapposizioni
+  const p=document.querySelector(".load p"),o=$("ldw");
+  if(o){o.style.transitionDuration=".45s";o.classList.remove("on");}
+  if(RM()||!p||!p.animate)return Promise.resolve();
+  return p.animate([{opacity:1,transform:"none"},{opacity:0,transform:"translateY(-8px)"}],{duration:240,easing:"ease-in",fill:"forwards"}).finished.catch(()=>{});
+}
 let RUN=0;
 async function run(surprise,fresh){
   const my=++RUN;
-  const stop=loading();const wait=sleep(1200);
+  const stop=loading();const wait=sleep(1000);   // 1s + ~.24s di uscita: stessa durata totale di prima
   try{
     S.a=buildA();
     let ranked=null,cand=null;
@@ -1192,7 +1244,7 @@ async function run(surprise,fresh){
       const pool=ranked||S.cands,nx=pickFrom(pool,false);
       if(!nx)break;cand=nx;
     }
-    await Promise.all([wait,preImg(d.poster,2800)]);stop();if(my!==RUN)return;show({d,m:cand.m,s:cand.s},surprise);
+    await Promise.all([wait,preImg(d.poster,2800)]);stop();if(my!==RUN)return;await leaveLoad();if(my!==RUN)return;show({d,m:cand.m,s:cand.s},surprise);
   }catch(e){await wait;stop();if(my!==RUN)return;showError(e);}
 }
 
