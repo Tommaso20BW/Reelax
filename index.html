@@ -108,7 +108,7 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .ib .btn{flex:none;height:40px;border-radius:12px;font-size:.82rem;padding:0 14px}
 
 /* scelta */
-.page{min-height:100%;display:flex;flex-direction:column;gap:18px}
+.page{--pg:18px;min-height:100%;display:flex;flex-direction:column;gap:var(--pg)}
 .page h1{margin:4px 0 0;flex:none;font-family:var(--fd);font-weight:800;font-size:clamp(1.9rem,8vw,2.6rem);line-height:1.02;letter-spacing:-.04em}
 /* UN SOLO layout per tutte le domande: elenco a righe che riempie lo schermo */
 .opts{flex:1;display:grid;gap:10px;grid-template-columns:1fr;grid-auto-rows:minmax(60px,1fr)}
@@ -136,7 +136,13 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .opts.g2 .opt .tx{flex:none;align-items:center;gap:3px}
 .opts.g2 .opt .t{font-size:1.05rem}
 .opts.g2 .opt .s{font-size:.76rem}
-.segw{flex:none;display:flex;flex-direction:column;gap:8px}
+.segw{flex:none;display:flex;flex-direction:column;gap:8px;overflow:hidden;max-height:0;opacity:0;margin-top:calc(var(--pg,18px)*-1);transform:translateY(18px) scale(.97);pointer-events:none;
+  transition:max-height .55s var(--ease),opacity .28s ease,margin-top .55s var(--ease),transform .5s var(--ease)}
+.segw.show{max-height:130px;opacity:1;margin-top:0;transform:none;pointer-events:auto;transition-delay:0s,.1s,0s,.04s}
+.segw.show .seg button{animation:segIn .55s var(--ease) backwards;animation-delay:calc(.14s + var(--n,0)*70ms)}
+.segw.show .segq{animation:segIn .5s var(--ease) .06s backwards}
+.seg button:nth-child(2){--n:1}.seg button:nth-child(3){--n:2}
+@keyframes segIn{from{opacity:0;transform:translateY(12px) scale(.92)}}
 .segw[hidden]{display:none}
 .segq{font:700 .72rem var(--fb);letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
 .seg{display:flex;gap:8px}
@@ -321,6 +327,66 @@ body.pre #app{opacity:0}
 .in .why li{animation:up .5s var(--ease) backwards;animation-delay:calc(.45s + var(--c,0)*100ms)}
 .in .pv{animation:chipIn .45s cubic-bezier(.3,1.5,.5,1) backwards;animation-delay:calc(.5s + var(--c,0)*45ms)}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-delay:0s!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
+
+/* ================= VERSIONE DESKTOP ================= */
+@media (min-width:900px) and (min-height:560px){
+  :root{--gut:40px}
+  #app{max-width:1180px}
+  .top-in{grid-template-columns:90px 1fr 90px;height:64px}
+  .brand{font-size:.95rem}
+  .prog{margin:2px var(--gut) 10px;max-width:1100px;align-self:center;width:calc(100% - var(--gut)*2)}
+  #stage{padding:18px var(--gut) 28px}
+  #dock{padding:14px var(--gut) 28px}
+  .dock-in{max-width:620px;margin:0 auto}
+  .btn{height:60px}
+  @media (hover:hover){.btn:hover{filter:brightness(1.15)}.tb:hover{background:rgba(255,255,255,.1)}.poster:hover{transform:scale(1.02)}.card.tap:hover,.castbtn:hover{filter:brightness(1.1)}.sr:hover{border-color:var(--line2)}}
+
+  /* domande: titolo centrato e opzioni in griglia larga */
+  .page{--pg:34px;justify-content:center;max-width:1040px;margin:0 auto;width:100%}
+  .page h1{text-align:center;font-size:clamp(2.6rem,4.2vw,3.6rem);margin:0}
+  .opts{flex:none}
+  .opts.g2{gap:18px;grid-auto-rows:minmax(168px,auto)}
+  .opts.g2.n4{grid-template-columns:repeat(4,1fr)}
+  .opts.g2.n6{grid-template-columns:repeat(3,1fr)}
+  .opts.g2.n3{grid-template-columns:repeat(3,1fr)}
+  .opts.g2 .opt{padding:22px 14px;gap:12px}
+  .opts.g2 .opt .em{font-size:3.2rem}
+  .opts.g2 .opt .t{font-size:1.2rem}
+  .opts.g2 .opt .s{font-size:.86rem}
+  .segw{align-items:center}
+  .seg{width:100%;max-width:520px}
+
+  /* ricerca, cast e altre pagine senza opzioni: colonna centrata */
+  .page:not(:has(.opts)){max-width:760px;justify-content:flex-start}
+  .page:not(:has(.opts)) h1{text-align:left}
+
+  /* risultato: locandina a sinistra (fissa), schede a destra */
+  .res{display:grid;grid-template-columns:340px minmax(0,1fr);grid-template-rows:repeat(12,auto) 1fr;column-gap:48px;row-gap:0;align-items:start;max-width:1040px;margin:0 auto;padding-top:6px}
+  .res>*{grid-column:2;margin-bottom:14px}
+  .res>.hero{grid-column:1;grid-row:1/-1;position:sticky;top:6px;margin:0}
+  .poster{width:min(100%,320px)}
+  .hero h2{font-size:clamp(1.9rem,2.6vw,2.4rem)}
+  .res>.attr{font-size:.7rem;margin-bottom:0}
+  .card{padding:20px}
+  .card p{font-size:1rem}
+  .info{font-size:.95rem}
+  .pv{max-width:52px}
+  .load{margin:-18px calc(var(--gut)*-1) -28px;min-height:calc(100% + 46px)}
+  .prow2{height:168px}.pc{width:112px;height:168px}
+  .err{max-width:640px;margin:0 auto}
+  #lg .lgc{max-width:400px}
+}
+@media (min-width:900px) and (max-height:559px){#app{max-width:1180px}.dock-in{max-width:620px;margin:0 auto}}
+
+/* ===== CARICAMENTO A TUTTO SCHERMO: il muro di locandine sta dietro l'app (barra alta e pulsanti restano sopra) ===== */
+.load{overflow:visible;margin:0;min-height:100%}
+.load::after{display:none}
+.ldw{position:fixed;left:0;right:0;top:0;bottom:0;z-index:0;overflow:hidden;background:var(--bg);opacity:0;transition:opacity .75s ease;pointer-events:none;--ph:clamp(140px,17vh,230px)}
+.ldw.on{opacity:1}
+@media (min-width:900px){.load p{font-size:1.9rem}}
+.ldw .prow2{height:var(--ph)}
+.ldw .pc{width:calc(var(--ph)*2/3);height:var(--ph);border-radius:calc(var(--ph)*.08);box-shadow:none}
+.ldw::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(44% 22% at 50% 50%,rgba(9,7,15,.96) 0,rgba(9,7,15,.6) 62%,transparent 100%),linear-gradient(var(--bg),transparent 18%,transparent 76%,var(--bg))}
 </style>
 </head>
 <body class="pre">
@@ -455,16 +521,17 @@ const stage=$("stage");
 
 /* ---------- UI: stage, barra alta, dock ---------- */
 /* regole: tra due domande scorrimento (avanti e indietro, come in origine). Ovunque altrove dissolvenza, sia in apertura che tornando indietro */
-let SWQ=false,NOANIM=false,BTN=false;
+let SWQ=false,NOANIM=false,BTN=false,TDX=0,LASTSTEP=-1;
 const IOS=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
 function swap(h,anim,dx){
+  if(h.indexOf('class="load"')<0)killWall();
   if(NOANIM){anim=false;stage.classList.remove("in");}   // gesto indietro di iPhone: Safari ha già animato, niente seconda animazione
   const old=stage.innerHTML,app=$("app");
   const prevQ=!!stage.querySelector(".opts"),toQ=SWQ;SWQ=false;
   document.querySelectorAll(".ghost").forEach(g=>g.remove());
-  const fade=true,move=false;
+  const dxs=(anim===false)?0:TDX;TDX=0;const fade=true,move=false;
   let ghost=null;
-  if(move&&old.trim()){
+  if((move||dxs)&&old.trim()){
     const ar=app.getBoundingClientRect(),sr=stage.getBoundingClientRect();
     ghost=document.createElement("div");ghost.className="ghost";ghost.setAttribute("aria-hidden","true");
     ghost.style.cssText="left:"+(sr.left-ar.left)+"px;top:"+(sr.top-ar.top)+"px;width:"+sr.width+"px;height:"+sr.height+"px";
@@ -487,7 +554,20 @@ function swap(h,anim,dx){
     return;
   }
   FIRST=false;
-  if(fade){if(!RM()&&stage.animate)stage.animate([{opacity:0,transform:"translate3d(0,10px,0) scale(.99)"},{opacity:1,transform:"none"}],{duration:340,easing:"cubic-bezier(.22,1,.36,1)"});return;}
+  if(fade){
+    const E="cubic-bezier(.22,1,.36,1)";
+    if(!RM()&&stage.animate){
+      if(dxs){   // tra due domande: scorrimento leggero (avanti da destra, indietro da sinistra) con i pulsanti che arrivano a cascata
+        const W=Math.min(44,Math.round(stage.clientWidth*.09));
+        stage.animate([{opacity:0,transform:"translate3d("+(dxs*W)+"px,0,0)"},{opacity:1,transform:"none"}],{duration:420,easing:E});
+        const h1=stage.querySelector("h1");
+        if(h1)h1.animate([{opacity:0,transform:"translate3d("+(dxs*26)+"px,0,0)"},{opacity:1,transform:"none"}],{duration:480,easing:E,fill:"backwards"});
+        stage.querySelectorAll(".opt").forEach((el,i)=>el.animate([{opacity:0,transform:"translate3d("+(dxs*22)+"px,0,0) scale(.96)"},{opacity:1,transform:"none"}],{duration:480,delay:50+i*45,easing:E,fill:"backwards"}));
+        if(ghost){const g=ghost;g.animate([{opacity:1,transform:"none"},{opacity:0,transform:"translate3d("+(-dxs*W)+"px,0,0)"}],{duration:260,easing:"cubic-bezier(.4,0,.6,1)",fill:"forwards"}).onfinish=()=>g.remove();setTimeout(()=>g.remove(),800);}
+      }else stage.animate([{opacity:0,transform:"translate3d(0,10px,0) scale(.99)"},{opacity:1,transform:"none"}],{duration:340,easing:E});
+    }else if(ghost)ghost.remove();
+    return;
+  }
   if(!move)return;
   const d=dx==null?100:dx,o={duration:650,easing:"cubic-bezier(.45,.05,.2,1)"};
   stage.animate([{transform:"translate3d("+d+"%,0,0)"},{transform:"none"}],o);
@@ -563,8 +643,9 @@ function home(anim){
   if(S.step>ST.length-1)S.step=ST.length-1;
   DIR=1;
   const st=ST[S.step],items=st.get(),n=items.length,q=typeof st.q==="function"?st.q():st.q;
-  const seg=st.k==="cat"?'<div class="segw" id="segw"'+(isAnim()?'':' hidden')+'><span class="segq">Film o serie?</span><div class="seg">'+FMT.map(f=>'<button type="button" class="'+(S.fmt===f[0]?'on':'')+'" data-f="'+f[0]+'">'+({movie:"Film",tv:"Serie",any:"Indifferente"})[f[0]]+'</button>').join('')+'</div></div>':'';
+  const seg=st.k==="cat"?'<div class="segw'+(isAnim()?' show':'')+'" id="segw"><span class="segq">Film o serie?</span><div class="seg">'+FMT.map(f=>'<button type="button" class="'+(S.fmt===f[0]?'on':'')+'" data-f="'+f[0]+'">'+({movie:"Film",tv:"Serie",any:"Indifferente"})[f[0]]+'</button>').join('')+'</div></div>':'';
   SWQ=true;
+  TDX=(stage.querySelector(".opts")&&LASTSTEP>=0&&S.step!==LASTSTEP)?(S.step>LASTSTEP?1:-1):0;LASTSTEP=S.step;
   swap('<div class="page"><h1>'+esc(q)+'</h1><div class="opts g2 n'+n+'" role="group" aria-label="'+esc(q)+'">'+items.map((o,i)=>opt(st.k,o,S[st.k]===o[0],i)).join('')+'</div>'+seg+'</div>',anim);
   const acts={back:()=>{if(S.step>0){S.step--;home();}},sur:surpriseAll,logout:doLogout,search:searchPage};
   if(S.step===0)delete acts.back;
@@ -577,7 +658,7 @@ function home(anim){
   });
   let lock=false;
   const mark=el=>{stage.querySelectorAll('.opt').forEach(x=>{const on=x===el;x.classList.toggle('on',on);x.setAttribute('aria-pressed',on?'true':'false');});};
-  const go=()=>{lock=true;setTimeout(()=>{if(S.step<steps().length-1){S.step++;home();}else{S.seen=[];S.cands=[];run(false,true);}},230);};
+  const go=d=>{lock=true;setTimeout(()=>{if(S.step<steps().length-1){S.step++;home();}else{S.seen=[];S.cands=[];run(false,true);}},d||230);};
   stage.querySelectorAll('.opt').forEach(b=>{b.onclick=()=>{
     if(lock)return;tap();
     const g=b.dataset.g,v=b.dataset.v;
@@ -587,12 +668,12 @@ function home(anim){
       const sw=$("segw");
       if(sw){
         sw.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x.dataset.f===S.fmt));
-        if(sw.hidden){sw.hidden=false;if(!RM()&&sw.animate)sw.animate([{opacity:0,transform:"translateY(10px)"},{opacity:1,transform:"none"}],{duration:320,easing:"cubic-bezier(.22,1,.36,1)"});}
+        if(!sw.classList.contains("show")){void sw.offsetWidth;sw.classList.add("show");setTimeout(()=>{try{sw.scrollIntoView({block:"nearest",behavior:"smooth"});}catch(e){}},300);}
       }
       return;
     }
-    const sw=$("segw");if(sw)sw.hidden=true;
-    go();
+    const sw2=$("segw"),wasShown=!!(sw2&&sw2.classList.contains("show"));if(sw2)sw2.classList.remove("show");
+    go(wasShown?460:230);
   };});
   const sw=$("segw");
   if(sw)sw.onclick=e=>{const b=e.target.closest&&e.target.closest("button[data-f]");if(!b||lock)return;tap();S.fmt=b.dataset.f;S.time="";sw.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));go();};
@@ -735,18 +816,22 @@ async function posterPool(force){
   }catch(e){}
   PBUSY=false;
 }
-const WROWS=7,WPER=9,PU="https://image.tmdb.org/t/p/w185";
+const PU="https://image.tmdb.org/t/p/w185";
+function wallDims(){   // righe e locandine per riga in base alla finestra: copre sempre tutto lo schermo, con il minimo di elementi
+  const big=innerWidth>=900,ph=big?Math.max(170,Math.min(300,innerHeight*.22)):Math.max(140,Math.min(230,innerHeight*.17)),pw=ph*2/3+12;
+  return{ph:Math.round(ph),rows:Math.min(9,Math.ceil(innerHeight*1.4/(ph+12))+1),per:Math.min(24,Math.max(9,Math.ceil(innerWidth*1.65/pw)))};
+}
 function pcHtml(k,hue,d){
   const u=WPOOL.length?WPOOL[k%WPOOL.length]:"";
   return '<i class="pc" data-k="'+k+'" style="--h:'+hue+';--d:'+d+'ms">'+(u?'<img src="'+PU+esc(u)+'" alt="" decoding="async" referrerpolicy="no-referrer" onload="this.classList.add(\'ld\')" onerror="this.remove()">':'')+'</i>';
 }
 function wallHtml(){
   WPOOL=shuf(PPOOL);
-  const base=rand(2),hue0=rand(360);let k=0,h='<div class="wall" id="wall" aria-hidden="true">';
-  for(let r=0;r<WROWS;r++){
-    const t=(8+Math.random()*6).toFixed(2),dir=((r+base)%2)?"reverse":"normal",o=(-Math.random()*t).toFixed(2);
+  const D=wallDims(),base=rand(2),hue0=rand(360);let k=0,h='<div class="wall" id="wall" aria-hidden="true">';
+  for(let r=0;r<D.rows;r++){
+    const t=((8+Math.random()*6)*D.per/9).toFixed(2),dir=((r+base)%2)?"reverse":"normal",o=(-Math.random()*t).toFixed(2);
     let set="";
-    for(let i=0;i<WPER;i++,k++)set+=pcHtml(k,(hue0+rand(70)+r*20)%360,Math.round(80+Math.random()*520));
+    for(let i=0;i<D.per;i++,k++)set+=pcHtml(k,(hue0+rand(70)+r*20)%360,Math.round(80+Math.random()*520));
     h+='<div class="prow2"><div class="ptrack" style="--t:'+t+'s;--dir:'+dir+';--o:'+o+'s">'+set+set+'</div></div>';
   }
   return h+'</div>';
@@ -762,12 +847,24 @@ function fillWall(){
   });
 }
 
+function killWall(now){
+  const o=$("ldw");if(!o)return;
+  o.removeAttribute("id");const w=o.querySelector("#wall");if(w)w.removeAttribute("id");
+  if(now||RM()){o.remove();return;}
+  o.classList.remove("on");setTimeout(()=>o.remove(),900);
+}
+function wallOn(){
+  killWall(true);
+  const o=document.createElement("div");o.className="ldw";o.id="ldw";o.style.setProperty("--ph",wallDims().ph+"px");o.setAttribute("aria-hidden","true");o.innerHTML=wallHtml();
+  document.body.appendChild(o);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>o.classList.add("on")));
+}
 function loading(){
   setBd(null);
   const t=["Cerco un titolo adatto a te...","Controllo i tuoi gusti...","Ci siamo quasi..."];
   const cancel=()=>{RUN++;DIR=-1;home();};
   ui({l:tbtn('cancel','x','Annulla'),r:'',d:bb('cancel','Annulla'),p:[1,1],a:{cancel,back:cancel}});
-  swap('<div class="load">'+wallHtml()+'<p id="lt">'+esc(t[0])+'</p></div>');
+  swap('<div class="load"><p id="lt">'+esc(t[0])+'</p></div>');wallOn();
   if(!WPOOL.length)posterPool().then(fillWall);
   let i=0;const iv=setInterval(()=>{i=(i+1)%t.length;const p=$('lt');if(p){p.textContent=t[i];if(p.animate)p.animate([{opacity:0,transform:'translateY(8px)'},{opacity:1,transform:'none'}],{duration:320,easing:'ease-out'});}},1300);
   return ()=>{clearInterval(iv);setTimeout(()=>posterPool(true),500);};
@@ -809,7 +906,7 @@ const itg=a=>uniq((a||[]).map(x=>GIT[x]||x));
 function fmtMin(m){return m>=60?Math.floor(m/60)+" h"+(m%60?" "+String(m%60).padStart(2,'0'):""):m+" min";}
 const mainstream=(cat,m)=>m.vc!=null?Math.max(0,Math.min(1,Math.log10(Math.max(10,m.vc))/4.3)):m.sl!=null?Math.max(0,Math.min(1,Math.log10(Math.max(2,m.sl))/2.6)):m.rating?Math.max(0,Math.min(1,(m.rating-4)/5)):.4;
 const hit=(g,w)=>g&&w&&g.some(x=>w.indexOf(x)>=0)?1:0;
-function score(cat,m,a){const g=m.genres||[],gs=G[cat==="cartoni"?(isFilmItem(m)?"film":"serie"):gkey(cat,a)],ms=mainstream(cat,m),e=+a.effort;const heavy=g.some(x=>gs.heavy.indexOf(x)>=0)||(m.rating||0)>=8.3,light=g.some(x=>gs.light.indexOf(x)>=0);const who=a.who==="couple"?hit(g,gs.mood.love.concat(gs.mood.laugh)):a.who==="friends"?hit(g,gs.mood.laugh.concat(gs.mood.thrill,gs.mood.scare)):0;return 45*hit(g,gs.mood[a.mood])+20*(e===2?(heavy?1:.3):e===0?(light?1:.3):.75)+20*Math.max(0,1-Math.abs((1-ms)*100-a.risk)/70)+15*(m.sl!=null?ms:m.rating?Math.max(0,Math.min(1,(m.rating-5)/4)):.5)+8*who+Math.random()*6;}
+function score(cat,m,a){const g=m.genres||[],gs=G[cat==="cartoni"?(isFilmItem(m)?"film":"serie"):gkey(cat,a)],ms=mainstream(cat,m),e=+a.effort;const heavy=g.some(x=>gs.heavy.indexOf(x)>=0)||(m.rating||0)>=8.3,light=g.some(x=>gs.light.indexOf(x)>=0);const who=a.who==="couple"?hit(g,gs.mood.love.concat(gs.mood.laugh)):a.who==="friends"?hit(g,gs.mood.laugh.concat(gs.mood.thrill,gs.mood.scare)):0;return 45*Math.max(hit(g,gs.mood[a.mood]),m.kwm?1:0)+20*(e===2?(heavy?1:.3):e===0?(light?1:.3):.75)+20*Math.max(0,1-Math.abs((1-ms)*100-a.risk)/70)+15*(m.sl!=null?ms:m.rating?Math.max(0,Math.min(1,(m.rating-5)/4)):.5)+8*who+Math.random()*6;}
 const pct=s=>Math.round(Math.min(98,52+46*Math.pow(Math.max(0,s)/100,1.3)));
 
 function parseDur(d){if(!d)return null;const h=/(\d+)\s*hr/.exec(d),m=/(\d+)\s*min/.exec(d);const v=(h?+h[1]*60:0)+(m?+m[1]:0);return v||null;}
@@ -868,8 +965,44 @@ const TM_MOOD_FILM={feelgood:"35|10751",laugh:"35",love:"10749",cry:"18|10749",s
 const TM_MOOD_TV={feelgood:"35|10751",laugh:"35",love:"18",cry:"18",scare:"9648",thrill:"10759|80|9648",mindbend:"9648|10765",epic:"10765|10759"};
 TM_MOOD_FILM.mind="9648|53|878|14";TM_MOOD_TV.mind="9648|10765";G.film.mood.mind=G.film.mood.mindbend.concat(G.film.mood.epic);G.serie.mood.mind=G.serie.mood.mindbend.concat(G.serie.mood.epic);G.anime.mood.mind=G.anime.mood.mindbend.concat(G.anime.mood.epic);MOOD_TXT.mind="mistero e mondi fantastici";
 const TM_ANIME={35:["Comedy"],18:["Drama"],10749:["Romance"],27:["Horror"],28:["Action"],12:["Adventure"],14:["Fantasy"],878:["Sci-Fi"],9648:["Mystery"],53:["Suspense"],10759:["Action","Adventure"],10765:["Fantasy","Sci-Fi"],10751:["Slice of Life"]};
-const KWC={};
-async function tmKw(q){if(KWC[q]!==undefined)return KWC[q];try{const r=await tm("/3/search/keyword",{query:q,page:1});KWC[q]=(r.results&&r.results[0]&&r.results[0].id)||null;}catch(e){KWC[q]=null;}return KWC[q];}
+/* ===== DATABASE PAROLE CHIAVE (TMDB) =====
+   Per ogni umore: p = precise (usate per prime), b = larghe (solo se le precise non bastano).
+   use: "all" = serie, anime e cartoni | "anim" = solo anime/cartoni | "off" = elenco pronto ma non ancora attivo.
+   I nomi sono in inglese, come su TMDB: gli ID si risolvono da soli (nome esatto) e restano salvati sul dispositivo.
+   Un nome che su TMDB non esiste viene ignorato senza errori.
+   Nomi verificati su schede TMDB reali (Toradora!, Another, Your Lie in April, ...): romance, love, romcom, unrequited love,
+   slice of life, high school, supernatural, gore, curse, tragedy, suicide, trauma, death of mother, friendship. */
+const KWL={
+  love:{use:"all",
+    p:["romance","romcom","unrequited love","love triangle","first love","boyfriend girlfriend relationship"],
+    b:["love","romantic comedy","crush","dating","marriage","wedding","true love","soulmates","teen romance","school romance"]},
+  scare:{use:"all",
+    p:["horror","gore","curse","splatter","slasher","psychological horror","supernatural horror","haunted house","survival horror","body horror"],
+    b:["ghost","zombie","vampire","demon","monster","supernatural","paranormal","murder","serial killer","urban legend","possession","witch","werewolf","yokai"]},
+  cry:{use:"anim",
+    p:["tragedy","tearjerker","terminal illness","death of mother","grief","loss of loved one","sacrifice"],
+    b:["sadness","trauma","death of a friend","death","bittersweet","melancholy","suicide","orphan","coming of age"]},
+  laugh:{use:"off",
+    p:["parody","slapstick comedy","satire","gag","absurd humor","sitcom"],
+    b:["slice of life","friendship","high school","comedy","misunderstanding"]},
+  thrill:{use:"off",
+    p:["battle","martial arts","superhero","spy","heist","chase","survival"],
+    b:["fight","revenge","war","assassin","conspiracy","rivalry"]},
+  mind:{use:"off",
+    p:["time travel","time loop","alternate reality","parallel world","mind game","conspiracy","dystopia"],
+    b:["psychological","mystery","amnesia","reincarnation","artificial intelligence","virtual reality","post-apocalyptic"]}
+};
+const KWC=(()=>{try{return JSON.parse(localStorage.getItem("rlx_kw1")||"{}")||{};}catch(e){return {};}})();
+const kwSave=()=>{try{localStorage.setItem("rlx_kw1",JSON.stringify(KWC));}catch(e){}};
+async function tmKw(q){
+  if(KWC[q]!==undefined)return KWC[q];
+  try{
+    const r=await tm("/3/search/keyword",{query:q,page:1});
+    const hit=(r.results||[]).find(x=>String(x.name||"").toLowerCase()===q);
+    KWC[q]=hit?hit.id:null;kwSave();
+  }catch(e){return null;}   // errore di rete: non memorizzo, riprovo la volta dopo
+  return KWC[q];
+}
 async function tmDiscover(kind,a,anim,ja){
   const film=kind==="film",r=a.risk,narrow=(!!a.era&&a.era!=="any");
   // fascia di notorieta' (numero di voti): famoso / un po' di tutto / poco conosciuto
@@ -882,7 +1015,8 @@ async function tmDiscover(kind,a,anim,ja){
   if(band[1])p["vote_count.lte"]=band[1];
   const mood=(film?TM_MOOD_FILM:TM_MOOD_TV)[a.mood]||"18";
   // TMDB per le serie non ha il genere "Romance" (e l'horror è debole): per amore/paura uso la parola chiave
-  const kwl=(!film&&(a.mood==="love"||a.mood==="scare"))?(await Promise.all((a.mood==="love"?["romance","love","romantic"]:["horror","supernatural horror","psychological horror","ghost","demon","slasher"]).map(tmKw))).filter(Boolean):[];
+  const KL=KWL[a.mood],useKw=!film&&!!KL&&(KL.use==="all"||(KL.use==="anim"&&!!anim));
+  const kwl=useKw?(await Promise.all(KL.p.map(tmKw))).filter(Boolean):[];
   const kw=kwl.length?uniq(kwl).join("|"):null;
   // genere di ripiego: usato quando la parola chiave non c'è o viene tolta (mai un titolo "a caso")
   const gFall=anim?"16,"+pick(mood.split("|")):mood;
@@ -918,9 +1052,11 @@ async function tmDiscover(kind,a,anim,ja){
     // nessun risultato con i filtri: li allargo un po' alla volta invece di dare errore
     const loose=Object.assign({},p,{"vote_average.gte":0,"vote_count.gte":10});
     const keepKw=Object.assign({},loose,{"vote_count.gte":3});delete keepKw["vote_count.lte"];delete keepKw["with_runtime.lte"];delete keepKw["with_runtime.gte"];delete keepKw["first_air_date.gte"];delete keepKw["first_air_date.lte"];
+    const bkw=useKw?uniq((await Promise.all(KL.b.map(tmKw))).filter(Boolean)).join("|"):"";
+    const broadKw=Object.assign({},keepKw,{with_keywords:bkw||keepKw.with_keywords});
     const looser=Object.assign({},keepKw);delete looser.with_keywords;looser.with_genres=gFall;
     const widest=Object.assign({},looser,{"vote_count.gte":5});delete widest.without_genres;widest.sort_by="popularity.desc";
-    for(const q of [p,loose,keepKw,looser,widest]){const x=await tm(path,Object.assign({page:1},q));raw=x.results||[];if(raw.length){if(!q.with_keywords)kwUsed=false;break;}}
+    for(const q of (useKw&&kw?[p,loose,keepKw,broadKw,looser,widest]:[p,loose,keepKw,looser,widest])){const x=await tm(path,Object.assign({page:1},q));raw=x.results||[];if(raw.length){if(!q.with_keywords)kwUsed=false;break;}}
   }
   const gen=ids=>ja?[].concat(...(ids||[]).map(i=>TM_ANIME[i]||[])):film?(ids||[]).map(i=>TM_FILM[i]).filter(Boolean):[].concat(...(ids||[]).map(i=>TM_TV[i]||[]));
   let base=raw.filter(m=>m.overview&&m.overview.length>25&&(!anim||ja||m.original_language!=="ja"));
@@ -1003,6 +1139,7 @@ const SRC={
 };
 async function rank(a){let list=await SRC[S.cat](a);if(!list||!list.length)throw new Error("EMPTY");
   if(a.era&&a.era!=="any"){const f=list.filter(m=>eraOk(m.year,a));if(f.length>=3)list=f;}
+  if((a.mood==="love"||a.mood==="scare")&&(S.cat==="anime"||S.cat==="cartoni")){const rx=a.mood==="love"?/romance/i:/horror/i;const rf=list.filter(m=>m.kwm||(m.genres||[]).some(x=>rx.test(x)));if(rf.length>=2)list=rf;}
   const out=list.map(m=>({m,s:score(S.cat,m,a)})).sort((x,y)=>y.s-x.s);
   if(S.cat!=="cartoni")return out;
   const f=out.filter(x=>isFilmItem(x.m)),t=out.filter(x=>!isFilmItem(x.m));
@@ -1448,6 +1585,21 @@ $("ix").onclick=()=>{ib.hidden=true;try{localStorage.setItem("stasera_ix","1");}
 try{const ios=/iphone|ipad|ipod/i.test(navigator.userAgent),stand=navigator.standalone===true||matchMedia("(display-mode: standalone)").matches;if(ios&&!stand&&!localStorage.getItem("stasera_ix")){ib.querySelector("p").innerHTML="Per usarla come app: tocca <b>Condividi</b> ⬆️ e poi <b>Aggiungi a Home</b>.";$("ibtn").hidden=true;ib.hidden=false;}}catch(e){}
 addEventListener("appinstalled",()=>{ib.hidden=true;});
 })();
+</script>
+
+<script>
+/* scorciatoie da tastiera (desktop): ← indietro, → / Invio prossimo, Esc chiude la locandina */
+addEventListener("keydown",function(e){
+  if(e.ctrlKey||e.metaKey||e.altKey)return;
+  var t=e.target,tag=t&&t.tagName;if(tag==="INPUT"||tag==="TEXTAREA")return;
+  var lb=document.getElementById("lb");
+  if(e.key==="Escape"&&lb&&lb.classList.contains("on")){var x=document.getElementById("lbx");if(x)x.click();return;}
+  if(document.body.classList.contains("locked")||(lb&&lb.classList.contains("on")))return;
+  var k=e.key,sel=null;
+  if(k==="ArrowLeft"||k==="Backspace")sel='#tl [data-act="back"]';
+  else if(k==="ArrowRight")sel='#dockin [data-act="oth"]';
+  if(sel){var b=document.querySelector(sel);if(b){e.preventDefault();b.click();}}
+});
 </script>
 </body>
 </html>
