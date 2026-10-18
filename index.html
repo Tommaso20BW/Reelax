@@ -398,7 +398,7 @@ body.pre #app{opacity:0}
 .opts.av .opt .em{transition:opacity .2s,filter .2s}
 .opts.av .opt.on{border-color:var(--red);background:linear-gradient(135deg,rgba(255,61,82,.3),rgba(255,61,82,.12));box-shadow:0 0 0 1px var(--red) inset}
 .opts.av .opt.on .em{opacity:.45;filter:grayscale(1)}
-@media (max-width:899px){.opts.av .opt:last-child:nth-child(odd){grid-column:1/-1}}
+@media (max-width:899px){.opts.av .opt:last-child:nth-child(odd){grid-column:1/-1;justify-self:center;width:calc(50% - 6px)}}
 @media (max-width:899px) and (max-height:740px){.opts.g2.av{grid-auto-rows:minmax(78px,1fr);gap:10px}.opts.g2.av .opt{padding:8px 8px}.opts.g2.av .opt .em{font-size:1.9rem}.opts.g2.av .opt .t{font-size:.98rem}}
 @media (min-width:900px) and (min-height:560px){.page .sub{text-align:center;margin:-22px 0 0}.opts.g2.av{grid-template-columns:repeat(4,1fr)}}
 </style>
