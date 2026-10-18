@@ -232,8 +232,6 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .lib .smsg{grid-column:1/-1}
 .bk{display:flex;flex-direction:column;gap:3px;min-width:0;text-align:left;transition:transform .12s}
 .bk:active{transform:scale(.96)}
-.sres.lib .bk{animation:bkIn .55s var(--ease) backwards;animation-delay:calc(var(--i,0)*40ms)}
-@keyframes bkIn{from{opacity:0;transform:translate3d(0,14px,0) scale(.96)}}
 .sres.lib{transition:opacity .2s}.sres.lib.busy{opacity:.45}
 .bk .cv{position:relative;display:block;aspect-ratio:2/3;border-radius:12px;overflow:hidden;background:linear-gradient(160deg,var(--s3),var(--s1));box-shadow:0 8px 20px rgba(0,0,0,.4),0 0 0 1px var(--line) inset;margin-bottom:5px}
 .bk .cv img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .35s}
@@ -734,6 +732,8 @@ async function doSearch(q){
     };
     $("sres").classList.remove("busy");
     $("sres").innerHTML=SLIST.length?SLIST.map(row).join(""):'<p class="smsg">Nessun risultato.</p>';
+    // comparsa a cascata (Web Animations, come le altre pagine): ogni locandina sale e si ingrandisce con un piccolo rimbalzo
+    if(!RM()&&SLIST.length)$("sres").querySelectorAll(".bk").forEach((el,i)=>{if(el.animate)el.animate([{opacity:0,transform:"translate3d(0,34px,0) scale(.82)"},{opacity:1,transform:"none"}],{duration:650,delay:Math.min(i,11)*55,easing:"cubic-bezier(.22,1.25,.36,1)",fill:"backwards"});});
   }catch(e){
     if(my!==SRUN||!$("sres"))return;
     $("sres").classList.remove("busy");
@@ -751,10 +751,13 @@ async function openSearched(x,back){
   // scheda subito, con i dati già noti dalla ricerca (nessuna schermata di caricamento)
   show({d:{movie:film,isTv:!film,tid:c.tid,title:c.title,year:c.year,runtime:null,overview:c.summary||"Trama non disponibile.",it:true,
     poster:c.image,rl:"TMDB",rv:c.rating,vc:c.vc,glist:[],gt:"",provKnown:false,
-    tmdbUrl:"https://www.themoviedb.org/"+(film?"movie":"tv")+"/"+c.tid},m:c,s:0},false,true);
-  // dettagli completi (trailer, piattaforme, cast...) in background, senza animazioni
+    tmdbUrl:"https://www.themoviedb.org/"+(film?"movie":"tv")+"/"+c.tid},m:c,s:0},false,true,false);
+  const t0=Date.now();
+  // dettagli completi (trailer, piattaforme, cast...) in background: la scheda entra con la sua animazione,
+  // e i dettagli la completano senza animazioni solo a entrata finita (altrimenti la interromperebbero a metà)
   try{
     const d=await tmdbDetails(c);
+    const w=1100-(Date.now()-t0);if(w>0)await new Promise(r=>setTimeout(r,w));
     if(my!==RUN||LB)return;
     show({d:d,m:c,s:0},false,true,true);
   }catch(e){}
