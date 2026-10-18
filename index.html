@@ -251,11 +251,11 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .page .pfi h1{margin:0;font-size:clamp(1.55rem,6.6vw,2.1rem);overflow-wrap:anywhere}
 .pdep{display:inline-block;padding:3px 10px;border-radius:99px;background:rgba(143,98,248,.18);border:1px solid rgba(143,98,248,.35);font:700 .7rem var(--fb);letter-spacing:.1em;text-transform:uppercase}
 .pdep:empty{display:none}
+.ph{visibility:hidden}
 .pmeta{font-size:.84rem;line-height:1.35;color:var(--mut)}
 .pmeta:empty{display:none}
 .pbio{flex:none;padding:16px 18px;border-radius:var(--r2);border:1px solid var(--line);background:var(--s1);font-size:.92rem;line-height:1.55;color:var(--fg)}
 .pbio:empty{display:none}
-.pbio{position:relative}
 .pbio .bw{position:relative;overflow:hidden}
 .pbio .bw p{margin:0;white-space:pre-line}
 .pbio .bw::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2.6em;background:linear-gradient(transparent,var(--s1));pointer-events:none;opacity:0;transition:opacity .5s ease}
@@ -783,25 +783,17 @@ function castPage(d,snap){
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>{show(snap.r,snap.sur,snap.man,"fade");}}});
   $("cres").onclick=e=>{const b=e.target.closest&&e.target.closest("[data-i]");if(!b)return;tap();personPage(list[+b.dataset.i],()=>castPage(d,snap));};
 }
-const EASE_O="cubic-bezier(.22,1,.36,1)";
-const rise=(el,o)=>{if(RM()||!el||!el.animate)return;o=o||{};el.animate([{opacity:0,transform:"translate3d("+(o.x||0)+"px,"+(o.y===undefined?22:o.y)+"px,0) scale("+(o.s||1)+")"},{opacity:1,transform:"none"}],{duration:o.d||800,delay:o.t||0,easing:o.e||EASE_O,fill:"backwards"});};
-/* un elemento che compare in un flusso verticale: cresce da zero (altezza, spazio sopra e opacità) invece di far saltare quello che sta sotto */
-const grow=(el,gap,d,t)=>{
-  if(RM()||!el||!el.animate)return;
-  const h=el.getBoundingClientRect().height;if(!h)return;
-  const a=el.animate([{height:"0px",opacity:0,marginTop:(-gap)+"px",paddingTop:"0px",paddingBottom:"0px",borderTopWidth:"0px",borderBottomWidth:"0px"},{height:h+"px",opacity:1,marginTop:"0px"}],{duration:d||700,delay:t||0,easing:EASE_O,fill:"backwards"});
-  el.style.overflow="hidden";const off=()=>{el.style.overflow="";};a.onfinish=off;a.oncancel=off;
-};
+const fade=(el,d,t)=>{if(RM()||!el||!el.animate)return;el.animate([{opacity:0},{opacity:1}],{duration:d||700,delay:t||0,easing:"ease-out",fill:"backwards"});};
 async function personPage(p,backFn){
   if(!p)return;
   setBd(p.img?"https://image.tmdb.org/t/p/w342"+p.img:null);
   const my=++RUN;
-  swap('<div class="page"><div class="pf"><span class="pfp">'+(p.img?'<img src="https://image.tmdb.org/t/p/w342'+esc(p.img)+'" alt="" referrerpolicy="no-referrer">':'👤')+'</span><div class="pfi"><h1>'+esc(p.name)+'</h1><span class="pdep" id="pdep"></span><span class="pmeta" id="pmeta"></span></div></div><div class="pbio" id="pbio"></div><div class="plab" id="plab"></div><div class="sres lib" id="pres"><p class="smsg">Carico...</p></div></div>',true);
+  swap('<div class="page"><div class="pf"><span class="pfp">'+(p.img?'<img src="https://image.tmdb.org/t/p/w342'+esc(p.img)+'" alt="" referrerpolicy="no-referrer">':'👤')+'</span><div class="pfi"><h1>'+esc(p.name)+'</h1><span class="pdep ph" id="pdep">Recitazione</span><span class="pmeta ph" id="pmeta"><div>&nbsp;</div><div>&nbsp;</div></span></div></div><div class="pbio" id="pbio"></div><div class="plab" id="plab"></div><div class="sres lib" id="pres"><p class="smsg">Carico...</p></div></div>',true);
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>{RUN++;backFn();}}});
-  {   // entrata: la scheda sale, la foto "scatta" in posizione con un piccolo rimbalzo, poi nome e dati a cascata
-    const pf=stage.querySelector(".pf");rise(pf,{y:26,d:850});
-    rise(stage.querySelector(".pfp"),{y:0,s:.5,d:1000,t:160,e:"cubic-bezier(.3,1.5,.5,1)"});
-    rise(stage.querySelector(".pfi h1"),{x:22,y:0,d:750,t:300});
+  {   // entrata: solo dissolvenza, nessun movimento
+    fade(stage.querySelector(".pf"),800);
+    fade(stage.querySelector(".pfp"),900,150);
+    fade(stage.querySelector(".pfi h1"),800,250);
   }
   const box=$("pres");
   box.onclick=e=>{const b=e.target.closest&&e.target.closest("[data-i]");if(!b)return;tap();openSearched(PLIST[+b.dataset.i],()=>personPage(p,backFn));};
@@ -809,8 +801,7 @@ async function personPage(p,backFn){
     const d=await tm("/3/person/"+p.id,{append_to_response:"combined_credits"});
     if(my!==RUN||!$("pres"))return;
     const dep={Acting:"Recitazione",Directing:"Regia",Writing:"Sceneggiatura",Production:"Produzione"}[d.known_for_department]||d.known_for_department||"";
-    const pf0=stage.querySelector(".pf"),hf0=pf0?pf0.getBoundingClientRect().height:0;
-    const pd=$("pdep");if(pd)pd.textContent=dep;
+    const pd=$("pdep");if(pd){pd.textContent=dep;pd.classList.remove("ph");}
     // data/luogo di nascita (e di morte), età
     const dt=v=>{if(!v)return"";const x=new Date(v+"T00:00:00");return isNaN(x)?"":x.toLocaleDateString("it-IT",{day:"numeric",month:"long",year:"numeric"});};
     const age=(b,e)=>{if(!b)return"";const x=new Date(b+"T00:00:00"),y=e?new Date(e+"T00:00:00"):new Date();if(isNaN(x)||isNaN(y))return"";let n=y.getFullYear()-x.getFullYear();if(y.getMonth()<x.getMonth()||(y.getMonth()===x.getMonth()&&y.getDate()<x.getDate()))n--;return n>=0&&n<130?n:"";};
@@ -818,14 +809,10 @@ async function personPage(p,backFn){
     if(d.birthday){const a=age(d.birthday,d.deathday);mt.push("Nato/a il "+dt(d.birthday)+(a!==""&&!d.deathday?" ("+a+" anni)":""));}
     if(d.deathday)mt.push("Morto/a il "+dt(d.deathday)+(age(d.birthday,d.deathday)!==""?" ("+age(d.birthday,d.deathday)+" anni)":""));
     if(d.place_of_birth)mt.push(esc(d.place_of_birth));
-    const pm=$("pmeta");if(pm)pm.innerHTML=mt.map(x=>"<div>"+x+"</div>").join("");
+    const pm=$("pmeta");if(pm){pm.innerHTML=mt.map(x=>"<div>"+x+"</div>").join("");pm.classList.remove("ph");}
     const pb=$("pbio"),bio=(d.biography||"").trim();
-    if(pf0&&!RM()&&pf0.animate){   // l'intestazione si allarga con dolcezza e i nuovi dati sfumano dentro: niente salti
-      const hf1=pf0.getBoundingClientRect().height;
-      if(Math.abs(hf1-hf0)>1){pf0.style.overflow="hidden";const a=pf0.animate([{height:hf0+"px"},{height:hf1+"px"}],{duration:650,easing:EASE_O});a.onfinish=a.oncancel=()=>{pf0.style.overflow="";};}
-      if(pm&&mt.length)rise(pm,{x:0,y:6,d:650,t:120});
-      if(pd&&dep)rise(pd,{x:0,y:6,d:550,t:60});
-    }
+    if(pm&&mt.length)fade(pm,700,100);
+    if(pd&&dep)fade(pd,600,50);
     if(pb&&bio){
       pb.innerHTML='<div class="bw"><p>'+esc(bio)+'</p></div>';
       const bw=pb.firstChild,bp=bw.firstChild,cs=getComputedStyle(bp),lh=parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.5,CH=Math.round(lh*4);
@@ -847,13 +834,12 @@ async function personPage(p,backFn){
             anim=bw.animate([{height:from+"px"},{height:to+"px"}],{duration:dur,easing:"cubic-bezier(.32,.72,0,1)"});
             anim.onfinish=anim.oncancel=()=>{anim=null;};
           }
-          if(open)bw.style.height="auto";   // dopo l'apertura segue il contenuto (rotazione, font)
-          else if(anim==null)bw.style.height=CH+"px";
+          if(open)bw.style.height="auto";
         };
         pb.onclick=()=>{tap();toggle();};
         pb.onkeydown=e=>{if(e.target===pb&&(e.key==="Enter"||e.key===" ")){e.preventDefault();toggle();}};
       }
-      grow(pb,18,800,80);
+      fade(pb,800,100);
     }
     const cc=d.combined_credits||{},seen={},items=[];
     const bad=x=>(x.genre_ids||[]).some(g=>g===10767||g===10763||g===10764)||/\b(self|himself|herself)\b/i.test(x.character||"");
@@ -867,7 +853,7 @@ async function personPage(p,backFn){
     const ok=await bkPreload(PLIST);
     if(my!==RUN||!$("pres"))return;
     box.innerHTML=PLIST.length?PLIST.map((x,i)=>bkCard(x,i,ok)).join(""):'<p class="smsg">Nessun titolo trovato.</p>';
-    if(pl&&PLIST.length){pl.textContent="Filmografia · "+PLIST.length+(PLIST.length===1?" titolo":" titoli");rise(pl,{x:0,y:8,d:600});}
+    if(pl&&PLIST.length){pl.textContent="Filmografia · "+PLIST.length+(PLIST.length===1?" titolo":" titoli");fade(pl,600);}
     if(PLIST.length)bkReveal(box,150);
   }catch(e){
     if(my!==RUN||!$("pres"))return;
