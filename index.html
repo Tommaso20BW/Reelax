@@ -651,7 +651,8 @@ const stage=$("stage");
 /* ---------- UI: stage, barra alta, dock ---------- */
 /* regole: tra due domande scorrimento (avanti e indietro, come in origine). Ovunque altrove dissolvenza, sia in apertura che tornando indietro */
 let TDX=0,LASTSTEP=-1,NAV=0,NAVT=0;
-const FWD={search:1,settings:1,recent:1,acuser:1,acpass:1,pfpick:1,srch:1,cast:1};
+/* direzione coerente col tasto: impostazioni (tasto a sinistra) entrano da sinistra, il resto da destra; "indietro" fa il percorso inverso */
+const FWD={search:1,settings:-1,recent:1,acuser:1,acpass:1,pfpick:1,srch:1,cast:1};let NAVSTK=[];
 function swap(h,anim){
   if(h.indexOf('class="load"')<0)killWall();
   const old=stage.innerHTML,app=$("app");
@@ -729,7 +730,7 @@ document.addEventListener("click",e=>{
   if(y){openYt(e,y.dataset.yt);return;}
   const b=e.target.closest&&e.target.closest("[data-act]");
   if(!b||b.disabled)return;
-  const f=ACT[b.dataset.act];if(f){tap();const an=b.dataset.act;NAV=an==="back"?-1:(FWD[an]?1:0);clearTimeout(NAVT);NAVT=setTimeout(()=>{NAV=0;},700);try{f();}catch(x){}}
+  const f=ACT[b.dataset.act];if(f){tap();const an=b.dataset.act;if(an==="back")NAV=NAVSTK.length?-NAVSTK.pop():-1;else if(FWD[an]){NAV=FWD[an];NAVSTK.push(NAV);}else NAV=0;clearTimeout(NAVT);NAVT=setTimeout(()=>{NAV=0;},700);try{f();}catch(x){}}
 });
 const tap=()=>{try{navigator.vibrate&&navigator.vibrate(8);}catch(e){}};
 function setBd(u){   // cambio sfondo morbido: se ce n'è già uno si dissolve prima di mostrare il nuovo (niente scatto)
@@ -752,7 +753,7 @@ const steps=()=>STEPS.filter(s=>!(s.skip&&s.skip()));
 function gkey(cat,a){cat=cat==="cartoni"?(a&&a.fmt==="movie"?"film":"serie"):cat; return cat==="film"?"film":cat==="anime"?"anime":"serie";}
 
 function opt(g,o,on,i){const sub=(g==="time"||g==="era")&&o[3]?'<span class="s">'+esc(o[3])+'</span>':'';return '<button type="button" class="opt'+(on?' on':'')+'" style="--i:'+i+'" data-g="'+g+'" data-v="'+o[0]+'" aria-pressed="'+(on?'true':'false')+'"><span class="em">'+o[1]+'</span><span class="tx"><span class="t">'+esc(o[2])+'</span>'+sub+'</span></button>';}
-function restart(){Object.assign(S,{cat:"",fmt:"",mood:"",time:"",era:"",style:"",step:0,seen:[],cands:[],cur:null,avoid:[]});home();}
+function restart(){NAVSTK=[];Object.assign(S,{cat:"",fmt:"",mood:"",time:"",era:"",style:"",step:0,seen:[],cands:[],cur:null,avoid:[]});home();}
 function surpriseAll(){
   S.cat=pick(CATS)[0];S.fmt="any";S.mood=pick(MOOD)[0];S.time="any";S.era="any";S.style="surprise";S.avoid=[];S.step=steps().length-1;
   S.seen=[];S.cands=[];run(true,true);
@@ -2123,7 +2124,7 @@ function unlockApp(){
   home();   // la prima pagina compare con la sfocatura incrociata mentre il login svanisce
   syncPull();
 }
-function doLogout(){
+function doLogout(){NAVSTK=[];
   try{localStorage.removeItem(AUTH_KEY);}catch(e){}
   Object.assign(S,{cat:"",fmt:"",mood:"",time:"",era:"",style:"",step:0,seen:[],cands:[],cur:null,avoid:[]});
   stage.innerHTML="";FIRST=true;
