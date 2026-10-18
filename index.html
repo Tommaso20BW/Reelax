@@ -495,9 +495,9 @@ const IC={
 /* ---------- Dati ---------- */
 const CATS=[["film","🎬","Film","Dal grande cinema"],["serie","📺","Serie TV","Dal piccolo schermo"],["anime","⛩️","Anime","Serie e film giapponesi"],["cartoni","🎨","Cartoni","Animazione di ogni tipo"]];
 const MOOD=[
-  ["laugh","😂","Ridere",""],["love","❤️","Amore",""],
-  ["cry","🥺","Commuovermi",""],["scare","😱","Paura",""],
-  ["thrill","⚡","Azione",""],["mind","🧠","Mistero e fantasy",""]
+  ["laugh","😂","Ridere",""],["love","💞","Amore e lacrime",""],
+  ["scare","😱","Paura",""],["thrill","⚡","Azione",""],
+  ["mind","🧠","Mistero e fantasy",""],["sport","⚽","Sport",""]
 ];
 const FMT=[["movie","🎬","Film","Si chiude in una serata"],["tv","📺","Serie","Episodi da seguire"],["any","🔥","Indifferente","Film o serie, scegli tu"]];
 const TIME_FILM=[["short","⚡","Al volo","Meno di 90 minuti"],["mid","🌙","Una serata","Circa due ore"],["long","🍿","Senza fretta","Oltre due ore"],["any","🤷","Non importa","Qualsiasi durata"]];
@@ -513,13 +513,13 @@ const AVOID=[["horror","😱","Horror e paura"],["gore","🩸","Violenza"],["rom
 const avoidOpts=()=>AVOID.filter(o=>!((o[0]==="horror"&&S.mood==="scare")||(o[0]==="romance"&&S.mood==="love")||(o[0]==="kids"&&S.cat==="cartoni")));
 const avoidNow=()=>{const ok=avoidOpts().map(o=>o[0]);return S.avoid.filter(x=>ok.indexOf(x)>=0);};
 const avLabel=()=>{const n=avoidNow().length;return n?"Cerca ("+n+")":"Niente da evitare";};
-const MOOD_TXT={laugh:"ridere",love:"una storia d'amore",cry:"commuoverti",scare:"avere paura",thrill:"azione e adrenalina",mind:"mistero e mondi fantastici"};
+const MOOD_TXT={laugh:"ridere",love:"amore e commozione",scare:"avere paura",thrill:"azione e adrenalina",mind:"mistero e mondi fantastici",sport:"sport"};
 const G={
- film:{mood:{laugh:["comedy film","romantic comedy film","romantic comedy"],love:["romance film","romantic drama film","romantic comedy film"],cry:["drama film","romance film"],scare:["horror film"],thrill:["action film","thriller film","adventure film"],mind:["mystery film","psychological thriller film","science fiction film","fantasy film","adventure film"]}},
- serie:{mood:{laugh:["Comedy"],love:["Romance"],cry:["Drama","Romance"],scare:["Horror"],thrill:["Action","Thriller","Crime"],mind:["Mystery","Thriller","Science-Fiction","Fantasy","Adventure"]}},
- anime:{mood:{laugh:["Comedy"],love:["Romance"],cry:["Drama","Romance"],scare:["Horror"],thrill:["Action","Suspense","Thriller"],mind:["Mystery","Psychological","Suspense","Thriller","Fantasy","Adventure","Sci-Fi"]}}
+ film:{mood:{laugh:["comedy film","romantic comedy film","romantic comedy"],love:["romance film","romantic drama film","romantic comedy film","drama film"],scare:["horror film"],thrill:["action film","thriller film","adventure film"],mind:["mystery film","psychological thriller film","science fiction film","fantasy film","adventure film"],sport:["sports film","sport film","drama film","comedy film"]}},
+ serie:{mood:{laugh:["Comedy"],love:["Romance","Drama"],scare:["Horror"],thrill:["Action","Thriller","Crime"],mind:["Mystery","Thriller","Science-Fiction","Fantasy","Adventure"],sport:["Sports","Drama","Comedy"]}},
+ anime:{mood:{laugh:["Comedy"],love:["Romance","Drama"],scare:["Horror"],thrill:["Action","Suspense","Thriller"],mind:["Mystery","Psychological","Suspense","Thriller","Fantasy","Adventure","Sci-Fi"],sport:["Sports"]}}
 };
-const JID={"Action":1,"Adventure":2,"Comedy":4,"Drama":8,"Fantasy":10,"Horror":14,"Mystery":7,"Romance":22,"Sci-Fi":24,"Slice of Life":36,"Suspense":41,"Psychological":40,"Gore":58,"Ecchi":9,"Hentai":12};
+const JID={"Sports":30,"Action":1,"Adventure":2,"Comedy":4,"Drama":8,"Fantasy":10,"Horror":14,"Mystery":7,"Romance":22,"Sci-Fi":24,"Slice of Life":36,"Suspense":41,"Psychological":40,"Gore":58,"Ecchi":9,"Hentai":12};
 
 /* ---------- Stato ---------- */
 let FIRST=true;
@@ -1032,7 +1032,7 @@ function compat(r){
 
 function parseDur(d){if(!d)return null;const h=/(\d+)\s*hr/.exec(d),m=/(\d+)\s*min/.exec(d);const v=(h?+h[1]*60:0)+(m?+m[1]:0);return v||null;}
 const cleanHtml=h=>{try{return (new DOMParser().parseFromString(String(h||"").replace(/<br\s*\/?>/gi," "),"text/html").body.textContent||"").replace(/\s+/g," ").trim();}catch(e){return "";}};
-const AL_OK=["Action","Adventure","Comedy","Drama","Fantasy","Horror","Mystery","Romance","Sci-Fi","Slice of Life","Psychological","Thriller"];
+const AL_OK=["Action","Adventure","Comedy","Drama","Fantasy","Horror","Mystery","Romance","Sci-Fi","Slice of Life","Psychological","Thriller","Sports"];
 async function animeAniList(a){
   let want=(G.anime.mood[a.mood]||["Drama"]).filter(x=>AL_OK.indexOf(x)>=0);
   if(!want.length)want=["Comedy"];
@@ -1080,8 +1080,8 @@ let LASTERR="";
 const tm=(path,params)=>fjr(TMDB_PROXY.replace(/\/+$/,"")+path+"?"+new URLSearchParams(Object.assign({language:"it-IT"},params||{})).toString(),10000).catch(e=>{LASTERR=(e&&(e.name==="AbortError"?"timeout":e.message))||"errore";throw e;});
 const TM_FILM={35:"comedy film",10751:"family film",10749:"romance film",18:"drama film",27:"horror film",28:"action film",53:"thriller film",12:"adventure film",9648:"mystery film",878:"science fiction film",14:"fantasy film",10752:"war film"};
 const TM_TV={35:["Comedy"],10751:["Family"],18:["Drama"],9648:["Mystery"],80:["Crime"],10759:["Action","Adventure"],10765:["Fantasy","Science-Fiction"],10768:["War"]};
-const TM_MOOD_FILM={laugh:"35",love:"10749",cry:"18|10749",scare:"27",thrill:"28|53|12",mind:"9648|53|878|14"};
-const TM_MOOD_TV={laugh:"35",love:"18",cry:"18",scare:"9648",thrill:"10759|80|9648",mind:"9648|10765"};
+const TM_MOOD_FILM={laugh:"35",love:"10749|18",scare:"27",thrill:"28|53|12",mind:"9648|53|878|14",sport:"18|35"};
+const TM_MOOD_TV={laugh:"35",love:"18",scare:"9648",thrill:"10759|80|9648",mind:"9648|10765",sport:"18|35"};
 const TM_ANIME={35:["Comedy"],18:["Drama"],10749:["Romance"],27:["Horror"],28:["Action"],12:["Adventure"],14:["Fantasy"],878:["Sci-Fi"],9648:["Mystery"],53:["Suspense"],10759:["Action","Adventure"],10765:["Fantasy","Sci-Fi"],10751:["Slice of Life"]};
 /* ===== DATABASE PAROLE CHIAVE (TMDB) =====
    Per ogni umore: p = precise (usate per prime), b = larghe (solo se le precise non bastano).
@@ -1092,14 +1092,14 @@ const TM_ANIME={35:["Comedy"],18:["Drama"],10749:["Romance"],27:["Horror"],28:["
    slice of life, high school, supernatural, gore, curse, tragedy, suicide, trauma, death of mother, friendship. */
 const KWL={
   love:{use:"all",
-    p:["romance","romcom","unrequited love","love triangle","first love","boyfriend girlfriend relationship"],
-    b:["love","romantic comedy","crush","dating","marriage","wedding","true love","soulmates","teen romance","school romance"]},
+    p:["romance","romcom","unrequited love","love triangle","first love","boyfriend girlfriend relationship","tearjerker","tragedy","terminal illness","grief"],
+    b:["love","romantic comedy","crush","dating","marriage","wedding","true love","soulmates","teen romance","school romance","sadness","bittersweet","loss of loved one","coming of age"]},
+  sport:{use:"all",film:true,
+    p:["sport","sports","boxing","basketball","baseball","soccer","football","volleyball","tennis","swimming","rugby","cycling"],
+    b:["athlete","coach","competition","team sport","training","underdog","rivalry","olympic games"]},
   scare:{use:"all",
     p:["horror","gore","curse","splatter","slasher","psychological horror","supernatural horror","haunted house","survival horror","body horror"],
     b:["ghost","zombie","vampire","demon","monster","supernatural","paranormal","murder","serial killer","urban legend","possession","witch","werewolf","yokai"]},
-  cry:{use:"anim",
-    p:["tragedy","tearjerker","terminal illness","death of mother","grief","loss of loved one","sacrifice"],
-    b:["sadness","trauma","death of a friend","death","bittersweet","melancholy","suicide","orphan","coming of age"]},
   laugh:{use:"off",
     p:["parody","slapstick comedy","satire","gag","absurd humor","sitcom"],
     b:["slice of life","friendship","high school","comedy","misunderstanding"]},
@@ -1145,7 +1145,7 @@ async function tmDiscover(kind,a,anim,ja){
   let mood=(film?TM_MOOD_FILM:TM_MOOD_TV)[a.mood]||"18";
   {const mg=mood.split("|").filter(x=>AV.g.indexOf(+x)<0);if(mg.length)mood=mg.join("|");}
   // TMDB per le serie non ha il genere "Romance" (e l'horror è debole): per amore/paura uso la parola chiave
-  const KL=KWL[a.mood],useKw=!film&&!!KL&&(KL.use==="all"||(KL.use==="anim"&&!!anim));
+  const KL=KWL[a.mood],useKw=!!KL&&(film?!!KL.film:(KL.use==="all"||(KL.use==="anim"&&!!anim)));
   const kwl=useKw?(await Promise.all(KL.p.filter(x=>AV.k.indexOf(x)<0).map(tmKw))).filter(Boolean):[];
   const kw=kwl.length?uniq(kwl).join("|"):null;
   const akw=AV.k.length?uniq((await Promise.all(AV.k.map(tmKw))).filter(Boolean)):[];
@@ -1156,8 +1156,8 @@ async function tmDiscover(kind,a,anim,ja){
   if(kw)p.with_keywords=kw;
   if(akw.length)p.without_keywords=akw.join("|");
   // generi da escludere in base all'umore (es. "ridere" senza horror/thriller, "lacrime" senza commedie)
-  const MEX=film?{laugh:[27,53,10752,80],love:[27,53,10752],cry:[35,27],scare:[35,10751,10749],thrill:[10749,10751,35],mind:[10749,35,10751]}
-    :{laugh:[80,9648,10768],love:[80,9648,10768],cry:[35,10751],scare:[35,10751],thrill:[35,10751],mind:[35,10751]};
+  const MEX=film?{laugh:[27,53,10752,80],love:[27,53,10752],scare:[35,10751,10749],thrill:[10749,10751,35],mind:[10749,35,10751],sport:[27,10752]}
+    :{laugh:[80,9648,10768],love:[80,9648,10768],scare:[35,10751],thrill:[35,10751],mind:[35,10751],sport:[80,9648,10768]};
   const exAll=uniq((MEX[a.mood]||[]).concat(anim?[]:[16])).filter(x=>mood.split("|").indexOf(String(x))<0);
   {const exF=uniq(exAll.concat(AV.g));if(exF.length)p.without_genres=exF.join("|");}
   if(film){
@@ -1272,7 +1272,7 @@ const SRC={
 };
 async function rank(a){let list=await SRC[S.cat](a);if(!list||!list.length)throw new Error("EMPTY");
   if(a.era&&a.era!=="any"){const f=list.filter(m=>eraOk(m.year,a));if(f.length>=3)list=f;}
-  if((a.mood==="love"||a.mood==="scare")&&(S.cat==="anime"||S.cat==="cartoni")){const rx=a.mood==="love"?/romance/i:/horror/i;const rf=list.filter(m=>m.kwm||(m.genres||[]).some(x=>rx.test(x)));if(rf.length>=2)list=rf;}
+  if((a.mood==="love"||a.mood==="scare"||a.mood==="sport")&&(S.cat==="anime"||S.cat==="cartoni")){const rx=a.mood==="love"?/romance|drama/i:a.mood==="sport"?/sport/i:/horror/i;const rf=list.filter(m=>m.kwm||(m.genres||[]).some(x=>rx.test(x)));if(rf.length>=2)list=rf;}
   const out=list.map(m=>({m,s:score(S.cat,m,a)})).sort((x,y)=>y.s-x.s);
   if(S.cat!=="cartoni")return out;
   const f=out.filter(x=>isFilmItem(x.m)),t=out.filter(x=>!isFilmItem(x.m));
@@ -1334,13 +1334,24 @@ async function run(surprise,fresh){
 
 /* ---------- Risultato ---------- */
 function fbPoster(t,y){const h=Array.from(t).reduce((a,ch)=>((a*31+ch.charCodeAt(0))%360),0);return '<div class="poster fb" role="button" tabindex="0" aria-label="Ingrandisci" style="background:linear-gradient(135deg,hsl('+h+' 68% 42%),hsl('+((h+55)%360)+' 58% 30%))"><small>Reelax</small><h3>'+esc(t)+'</h3><small>'+esc(y||'')+'</small></div>';}
+// umori doppi ("amore e lacrime", "mistero e fantasy"): basta una delle due metà, e il motivo dice quale
+const FACETS={
+  love:[["amore",["romance film","romantic drama film","romantic comedy film","romantic comedy","Romance"]],["lacrime",["drama film","Drama"]]],
+  mind:[["mistero",["mystery film","psychological thriller film","Mystery","Thriller","Psychological","Suspense"]],["fantasy",["science fiction film","fantasy film","adventure film","Science-Fiction","Fantasy","Adventure","Sci-Fi"]]]
+};
+const FACET_TXT={
+  love:{amore:"è soprattutto una storia d'amore",lacrime:"punta sull'emozione e sulla commozione",both:"unisce una storia d'amore e momenti che commuovono"},
+  mind:{mistero:"c'è soprattutto mistero e suspense",fantasy:"porta in un mondo fantastico o di fantascienza",both:"unisce mistero e un mondo fantastico"}
+};
 function why(r,sur){
   const a=S.a,d=r.d,m=r.m,g=m.genres||[],gs=G[S.cat==="cartoni"?(isFilmItem(m)?"film":"serie"):gkey(S.cat,a)],o=[],rnd=S.style==="surprise";
   const gl=d.glist&&d.glist.length?d.glist.slice(0,3).join(", "):"",mt=MOOD_TXT[a.mood];
   if(rnd)o.push("Sorpresa totale: categoria e voglia sono state scelte a caso.");
   else{
     if(sur)o.push("Scelta a sorpresa: un titolo meno battuto del solito.");
-    if(hit(g,gs.mood[a.mood]))o.push("Volevi "+mt+(gl?" e i suoi generi ("+gl+") vanno in quella direzione.":"."));
+    const fm=(FACETS[a.mood]||[]).filter(f=>hit(g,f[1])).map(f=>f[0]),fx=FACET_TXT[a.mood];
+    if(hit(g,gs.mood[a.mood])&&fx&&fm.length)o.push("Volevi "+mt+": "+(fm.length>1?fx.both:fx[fm[0]])+(gl?" ("+gl+")":"")+".");
+    else if(hit(g,gs.mood[a.mood]))o.push("Volevi "+mt+(gl?" e i suoi generi ("+gl+") vanno in quella direzione.":"."));
     else if(m.kwm)o.push("Volevi "+mt+(gl?": rientra tra i titoli di quel tema, anche se il genere è "+gl+".":" e rientra tra i titoli di quel tema."));
     else o.push("Non è il genere più ovvio per chi vuole "+mt+(gl?" ("+gl+")":"")+": lo propongo per gli altri criteri.");
   }
