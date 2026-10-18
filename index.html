@@ -32,7 +32,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=Instrument+Sans:wght@400;500;600;700&display=swap">
-<script>(function(){try{var s=localStorage.getItem("reelax_fs");if(s&&+s>=90&&+s<=140)document.documentElement.style.fontSize=s+"%";}catch(e){}})();</script>
+<script>(function(){try{localStorage.removeItem("reelax_fs");}catch(e){}})();</script>
 <script>
 /* tema: auto (segue il dispositivo) | chiaro | scuro */
 (function(){
@@ -1393,7 +1393,6 @@ function settingsPage(){
     sec('Ricerca','<div class="sgrp" id="sg_pf">'+pfGroup()+'</div>')+
     sec('Cronologia','<div class="sgrp"><button type="button" class="srow" data-act="recent">'+IC.clock+'<span class="sl">Trovati di recente</span><span class="sn">'+RECENT.length+'</span>'+IC.chev+'</button></div>')+
     sec('Aspetto','<div class="seg" id="thseg">'+[["auto","Auto"],["light","Chiaro"],["dark","Scuro"]].map(x=>'<button type="button" data-t="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>'+
-      '<div class="sh" style="margin-top:8px">Dimensione del testo</div><div class="seg" id="fsseg">'+[["100","Normale"],["112","Grande"],["125","Molto grande"]].map(x=>'<button type="button" data-s="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>'+
       '<button type="button" class="srow" data-act="hap" role="switch" aria-checked="'+hapOn()+'" style="margin-top:8px">'+IC.phone+'<span class="sl">Vibrazione al tocco</span><span class="sw'+(hapOn()?' on':'')+'"><i></i></span></button>')+
     sec('Account','<div class="sgrp"><button type="button" class="srow" data-act="acuser">'+IC.user+'<span class="sl">Cambia username</span>'+IC.chev+'</button><button type="button" class="srow" data-act="acpass">'+IC.lock+'<span class="sl">Cambia password</span>'+IC.chev+'</button><button type="button" class="srow" data-act="acall">'+IC.devs+'<span class="sl">Esci da tutti i dispositivi</span></button></div>')+
     '<button type="button" class="srow out" data-act="logout">'+IC.out+'<span class="sl">Esci</span></button></div>',true);
@@ -1403,9 +1402,6 @@ function settingsPage(){
     pfpick:()=>pfPage(),acuser:()=>accountPage("user"),acpass:()=>accountPage("pass")}});
   const th=$("thseg"),pr=window.themePref();
   th.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.t===pr));
-  const fsg=$("fsseg"),fsv=(()=>{try{return localStorage.getItem("reelax_fs")||"100";}catch(e){return "100";}})();
-  fsg.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.s===fsv));
-  fsg.onclick=e=>{const b=e.target.closest&&e.target.closest("button[data-s]");if(!b)return;tap();try{localStorage.setItem("reelax_fs",b.dataset.s);}catch(x){}document.documentElement.style.fontSize=b.dataset.s+"%";fsg.querySelectorAll("button").forEach(z=>z.classList.toggle("on",z===b));setTimeout(()=>{try{fit();}catch(x){}},60);};
   th.onclick=e=>{const b=e.target.closest&&e.target.closest("button[data-t]");if(!b)return;tap();window.setTheme(b.dataset.t);th.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));};
 }
 /* ---------- Cambio username / password ---------- */
