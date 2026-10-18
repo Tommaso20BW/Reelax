@@ -232,6 +232,9 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .lib .smsg{grid-column:1/-1}
 .bk{display:flex;flex-direction:column;gap:3px;min-width:0;text-align:left;transition:transform .12s}
 .bk:active{transform:scale(.96)}
+.sres.lib .bk{animation:bkIn .55s var(--ease) backwards;animation-delay:calc(var(--i,0)*40ms)}
+@keyframes bkIn{from{opacity:0;transform:translate3d(0,14px,0) scale(.96)}}
+.sres.lib{transition:opacity .2s}.sres.lib.busy{opacity:.45}
 .bk .cv{position:relative;display:block;aspect-ratio:2/3;border-radius:12px;overflow:hidden;background:linear-gradient(160deg,var(--s3),var(--s1));box-shadow:0 8px 20px rgba(0,0,0,.4),0 0 0 1px var(--line) inset;margin-bottom:5px}
 .bk .cv img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .35s}
 .bk .cv img.ld{opacity:1}
@@ -710,19 +713,30 @@ async function doSearch(q){
   const my=++SRUN,box=$("sres");
   if(!box)return;
   if(q.length<2){box.innerHTML="";SLIST=[];return;}
-  box.innerHTML='<p class="smsg">Cerco...</p>';
+  if(box.querySelector(".bk"))box.classList.add("busy");   // risultati precedenti restano, attenuati: niente sfarfallio a ogni lettera
+  else box.innerHTML='<p class="smsg">Cerco...</p>';
   try{
     const list=await searchTitles(q);
     if(my!==SRUN||!$("sres"))return;
     SLIST=list.slice(0,20);
+    // precarica le locandine (max ~1,4 s): la griglia compare già completa, senza riquadri vuoti che si riempiono a caso
+    const ok={};
+    await Promise.race([
+      Promise.all(SLIST.slice(0,12).filter(x=>x.poster_path).map(x=>new Promise(r=>{const im=new Image(),u="https://image.tmdb.org/t/p/w342"+x.poster_path;im.referrerPolicy="no-referrer";im.onload=()=>{ok[x.poster_path]=1;r();};im.onerror=r;im.src=u;}))),
+      new Promise(r=>setTimeout(r,1400))
+    ]);
+    if(my!==SRUN||!$("sres"))return;
+    box.classList.remove("busy");
     const row=(x,i)=>{
       const film=x.media_type==="movie",title=film?x.title:x.name,year=((film?x.release_date:x.first_air_date)||"").slice(0,4);
-      const th=x.poster_path?'<img src="https://image.tmdb.org/t/p/w342'+esc(x.poster_path)+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onload="this.classList.add(\'ld\')">':'<span class="nop">'+esc((title||"?").trim().charAt(0).toUpperCase())+'</span>';
-      return '<button type="button" class="bk" data-i="'+i+'"><span class="cv">'+th+'</span><span class="t">'+esc(title||"Senza titolo")+'</span><span class="s">'+(year?year+" · ":"")+(film?"Film":"Serie TV")+'</span></button>';
+      const th=x.poster_path?'<img src="https://image.tmdb.org/t/p/w342'+esc(x.poster_path)+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" class="'+(ok[x.poster_path]?"ld":"")+'" onload="this.classList.add(\'ld\')">':'<span class="nop">'+esc((title||"?").trim().charAt(0).toUpperCase())+'</span>';
+      return '<button type="button" class="bk" data-i="'+i+'" style="--i:'+Math.min(i,11)+'"><span class="cv">'+th+'</span><span class="t">'+esc(title||"Senza titolo")+'</span><span class="s">'+(year?year+" · ":"")+(film?"Film":"Serie TV")+'</span></button>';
     };
+    $("sres").classList.remove("busy");
     $("sres").innerHTML=SLIST.length?SLIST.map(row).join(""):'<p class="smsg">Nessun risultato.</p>';
   }catch(e){
     if(my!==SRUN||!$("sres"))return;
+    $("sres").classList.remove("busy");
     $("sres").innerHTML='<p class="smsg">Ricerca non riuscita'+(navigator.onLine===false?': sei offline':' ('+esc((e&&e.message)||"errore")+')')+'. Riprova tra poco.</p>';
   }
 }
