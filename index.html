@@ -231,6 +231,7 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .sr .s{font-size:.8rem;color:var(--mut)}
 .sres.lib{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px 12px;align-items:start}
 .lib .smsg{grid-column:1/-1}
+.lib .trl{grid-column:1/-1;margin:2px 0 -2px;font-size:.78rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
 .bk{display:flex;flex-direction:column;gap:3px;min-width:0;text-align:left;transition:transform .12s}
 .bk:active{transform:scale(.96)}
 .sres.lib{transition:opacity .2s}.sres.lib.busy{opacity:.45}
@@ -781,7 +782,7 @@ async function doSearch(q){
     if(my!==SRUN||!$("sres"))return;
     box.classList.remove("busy");
     $("sres").classList.remove("busy");
-    $("sres").innerHTML=SLIST.length?SLIST.map((x,i)=>bkCard(x,i,ok)).join(""):'<p class="smsg">Nessun risultato.</p>';
+    $("sres").innerHTML=SLIST.length?(trend?'<p class="trl">I più in voga ora</p>':"")+SLIST.map((x,i)=>bkCard(x,i,ok)).join(""):'<p class="smsg">Nessun risultato.</p>';
     if(SLIST.length)bkReveal($("sres"));
   }catch(e){
     if(my!==SRUN||!$("sres"))return;
