@@ -502,6 +502,8 @@ body.pre #app{opacity:0}
 .srow.out svg{color:var(--red)}
 .srow.out.ask{border-color:var(--red)}
 .srow.ask{border-color:var(--red)}
+.srow.dng{margin-top:auto;color:var(--red);position:sticky;bottom:2px;z-index:2}
+.srow.dng svg{color:var(--red)}
 .srow.sm{min-height:52px;font-size:.95rem}
 .sblock .sh+.seg,.sblock .seg+.sh{margin-top:6px}
 .srow .sn{color:var(--mut);font-weight:600;font-size:.9rem}
@@ -1331,11 +1333,11 @@ function clearRecent(){
   clearTimeout(clrT);
   RECENT=L.recent=[];try{localStorage.removeItem(RKEY);}catch(e){}lsave();
   const box=$("lres");if(box)box.innerHTML='<div class="lemp">'+IC.clock+'<span>Ancora vuota</span></div>';
-  b.remove();
+  b.classList.remove("ask");sl.textContent="Svuota la cronologia";
 }
 function recentPage(){
   RUN++;SRUN++;setBd(null);
-  swap('<div class="page"><h1>Trovati di recente</h1><div class="sres lib" id="lres"></div>'+(RECENT.length?'<button type="button" class="srow sm" data-act="clr" style="flex:none;margin-top:4px">'+IC.trash+'<span class="sl">Svuota la cronologia</span></button>':'')+'</div>',true);
+  swap('<div class="page"><h1>Trovati di recente</h1><div class="sres lib" id="lres"></div>'+'<button type="button" class="srow dng" data-act="clr" style="flex:none">'+IC.trash+'<span class="sl">Svuota la cronologia</span></button>'+'</div>',true);
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>settingsPage(),clr:clearRecent}});
   const box=$("lres");
   box.innerHTML=RECENT.length?RECENT.map(bkItem).join(""):'<div class="lemp">'+IC.clock+'<span>Ancora vuota</span></div>';
