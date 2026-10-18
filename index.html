@@ -76,17 +76,17 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 
 /* il contenuto sfuma sotto la barra: nessun taglio netto */
 #stage{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:10px var(--gut) 20px;
-  -webkit-mask-image:linear-gradient(transparent,#000 14px);mask-image:linear-gradient(transparent,#000 14px)}
+  -webkit-mask-image:linear-gradient(transparent,#000 14px,#000 calc(100% - 22px),transparent);mask-image:linear-gradient(transparent,#000 14px,#000 calc(100% - 22px),transparent)}
 #stage::-webkit-scrollbar{display:none}
-.ghost{position:absolute;z-index:1;box-sizing:border-box;overflow:hidden;padding:10px var(--gut) 20px;pointer-events:none;will-change:transform;-webkit-mask-image:linear-gradient(transparent,#000 14px);mask-image:linear-gradient(transparent,#000 14px)}
+.ghost{position:absolute;z-index:1;box-sizing:border-box;overflow:hidden;padding:10px var(--gut) 20px;pointer-events:none;will-change:transform;-webkit-mask-image:linear-gradient(transparent,#000 14px,#000 calc(100% - 22px),transparent);mask-image:linear-gradient(transparent,#000 14px,#000 calc(100% - 22px),transparent)}
 
 /* dock inferiore: resta SOPRA la zona della home-indicator, così i tasti si toccano sempre */
-#dock{flex:none;position:relative;z-index:6;padding:12px var(--gut) 16px}
+#dock{flex:none;position:relative;z-index:6;padding:12px var(--gut) max(16px,calc(var(--sab) + 6px))}
 .dock-in{display:flex;gap:8px}
 .dock-in .btn{padding:0 6px;font-size:.95rem;border-radius:999px}
 .dock-in .btn.v{flex-direction:column;gap:3px;font-size:.8rem;line-height:1.1}
 .dock-in .btn.v svg{width:21px;height:21px}
-.btn.primary{border-color:transparent;background:var(--grad);color:#fff;box-shadow:0 10px 26px rgba(255,61,82,.3)}
+.btn.primary{border-color:transparent;background:var(--grad);background-origin:border-box;color:#fff;box-shadow:0 10px 26px rgba(255,61,82,.3)}
 .btn.primary::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.3) 50%,transparent 60%);transform:translateX(-120%);animation:sweep 3.8s 1.2s ease-in-out 2;pointer-events:none}
 @keyframes sweep{0%{transform:translateX(-120%)}35%,100%{transform:translateX(120%)}}
 .btn{position:relative;overflow:hidden;flex:1;min-width:0;height:56px;border-radius:18px;display:flex;align-items:center;justify-content:center;gap:9px;padding:0 14px;
@@ -177,6 +177,7 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .poster.fb{display:flex;flex-direction:column;justify-content:space-between;padding:.9em;color:#fff;border:0;font-size:16px}
 .poster.fb h3{margin:0;font-family:var(--fd);font-size:1.25em;line-height:1.1}
 .poster.fb small{opacity:.8;font-size:.7em;letter-spacing:.1em;text-transform:uppercase}
+.poster.fb{text-align:center;align-items:center}
 .hero h2,.hero .tag,.hero .chips{position:relative;z-index:3}
 .hero h2{margin:0;font-family:var(--fd);font-weight:800;font-size:clamp(1.7rem,7.5vw,2.3rem);line-height:1.03;letter-spacing:-.035em;word-break:break-word}
 .tag{margin:-6px 0 0;font-size:.88rem;color:var(--mut);font-style:italic}
@@ -255,7 +256,7 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 /* lightbox locandina */
 #lb{position:fixed;inset:0;z-index:100;display:none}
 #lb.on{display:block}
-#lb .bg{position:absolute;inset:0;background:rgba(5,3,10,.92);opacity:0;transition:opacity .6s ease;will-change:opacity}
+#lb .bg{position:absolute;inset:0;background:rgba(5,3,10,.98);opacity:0;transition:opacity .6s ease;will-change:opacity}
 #lb.show .bg{opacity:1}
 @property --ms{syntax:'<length>';inherits:false;initial-value:0px}
 @property --ml{syntax:'<length>';inherits:false;initial-value:0px}
@@ -667,7 +668,7 @@ function searchPage(){
   RUN++;
   setBd(null);
   swap('<div class="page"><h1>Cerca un titolo</h1><input class="lgi sin" id="sq" type="search" placeholder="Film o serie TV" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="search" aria-label="Cerca un titolo"><div class="sres lib" id="sres"></div></div>',true);
-  ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>{SRUN++;home();}}});
+  ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>{SRUN++;RUN++;home();}}});
   const inp=$("sq"),box=$("sres");
   inp.value=SQ;
   let t=null;
@@ -736,7 +737,6 @@ async function doSearch(q){
 }
 async function openSearched(x,back){
   if(!x)return;
-  BACK=back||null;
   const film=x.media_type==="movie";
   const c={id:"tm"+(film?"film":"tv")+x.id,tid:x.id,src:"tmdb",movie:film,anim:false,title:(film?x.title:x.name)||"Senza titolo",
     year:((film?x.release_date:x.first_air_date)||"").slice(0,4),genres:[],rating:x.vote_average||0,vc:x.vote_count||0,
@@ -755,7 +755,7 @@ async function openSearched(x,back){
   }catch(e){}
   stage.style.pointerEvents="";stage.style.cursor="";
   if(my!==RUN||LB)return;
-  show(full||quick,false,true,false);
+  const r2=full||quick;r2.back=back||null;show(r2,false,true,false);
 }
 
 /* ---------- Cast e persone ---------- */
@@ -1576,7 +1576,7 @@ function show(r,sur,man,quiet){
       l:tbtn('back','back','Torna alla ricerca'),
       r:tbtn('share','share','Condividi'),
       d:bb('re',IC.restart+'Ricomincia','v')+bb('srch',IC.search+'Cerca ancora','v primary'),
-      a:{back:()=>{if(BACK)BACK();else searchPage();},share,re:()=>{RUN++;restart();},srch:()=>searchPage(),cast:()=>castPage(d)}
+      a:{back:()=>{if(r.back)r.back();else searchPage();},share,re:()=>{RUN++;restart();},srch:()=>searchPage(),cast:()=>castPage(d)}
     });
     return;
   }
