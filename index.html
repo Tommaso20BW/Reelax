@@ -508,7 +508,7 @@ body.pre #app{opacity:0}
 </head>
 <body class="pre">
 <div id="sp" class="wait" role="presentation"><svg viewBox="0 0 4727 702" aria-hidden="true"><path d="M358 702 212 437H171V702H0V0H287Q370 0 428.5 29Q487 58 516 108.5Q545 159 545 221Q545 291 505.5 346Q466 401 389 424L551 702ZM171 316H277Q324 316 347.5 293Q371 270 371 228Q371 188 347.5 165Q324 142 277 142H171Z"/><path d="M1053 137V279H1282V411H1053V565H1312V702H882V0H1312V137Z"/><path d="M1824 137V279H2053V411H1824V565H2083V702H1653V0H2083V137Z"/><path d="M2595 570H2819V702H2424V0H2595Z"/><path d="M3568 578H3306L3264 702H3085L3339 0H3537L3791 702H3610ZM3524 446 3437 189 3351 446Z"/><path d="M4528 702 4385 487 4259 702H4065L4290 345L4060 0H4259L4400 212L4524 0H4718L4495 354L4727 702Z"/></svg></div>
-<script>setTimeout(function(){var s=document.getElementById("sp");if(s)s.hidden=true;},10000);</script>
+<script>var IS_APP=!!(navigator.standalone||(window.matchMedia&&matchMedia("(display-mode: standalone)").matches));(function(){var s=document.getElementById("sp");if(s&&!IS_APP)s.hidden=true;setTimeout(function(){if(s)s.hidden=true;},10000);})();</script>
 <div id="bd"><i></i></div>
 <div id="app">
   <header class="top">
@@ -2141,7 +2141,7 @@ $("lgf").addEventListener("submit",async e=>{
   c.classList.remove("busy");btn.disabled=false;er.textContent=fail||"Nome utente o password non corretti.";
   void c.offsetWidth;c.classList.add("bad");$("lgp").value="";try{$("lgp").focus();}catch(x){}
 });
-/* avvio: la schermata #sp resta finche' font e pagina sono pronti (minimo 3 s), poi la scritta si dissolve e compare login o app */
+/* avvio: la schermata #sp resta finche' font e pagina sono pronti (solo da app installata: minimo 3 s; nel browser nessuna schermata), poi la scritta si dissolve e compare login o app */
 function hideSplash(){
   const sp=$("sp");if(!sp||sp.hidden)return;
   if(RM()||!sp.animate){sp.hidden=true;return;}
@@ -2155,7 +2155,7 @@ function hideSplash(){
 const boot=()=>{document.body.classList.remove("pre");if(isAuthed()){home();syncPull();}else lockApp();hideSplash();};
 const fontsOk=(document.fonts&&document.fonts.ready)?Promise.race([document.fonts.ready,sleep(1200)]):Promise.resolve();
 const pageOk=document.readyState==="complete"?Promise.resolve():new Promise(r=>{addEventListener("load",r,{once:true});setTimeout(r,3000);});
-Promise.all([fontsOk,pageOk,sleep(Math.max(0,3000-performance.now()))]).then(()=>requestAnimationFrame(()=>requestAnimationFrame(boot)));
+Promise.all([fontsOk,pageOk,sleep(IS_APP?Math.max(0,3000-performance.now()):0)]).then(()=>requestAnimationFrame(()=>requestAnimationFrame(boot)));
 let dp=null;const ib=$("ib");
 addEventListener("beforeinstallprompt",e=>{e.preventDefault();dp=e;try{if(!localStorage.getItem("stasera_ix"))ib.hidden=false;}catch(x){ib.hidden=false;}});
 $("ibtn").onclick=()=>{ib.hidden=true;if(dp){dp.prompt();dp=null;}};
