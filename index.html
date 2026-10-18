@@ -415,6 +415,9 @@ body.pre #app{opacity:0}
 .srow:active{transform:scale(.985)}
 .srow svg{width:20px;height:20px;flex:none;color:var(--mut)}
 .srow .sl{flex:1;min-width:0}
+.srow.out{margin-top:auto;color:var(--red)}
+.srow.out svg{color:var(--red)}
+.srow.out.ask{border-color:var(--red)}
 .srow .sn{color:var(--mut);font-weight:600;font-size:.9rem}
 @media (hover:hover){.srow:hover{border-color:var(--line2)}}
 .lemp{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;gap:10px;padding:46px 0;color:var(--mut);font-weight:600;font-size:.95rem}
@@ -1223,8 +1226,16 @@ function settingsPage(){
   RUN++;SRUN++;setBd(null);
   swap('<div class="page"><h1>Impostazioni</h1><div class="srows">'+
     '<button type="button" class="srow" data-act="recent">'+IC.clock+'<span class="sl">Trovati di recente</span><span class="sn">'+RECENT.length+'</span>'+IC.chev+'</button>'+
-  '</div></div>',true);
-  ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>home(),recent:()=>recentPage()}});
+  '</div>'+
+    '<button type="button" class="srow out" data-act="logout">'+IC.out+'<span class="sl">Esci</span></button></div>',true);
+  ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>home(),recent:()=>recentPage(),logout:confirmLogout}});
+}
+let outT=null;
+function confirmLogout(){   // primo tocco chiede conferma, secondo tocco esce
+  const b=document.querySelector('.srow.out');if(!b)return doLogout();
+  if(b.classList.contains('ask')){clearTimeout(outT);return doLogout();}
+  b.classList.add('ask');b.querySelector('.sl').textContent='Tocca ancora per uscire';
+  outT=setTimeout(()=>{b.classList.remove('ask');b.querySelector('.sl').textContent='Esci';},3000);
 }
 
 const TM_FILM={35:"comedy film",10751:"family film",10749:"romance film",18:"drama film",27:"horror film",28:"action film",53:"thriller film",12:"adventure film",9648:"mystery film",878:"science fiction film",14:"fantasy film",10752:"war film"};
