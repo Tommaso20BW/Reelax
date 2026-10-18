@@ -1211,9 +1211,9 @@ const tm=(path,params)=>fjr(TMDB_PROXY.replace(/\/+$/,"")+path+"?"+new URLSearch
   if(e&&e.message==="HTTP 401"){doLogout();}
   LASTERR=(e&&(e.name==="AbortError"?"timeout":e.message))||"errore";throw e;});
 /* ---------- Liste personali: già visto / da vedere (locale + sincronizzate dal Worker) ---------- */
-const LKEY="reelax_lists",LDIRTY="reelax_lists_dirty",LCAP={seen:2000,watch:500};
-let L={watch:[],seen:[],platforms:[],recent:[]},LTAB="watch";
-try{const j=JSON.parse(localStorage.getItem(LKEY)||"null");if(j){L.watch=Array.isArray(j.watch)?j.watch:[];L.seen=Array.isArray(j.seen)?j.seen:[];L.platforms=Array.isArray(j.platforms)?j.platforms:[];L.recent=Array.isArray(j.recent)?j.recent:[];}}catch(e){}
+const LKEY="reelax_lists",LDIRTY="reelax_lists_dirty";
+let L={platforms:[],recent:[]};
+try{const j=JSON.parse(localStorage.getItem(LKEY)||"null");if(j){L.platforms=Array.isArray(j.platforms)?j.platforms:[];L.recent=Array.isArray(j.recent)?j.recent:[];}}catch(e){}
 const PX=()=>TMDB_PROXY.replace(/\/+$/,"");
 const AUTHH=()=>({Authorization:"Bearer "+getTok(),"Content-Type":"application/json"});
 let pushT=null;
@@ -1235,7 +1235,7 @@ async function syncPull(){
     if(!r.ok)return;
     const j=await r.json();
     const keep=RECENT;
-    L={watch:Array.isArray(j.watch)?j.watch:[],seen:Array.isArray(j.seen)?j.seen:[],platforms:Array.isArray(j.platforms)?j.platforms:[],recent:Array.isArray(j.recent)?j.recent:[]};
+    L={platforms:Array.isArray(j.platforms)?j.platforms:[],recent:Array.isArray(j.recent)?j.recent:[]};
     RECENT=L.recent;
     if(!RECENT.length&&keep.length){RECENT=L.recent=keep;lsave();}   // il server non ha ancora la lista: invio quella di questo dispositivo
     try{localStorage.setItem(LKEY,JSON.stringify(L));}catch(e){}
@@ -1245,9 +1245,6 @@ const itemOf=r=>{const m=r.m,d=r.d,t=m.src==="tmdb",p=d.poster||m.image||"";
   return{k:m.id,t:d.title,y:d.year||"",p:p.indexOf(TMDB_IMG)===0?p.slice(TMDB_IMG.length):p,mv:!!d.movie,sr:t?"tmdb":(m.src||""),ti:t?m.tid:0};};
 const pu=it=>it.p?(it.p.charAt(0)==="/"?"https://image.tmdb.org/t/p/w342"+it.p:it.p):"";
 const tkey=(t,y)=>"t:"+normT(t)+"|"+(y||"");
-const seenKeys=()=>{const s=new Set();L.seen.forEach(x=>{s.add(x.k);s.add(tkey(x.t,x.y));});return s;};
-const isSeen=(s,m)=>s.has(m.id)||s.has(tkey(m.title,m.year));
-const inL=(w,r)=>L[w].some(x=>x.k===r.m.id);
 const bkItem=(it,i)=>{
   const u=pu(it),th=u?'<img src="'+esc(u)+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onload="this.classList.add(\'ld\')">':'<span class="nop">'+esc((it.t||"?").trim().charAt(0).toUpperCase())+'</span>';
   return '<button type="button" class="bk" data-i="'+i+'"><span class="cv">'+th+'</span><span class="t">'+esc(it.t||"Senza titolo")+'</span><span class="s">'+(it.y?it.y+" · ":"")+(it.mv?"Film":"Serie")+'</span></button>';
