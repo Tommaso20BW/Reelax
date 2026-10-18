@@ -1871,7 +1871,29 @@ function openYt(e,key){
 /* ---------- Condividi ---------- */
 const SHC={k:"",p:null};
 const shKey=d=>String(d.title||"")+"|"+(d.year||"");
-function shLoad(u){return new Promise(res=>{if(!u)return res(null);const i=new Image();i.crossOrigin="anonymous";i.referrerPolicy="no-referrer";const t=setTimeout(()=>res(null),7000);i.onload=()=>{clearTimeout(t);res(i);};i.onerror=()=>{clearTimeout(t);res(null);};i.src=u;});}
+/* Locandina per l'immagine di condivisione. Serve un'immagine "pulita" (CORS), altrimenti il canvas non si può esportare.
+   Tentativi: 1) fetch che salta la cache (Safari a volte riusa la copia senza CORS), 2) <img crossorigin> con parametro anti-cache,
+   3) ultima spiaggia: proxy immagini pubblico (SH_PROXY), usato solo se i primi due falliscono (es. alcune locandine anime). */
+const SH_PROXY="https://images.weserv.nl/?url=";
+function shImgEl(u,cors){return new Promise(res=>{const i=new Image();if(cors)i.crossOrigin="anonymous";i.referrerPolicy="no-referrer";const t=setTimeout(()=>res(null),6000);i.onload=()=>{clearTimeout(t);res(i.naturalWidth?i:null);};i.onerror=()=>{clearTimeout(t);res(null);};i.src=u;});}
+async function shFetchImg(u){
+  try{
+    const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),7000);
+    const r=await fetch(u,{mode:"cors",cache:"reload",referrerPolicy:"no-referrer",signal:ctl.signal});clearTimeout(t);
+    if(!r.ok)return null;
+    const bl=await r.blob();
+    if(window.createImageBitmap){try{const bm=await createImageBitmap(bl);if(bm&&bm.width)return bm;}catch(e){}}
+    const ou=URL.createObjectURL(bl);const im=await shImgEl(ou,false);URL.revokeObjectURL(ou);return im;
+  }catch(e){return null;}
+}
+async function shLoad(u){
+  if(!u)return null;
+  const wrap=im=>im&&(im.naturalWidth||im.width)?{s:im,w:im.naturalWidth||im.width,h:im.naturalHeight||im.height}:null;
+  let r=wrap(await shFetchImg(u));
+  if(!r)r=wrap(await shImgEl(u+(u.indexOf("?")<0?"?":"&")+"_s=1",true));
+  if(!r&&/^https?:\/\//.test(u))r=wrap(await shFetchImg(SH_PROXY+encodeURIComponent(u.replace(/^https?:\/\//,""))));
+  return r;
+}
 function shLines(x,t,w,max){
   const ws=String(t||"").replace(/\s+/g," ").trim().split(" ").filter(Boolean),out=[];let cur="";
   ws.forEach(wd=>{const tt=cur?cur+" "+wd:wd;if(cur&&x.measureText(tt).width>w){out.push(cur);cur=wd;}else cur=tt;});
@@ -1891,7 +1913,7 @@ async function shBuild(d){
   const pw=560,ph=840,px=(W-pw)/2,py=120,R=34;
   x.save();x.shadowColor="rgba(0,0,0,.6)";x.shadowBlur=70;x.shadowOffsetY=30;x.fillStyle="#1a1627";x.beginPath();x.roundRect(px,py,pw,ph,R);x.fill();x.restore();
   x.save();x.beginPath();x.roundRect(px,py,pw,ph,R);x.clip();
-  if(img&&img.naturalWidth){const s=Math.max(pw/img.naturalWidth,ph/img.naturalHeight),w=img.naturalWidth*s,hh=img.naturalHeight*s;x.drawImage(img,px+(pw-w)/2,py+(ph-hh)/2,w,hh);}
+  if(img&&img.w){const s=Math.max(pw/img.w,ph/img.h),w=img.w*s,hh=img.h*s;x.drawImage(img.s,px+(pw-w)/2,py+(ph-hh)/2,w,hh);}
   else{const q=x.createLinearGradient(px,py,px+pw,py+ph);q.addColorStop(0,"#ff3d52");q.addColorStop(.62,"#c13bd9");q.addColorStop(1,"#8f62f8");x.fillStyle=q;x.fillRect(px,py,pw,ph);x.fillStyle="rgba(255,255,255,.9)";x.font="800 260px "+FD;x.textAlign="center";x.textBaseline="middle";x.fillText((d.title||"?").trim().charAt(0).toUpperCase(),W/2,py+ph/2);}
   x.restore();
   x.save();x.strokeStyle="rgba(255,255,255,.18)";x.lineWidth=2;x.beginPath();x.roundRect(px+1,py+1,pw-2,ph-2,R-1);x.stroke();x.restore();
