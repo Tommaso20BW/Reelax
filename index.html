@@ -255,9 +255,12 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .pmeta:empty{display:none}
 .pbio{flex:none;padding:16px 18px;border-radius:var(--r2);border:1px solid var(--line);background:var(--s1);font-size:.92rem;line-height:1.55;color:var(--fg)}
 .pbio:empty{display:none}
-.pbio p{margin:0;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-line}
-.pbio.open p{display:block}
-.pbio button{margin-top:8px;color:var(--gold);font-weight:700;font-size:.84rem}
+.pbio p{margin:0;white-space:pre-line;overflow:hidden;--f:0px;transition:height .6s cubic-bezier(.25,.8,.25,1),--f .6s ease;
+  -webkit-mask-image:linear-gradient(#000 calc(100% - var(--f)),transparent);mask-image:linear-gradient(#000 calc(100% - var(--f)),transparent)}
+.pbio p.clamp{--f:1.6em}
+.pbio.tap{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.pbio.tap:active{filter:brightness(1.08)}
+.pbio button{margin-top:10px;color:var(--gold);font-weight:700;font-size:.84rem}
 .plab{flex:none;margin:6px 2px -6px;font:700 .72rem var(--fb);letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
 .plab:empty{display:none}
 .castbtn{display:block;width:100%;text-align:left;cursor:pointer;color:var(--fg)}
@@ -374,7 +377,6 @@ body.pre #app{opacity:0}
   .page .pfi h1{font-size:clamp(2.2rem,3.6vw,3rem)}
   .pmeta{font-size:.95rem}
   .pbio{padding:20px 24px;font-size:.98rem}
-  .pbio p{-webkit-line-clamp:5}
   .page:has(.pf) .sres,.page:has(#cres) .sres{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
   .page:has(#cres){max-width:980px}
   .page:has(#cres) h1{text-align:left}
@@ -799,13 +801,24 @@ async function personPage(p,backFn){
     const pm=$("pmeta");if(pm)pm.innerHTML=mt.map(x=>"<div>"+x+"</div>").join("");
     const pb=$("pbio"),bio=(d.biography||"").trim();
     if(pb&&bio){
-      pb.innerHTML="<p>"+esc(bio)+"</p>";
-      const bp=pb.firstChild;
-      if(bp.scrollHeight>bp.clientHeight+2){
-        const bt=document.createElement("button");bt.type="button";bt.textContent="Leggi tutto";
-        bt.onclick=()=>{tap();const o=pb.classList.toggle("open");bt.textContent=o?"Riduci":"Leggi tutto";};
-        pb.appendChild(bt);
-      }
+      pb.innerHTML='<p class="clamp">'+esc(bio)+'</p>';
+      const bp=pb.firstChild,cs=getComputedStyle(bp),lh=parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.5,CH=Math.round(lh*4);
+      if(bp.scrollHeight>CH+2){   // come la trama: tutta la scheda è toccabile e si apre/chiude con animazione
+        const bt=document.createElement("button");bt.type="button";bt.textContent="Leggi tutto";pb.appendChild(bt);
+        pb.classList.add("tap");pb.setAttribute("role","button");pb.tabIndex=0;pb.setAttribute("aria-expanded","false");
+        bp.style.height=CH+"px";
+        bp.addEventListener("transitionend",e=>{if(e.target===bp&&e.propertyName==="height"&&!bp.classList.contains("clamp"))bp.style.height="auto";});
+        const toggle=()=>{
+          if(window.getSelection&&String(window.getSelection()).length>0)return;
+          const opening=bp.classList.contains("clamp");
+          bp.style.height=bp.getBoundingClientRect().height+"px";void bp.offsetHeight;
+          bp.classList.toggle("clamp",!opening);
+          bp.style.height=(opening?bp.scrollHeight:CH)+"px";
+          bt.textContent=opening?"Riduci":"Leggi tutto";pb.setAttribute("aria-expanded",opening);
+        };
+        pb.onclick=()=>{tap();toggle();};
+        pb.onkeydown=e=>{if(e.target===pb&&(e.key==="Enter"||e.key===" ")){e.preventDefault();toggle();}};
+      }else bp.classList.remove("clamp");
     }
     const cc=d.combined_credits||{},seen={},items=[];
     const bad=x=>(x.genre_ids||[]).some(g=>g===10767||g===10763||g===10764)||/\b(self|himself|herself)\b/i.test(x.character||"");
