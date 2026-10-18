@@ -736,20 +736,8 @@ document.addEventListener("click",e=>{
   if(y){openYt(e,y.dataset.yt);return;}
   const b=e.target.closest&&e.target.closest("[data-act]");
   if(!b||b.disabled)return;
-  const f=ACT[b.dataset.act];if(f){tap();const an=b.dataset.act;NAV=0;const onHome=!!stage.querySelector(".opts");if(an==="settings"&&onHome)NAV=-1;else if(an==="search"&&onHome)NAV=1;else if(an==="back"){if(stage.querySelector(".srow.out"))NAV=1;else if($("sq"))NAV=-1;}clearTimeout(NAVT);NAVT=setTimeout(()=>{NAV=0;},700);try{f();}catch(x){}}
+  const f=ACT[b.dataset.act];if(f){const an=b.dataset.act;NAV=0;const onHome=!!stage.querySelector(".opts");if(an==="settings"&&onHome)NAV=-1;else if(an==="search"&&onHome)NAV=1;else if(an==="back"){if(stage.querySelector(".srow.out"))NAV=1;else if($("sq"))NAV=-1;}clearTimeout(NAVT);NAVT=setTimeout(()=>{NAV=0;},700);try{f();}catch(x){}}
 });
-const HKEY="reelax_hap";
-const hapOn=()=>{try{return localStorage.getItem(HKEY)!=="0";}catch(e){return true;}};
-const hapSet=v=>{try{localStorage.setItem(HKEY,v?"1":"0");}catch(e){}};
-let HAP=null;
-function hapIOS(){   // iPhone: niente navigator.vibrate, ma un interruttore "switch" nativo (iOS 17.4+) fa il tocco aptico
-  try{
-    if(!HAP){const l=document.createElement("label");l.setAttribute("aria-hidden","true");l.style.cssText="position:fixed;left:-60px;top:-60px;width:2px;height:2px;opacity:.01;pointer-events:none";
-      const i=document.createElement("input");i.type="checkbox";i.setAttribute("switch","");i.tabIndex=-1;l.appendChild(i);document.body.appendChild(l);HAP=l;}
-    HAP.click();
-  }catch(e){}
-}
-const tap=()=>{if(!hapOn())return;try{if(navigator.vibrate){navigator.vibrate(8);return;}}catch(e){}hapIOS();};
 function setBd(u){   // cambio sfondo morbido: se ce n'è già uno si dissolve prima di mostrare il nuovo (niente scatto)
   const b=$("bd"),i=b.firstElementChild;clearTimeout(b._t);
   const put=()=>{i.style.backgroundImage='url("'+u.replace(/"/g,"%22")+'")';i._u=u;b.classList.add("on");};
@@ -796,7 +784,7 @@ function home(anim){
   const mark=el=>{stage.querySelectorAll('.opt').forEach(x=>{const on=x===el;x.classList.toggle('on',on);x.setAttribute('aria-pressed',on?'true':'false');});};
   const go=d=>{lock=true;const oo=stage.querySelector(".opts");if(oo)oo.classList.add("sel");setTimeout(()=>{if(S.step<steps().length-1){S.step++;home();}else{S.seen=[];S.cands=[];run(false,true);}},d||210);};
   stage.querySelectorAll('.opt').forEach(b=>{b.onclick=()=>{
-    if(lock)return;tap();
+    if(lock)return;
     const g=b.dataset.g,v=b.dataset.v;
     if(g==="avoid"){   // selezione multipla: ogni tocco accende/spegne, non avanza
       const i=S.avoid.indexOf(v);if(i<0)S.avoid.push(v);else S.avoid.splice(i,1);
@@ -819,7 +807,7 @@ function home(anim){
     go(wasShown?300:230);
   };});
   const sw=$("segw");
-  if(sw)sw.onclick=e=>{const b=e.target.closest&&e.target.closest("button[data-f]");if(!b||lock)return;tap();S.fmt=b.dataset.f;S.time="";sw.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));go();};
+  if(sw)sw.onclick=e=>{const b=e.target.closest&&e.target.closest("button[data-f]");if(!b||lock)return;S.fmt=b.dataset.f;S.time="";sw.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));go();};
 }
 
 /* ---------- Ricerca manuale (TMDB) ---------- */
@@ -834,7 +822,7 @@ function searchPage(){
   let t=null;
   inp.addEventListener("input",()=>{SQ=inp.value.trim();clearTimeout(t);t=setTimeout(()=>doSearch(SQ),350);});
   inp.addEventListener("keydown",e=>{if(e.key==="Enter"){clearTimeout(t);SQ=inp.value.trim();doSearch(SQ);inp.blur();}});
-  box.onclick=e=>{const b=e.target.closest&&e.target.closest("[data-i]");if(!b)return;tap();openSearched(SLIST[+b.dataset.i]);};
+  box.onclick=e=>{const b=e.target.closest&&e.target.closest("[data-i]");if(!b)return;openSearched(SLIST[+b.dataset.i]);};
   // scorrendo l'elenco la tastiera si chiude, così l'ultimo risultato resta raggiungibile senza spazio vuoto in fondo
   box.addEventListener("touchmove",()=>{if(document.activeElement===inp)inp.blur();},{passive:true});
   doSearch(SQ);   // vuoto = i più in voga del momento
@@ -976,7 +964,7 @@ function castPage(d,snap){
   const list=d.castList||[];
   swap('<div class="page"><h1>Cast</h1><div class="sres lib" id="cres">'+list.map(bkPerson).join('')+'</div></div>',true);
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>{show(snap.r,snap.sur,snap.man,"fade");}}});
-  $("cres").onclick=e=>{const b=e.target.closest&&e.target.closest("[data-i]");if(!b)return;tap();personPage(list[+b.dataset.i],()=>castPage(d,snap));};
+  $("cres").onclick=e=>{const b=e.target.closest&&e.target.closest("[data-i]");if(!b)return;personPage(list[+b.dataset.i],()=>castPage(d,snap));};
 }
 function personInfo(d){
   const dep=DEPT[d.known_for_department]||d.known_for_department||"";
@@ -1037,7 +1025,7 @@ async function personPage(p,backFn){
   if(my!==RUN||!res.isConnected)return;
   res.insertAdjacentHTML("beforeend",'<div class="sech" style="--k:0">Filmografia · '+PLIST.length+(PLIST.length===1?" titolo":" titoli")+'</div><div class="sres lib" id="pres">'+PLIST.map((x,i)=>bkCard(x,i,ok)).join("")+'</div>');
   const box=$("pres");
-  box.onclick=e=>{const b=e.target.closest&&e.target.closest("[data-i]");if(!b)return;tap();openSearched(PLIST[+b.dataset.i],()=>personPage(p,backFn));};
+  box.onclick=e=>{const b=e.target.closest&&e.target.closest("[data-i]");if(!b)return;openSearched(PLIST[+b.dataset.i],()=>personPage(p,backFn));};
   bkReveal(box,120);
 }
 
@@ -1342,7 +1330,7 @@ function recentPage(){
   const box=$("lres");
   box.innerHTML=RECENT.length?RECENT.map(bkItem).join(""):'<div class="lemp">'+IC.clock+'<span>Ancora vuota</span></div>';
   if(RECENT.length)bkReveal(box);
-  box.onclick=e=>{const b=e.target.closest&&e.target.closest("[data-i]");if(!b)return;tap();openItem(RECENT[+b.dataset.i],()=>recentPage());};
+  box.onclick=e=>{const b=e.target.closest&&e.target.closest("[data-i]");if(!b)return;openItem(RECENT[+b.dataset.i],()=>recentPage());};
 }
 
 /* ---------- Impostazioni ---------- */
@@ -1392,20 +1380,19 @@ function settingsPage(){
     sec('Ricerca','<div class="sgrp" id="sg_pf">'+pfGroup()+'</div>')+
     sec('Cronologia','<div class="sgrp"><button type="button" class="srow" data-act="recent">'+IC.clock+'<span class="sl">Trovati di recente</span><span class="sn">'+RECENT.length+'</span>'+IC.chev+'</button></div>')+
     sec('Aspetto','<div class="seg" id="thseg">'+[["auto","Auto"],["light","Chiaro"],["dark","Scuro"]].map(x=>'<button type="button" data-t="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>'+
-      '<div class="sh" style="margin-top:8px">Dimensione del testo</div><div class="seg" id="fsseg">'+[["100","Normale"],["112","Grande"],["125","Molto grande"]].map(x=>'<button type="button" data-s="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>'+
-      '<button type="button" class="srow" data-act="hap" role="switch" aria-checked="'+hapOn()+'" style="margin-top:8px">'+IC.phone+'<span class="sl">Vibrazione al tocco</span><span class="sw'+(hapOn()?' on':'')+'"><i></i></span></button>')+
+      '<div class="sh" style="margin-top:8px">Dimensione del testo</div><div class="seg" id="fsseg">'+[["100","Normale"],["112","Grande"],["125","Molto grande"]].map(x=>'<button type="button" data-s="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>')+
     sec('Account','<div class="sgrp"><button type="button" class="srow" data-act="acuser">'+IC.user+'<span class="sl">Cambia username</span>'+IC.chev+'</button><button type="button" class="srow" data-act="acpass">'+IC.lock+'<span class="sl">Cambia password</span>'+IC.chev+'</button><button type="button" class="srow" data-act="acall">'+IC.devs+'<span class="sl">Esci da tutti i dispositivi</span></button></div>')+
     '<button type="button" class="srow out" data-act="logout">'+IC.out+'<span class="sl">Esci</span></button></div>',true);
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>home(),recent:()=>recentPage(),logout:confirmLogout,acall:revokeAll,
-    hap:()=>{const v=!hapOn();hapSet(v);const b=document.querySelector('[data-act="hap"]');if(b){b.setAttribute("aria-checked",v?"true":"false");const s=b.querySelector(".sw");if(s)s.classList.toggle("on",v);}if(v)tap();},
+    
     pfsw:()=>{const v=!pfOn();pfSet(v);const box=$("sg_pf");if(box)box.innerHTML=pfGroup();if(v&&!pfSel().length)pfPage();},
     pfpick:()=>pfPage(),acuser:()=>accountPage("user"),acpass:()=>accountPage("pass")}});
   const th=$("thseg"),pr=window.themePref();
   th.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.t===pr));
   const fsg=$("fsseg"),fsv=(()=>{try{return localStorage.getItem("reelax_fs")||"100";}catch(e){return "100";}})();
   fsg.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.s===fsv));
-  fsg.onclick=e=>{const b=e.target.closest&&e.target.closest("button[data-s]");if(!b)return;tap();try{localStorage.setItem("reelax_fs",b.dataset.s);}catch(x){}document.documentElement.style.fontSize=b.dataset.s+"%";fsg.querySelectorAll("button").forEach(z=>z.classList.toggle("on",z===b));setTimeout(()=>{try{fit();}catch(x){}},60);};
-  th.onclick=e=>{const b=e.target.closest&&e.target.closest("button[data-t]");if(!b)return;tap();window.setTheme(b.dataset.t);th.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));};
+  fsg.onclick=e=>{const b=e.target.closest&&e.target.closest("button[data-s]");if(!b)return;try{localStorage.setItem("reelax_fs",b.dataset.s);}catch(x){}document.documentElement.style.fontSize=b.dataset.s+"%";fsg.querySelectorAll("button").forEach(z=>z.classList.toggle("on",z===b));setTimeout(()=>{try{fit();}catch(x){}},60);};
+  th.onclick=e=>{const b=e.target.closest&&e.target.closest("button[data-t]");if(!b)return;window.setTheme(b.dataset.t);th.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));};
 }
 /* ---------- Cambio username / password ---------- */
 function accountPage(mode){
@@ -1420,7 +1407,7 @@ function accountPage(mode){
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>settingsPage()}});
   const m=$("acm"),btn=$("acs"),say=(t,ok)=>{m.textContent=t;m.classList.toggle("ok",!!ok);};
   btn.onclick=async()=>{
-    tap();
+    
     const cur=$("ac_c").value,nv=$("ac_n").value;
     if(u){if(!nv.trim()){say("Scrivi il nuovo username.");return;}}
     else{if(nv.length<8){say("La nuova password deve avere almeno 8 caratteri.");return;}if(nv!==$("ac_r").value){say("Le due password non coincidono.");return;}}
@@ -1478,8 +1465,8 @@ async function pfPage(){
   box.innerHTML=top.join('')+(rest.length?'<button type="button" class="pfm" data-more="1">Mostra altre ('+rest.length+')</button>':'');
   box.onclick=e=>{
     const mb=e.target.closest&&e.target.closest("[data-more]");
-    if(mb){tap();mb.outerHTML=rest.join('');return;}
-    const b=e.target.closest&&e.target.closest("[data-i]");if(!b)return;tap();
+    if(mb){mb.outerHTML=rest.join('');return;}
+    const b=e.target.closest&&e.target.closest("[data-i]");if(!b)return;
     const x=list[+b.dataset.i],i=L.platforms.findIndex(y=>y&&y.k===x.k);
     if(i>=0)L.platforms.splice(i,1);else L.platforms.push({k:x.k,n:x.n,l:x.l,ids:x.ids});
     lsave();const on=i<0;b.classList.toggle("on",on);b.setAttribute("aria-pressed",on?"true":"false");
@@ -2085,7 +2072,7 @@ function polish(p,r){
   [['.chips>*'],['.why li'],['.pv']].forEach(q=>stage.querySelectorAll(q[0]).forEach((el,i)=>el.style.setProperty('--c',i)));
   stage.querySelectorAll('.poster img').forEach(im=>{const ok=()=>im.classList.add('ld');if(im.complete)ok();else{im.addEventListener('load',ok);im.addEventListener('error',ok);}});
   const pe=stage.querySelector('.poster');
-  if(pe&&!pe.classList.contains('still')){pe.onclick=()=>{tap();openLb(pe);};pe.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openLb(pe);}};}
+  if(pe&&!pe.classList.contains('still')){pe.onclick=()=>{openLb(pe);};pe.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openLb(pe);}};}
   const pl=$('plot'),pm=$('pmore');
   const pc=$('plotcard');
   if(pl&&pm&&pc){
