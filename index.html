@@ -719,11 +719,25 @@ async function searchTitles(q){
   }catch(e){}
   throw err||new Error("ricerca TMDB non disponibile");
 }
+/* Anime che TMDB non ha: li cerco anche su AniList e li aggiungo in fondo (senza doppioni) */
+async function searchAniList(q){
+  const gq="query($s:String){Page(page:1,perPage:8){media(type:ANIME,isAdult:false,search:$s,sort:SEARCH_MATCH){id title{romaji english}startDate{year}genres averageScore duration episodes format coverImage{large}description(asHtml:false)}}}";
+  const r=await fjr("https://graphql.anilist.co",8000,{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify({query:gq,variables:{s:q}})});
+  return ((r&&r.data&&r.data.Page&&r.data.Page.media)||[]).filter(m=>["TV","TV_SHORT","MOVIE","ONA"].indexOf(m.format)>=0).map(m=>{
+    const t=(m.title&&(m.title.english||m.title.romaji))||"Senza titolo",mv=m.format==="MOVIE";
+    return{al:{id:"al"+m.id,src:"anime",movie:mv,title:t,alt:[m.title&&m.title.romaji,m.title&&m.title.english],year:m.startDate&&m.startDate.year||"",genres:m.genres||[],rating:m.averageScore?m.averageScore/10:0,runtime:mv?(m.duration||null):null,episodes:m.episodes||null,image:(m.coverImage&&m.coverImage.large)||null,summary:cleanHtml(m.description)},
+      media_type:mv?"movie":"tv",title:t,name:t,posterUrl:(m.coverImage&&m.coverImage.large)||null,release_date:m.startDate&&m.startDate.year?m.startDate.year+"-01-01":"",first_air_date:m.startDate&&m.startDate.year?m.startDate.year+"-01-01":""};
+  });
+}
+const mergeAl=(main,al)=>{
+  const have={};main.forEach(x=>[x.title,x.name,x.original_title,x.original_name].forEach(t=>{const k=normT(t);if(k)have[k]=1;}));
+  return main.slice(0,16).concat(al.filter(x=>![x.al.title].concat(x.al.alt||[]).some(t=>have[normT(t)])).slice(0,6));
+};
 /* Libreria di locandine (ricerca e filmografia): HTML, precarico e comparsa a cascata */
 const bkCard=(x,i,ok)=>{
   const film=x.media_type==="movie",title=film?x.title:x.name,year=((film?x.release_date:x.first_air_date)||"").slice(0,4);
-  const th=x.poster_path?'<img src="https://image.tmdb.org/t/p/w342'+esc(x.poster_path)+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" class="'+(ok[x.poster_path]?"ld":"")+'" onload="this.classList.add(\'ld\')">':'<span class="nop">'+esc((title||"?").trim().charAt(0).toUpperCase())+'</span>';
-  return '<button type="button" class="bk" data-i="'+i+'"><span class="cv">'+th+'</span><span class="t">'+esc(title||"Senza titolo")+'</span><span class="s">'+(year?year+" · ":"")+(film?"Film":"Serie TV")+'</span></button>';
+  const th=x.posterUrl?'<img src="'+esc(x.posterUrl)+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onload="this.classList.add(\'ld\')">':x.poster_path?'<img src="https://image.tmdb.org/t/p/w342'+esc(x.poster_path)+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" class="'+(ok[x.poster_path]?"ld":"")+'" onload="this.classList.add(\'ld\')">':'<span class="nop">'+esc((title||"?").trim().charAt(0).toUpperCase())+'</span>';
+  return '<button type="button" class="bk" data-i="'+i+'"><span class="cv">'+th+'</span><span class="t">'+esc(title||"Senza titolo")+'</span><span class="s">'+(year?year+" · ":"")+(x.al?(film?"Film anime":"Anime"):(film?"Film":"Serie TV"))+'</span></button>';
 };
 const bkPreload=async list=>{   // max ~1,4 s: la griglia compare già completa
   const ok={};
@@ -741,9 +755,10 @@ async function doSearch(q){
   if(box.querySelector(".bk"))box.classList.add("busy");   // risultati precedenti restano, attenuati: niente sfarfallio a ogni lettera
   else box.innerHTML='<p class="smsg">Cerco...</p>';
   try{
-    const list=await searchTitles(q);
+    const [list0,al]=await Promise.all([searchTitles(q),searchAniList(q).catch(()=>[])]);
     if(my!==SRUN||!$("sres"))return;
-    SLIST=list.slice(0,20);
+    const list=mergeAl(list0,al);
+    SLIST=list.slice(0,22);
     const ok=await bkPreload(SLIST);
     if(my!==SRUN||!$("sres"))return;
     box.classList.remove("busy");
@@ -758,6 +773,17 @@ async function doSearch(q){
 }
 async function openSearched(x,back){
   if(!x)return;
+  if(x.al){
+    const c=x.al,my=++RUN;
+    const quick={d:{movie:c.movie,isTv:!c.movie,title:c.title,year:c.year,runtime:c.runtime,episodes:c.episodes,overview:c.summary||"Trama non disponibile.",it:true,poster:c.image,rl:"AniList",rv:c.rating,glist:itg(c.genres),gt:itg(c.genres).join(" · "),provKnown:false},m:c,s:0};
+    stage.style.pointerEvents="none";stage.style.cursor="progress";
+    let full=null;
+    try{const d=await detailsOf(c);await preImg(d.poster||c.image,2800);full={d:d,m:c,s:0};}catch(e){}
+    stage.style.pointerEvents="";stage.style.cursor="";
+    if(my!==RUN||LB)return;
+    const r2=full||quick;r2.back=back||null;show(r2,false,true,false);
+    return;
+  }
   const film=x.media_type==="movie";
   const c={id:"tm"+(film?"film":"tv")+x.id,tid:x.id,src:"tmdb",movie:film,anim:false,title:(film?x.title:x.name)||"Senza titolo",
     year:((film?x.release_date:x.first_air_date)||"").slice(0,4),genres:[],rating:x.vote_average||0,vc:x.vote_count||0,
@@ -1260,7 +1286,15 @@ async function tmdbDetails(c){
     ytKey:tv?tv.key:"",prov:prov,provKnown:!!wpAll,
     tmdbUrl:"https://www.themoviedb.org/"+(c.movie?"movie":"tv")+"/"+c.tid};
 }
-async function animeNew(a){const kinds=a.fmt==='movie'?['film']:a.fmt==='any'?['film','tv']:['tv'];const r=await Promise.allSettled(kinds.map(k=>tmDiscover(k,a,true,true)));const list=[];r.forEach(x=>{if(x.status==='fulfilled')list.push(...x.value);});if(!list.length&&r.every(x=>x.status==='rejected'))throw new Error('TMDB non raggiungibile');return list;}
+async function animeNew(a){const kinds=a.fmt==='movie'?['film']:a.fmt==='any'?['film','tv']:['tv'];const r=await Promise.allSettled(kinds.map(k=>tmDiscover(k,a,true,true)));const list=[];r.forEach(x=>{if(x.status==='fulfilled')list.push(...x.value);});if(!list.length&&r.every(x=>x.status==='rejected'))throw new Error('TMDB non raggiungibile');
+  // pochi anime da TMDB (es. sport): aggiungo AniList; la trama in italiano arriva comunque da Wikipedia
+  if(list.length<12){try{
+    const bad={horror:"Horror",romance:"Romance",sexual:"Ecchi"},nb=(a.avoid||[]).map(x=>bad[x]).filter(Boolean);
+    const norm=t=>String(t||"").toLowerCase().replace(/[^a-z0-9]+/g,"");
+    const have={};list.forEach(m=>{have[norm(m.title)]=1;});
+    (await animeAniList(a)).forEach(m=>{const k=norm(m.title);if(have[k]||(m.genres||[]).some(g=>nb.indexOf(g)>=0))return;have[k]=1;list.push(m);});
+  }catch(e){}}
+  return list;}
 // TMDB è l'unica fonte: le altre (Wikidata, TVmaze, AniList, Jikan) servono solo se TMDB non risponde proprio
 async function viaTmdb(fn,fallback,a){
   if(!tmdbOn())return fallback();
@@ -1271,7 +1305,23 @@ async function viaTmdb(fn,fallback,a){
   throw new Error("EMPTY");                                          // TMDB vivo ma senza risultati: niente altre fonti
 }
 const isFilmItem=m=>m.sl!=null||(m.src==="tmdb"&&m.movie);
-const detailsOf=c=>c.src==="tmdb"?tmdbDetails(c):c.sl!=null?filmDetails(c):c.src==="tv"?tvDetails(c):animeDetails(c);
+// anime da AniList/Jikan: li cerco su TMDB per titolo e uso la sua scheda (stessa grafica: dove guardarlo, cast, trailer); se non c'è, scheda semplice
+async function animeViaTmdb(c){
+  if(!tmdbOn())return null;
+  try{
+    const mv=!!c.movie,y=+c.year||0,ti=x=>mv?x.title:x.name,oti=x=>mv?x.original_title:x.original_name;
+    const yr=x=>+(((mv?x.release_date:x.first_air_date)||"").slice(0,4))||0;
+    const r=await tm("/3/search/"+(mv?"movie":"tv"),{query:c.title,page:1});
+    const ok=(r.results||[]).filter(x=>x.original_language==="ja"||(x.genre_ids||[]).indexOf(16)>=0);
+    const near=x=>!y||!yr(x)||Math.abs(yr(x)-y)<=1;
+    const best=ok.find(x=>(sameTitle(ti(x),c.title)||sameTitle(oti(x),c.title))&&near(x))||(y?ok.find(x=>yr(x)&&Math.abs(yr(x)-y)<=1):null);
+    if(!best)return null;
+    const d=await tmdbDetails({movie:mv,tid:best.id,title:ti(best)||c.title,year:String(yr(best)||c.year||""),image:best.poster_path?TMDB_IMG+best.poster_path:c.image,summary:best.overview||c.summary,rating:best.vote_average||c.rating,vc:best.vote_count||0});
+    d.cast="";d.castList=[];   // per gli anime da AniList il cast non si mostra
+    return d;
+  }catch(e){return null;}
+}
+const detailsOf=c=>c.src==="tmdb"?tmdbDetails(c):c.sl!=null?filmDetails(c):c.src==="tv"?tvDetails(c):c.src==="anime"?animeViaTmdb(c).then(d=>d||animeDetails(c)):animeDetails(c);
 async function cartoniOld(a){const r=await Promise.allSettled([a.fmt==="tv"?Promise.resolve([]):filmDiscover(a,true),a.fmt==="movie"?Promise.resolve([]):tvDiscover(a,true)]);const list=[];let err=null;r.forEach(x=>{if(x.status==="fulfilled")list.push(...x.value);else err=err||x.reason;});if(!list.length&&err)throw err;return list;}
 async function cartoniNew(a){const r=await Promise.allSettled([a.fmt==="tv"?Promise.resolve([]):tmDiscover("film",a,true),a.fmt==="movie"?Promise.resolve([]):tmDiscover("tv",a,true)]);const list=[];r.forEach(x=>{if(x.status==="fulfilled")list.push(...x.value);});if(!list.length&&r.every(x=>x.status==="rejected"))throw new Error("TMDB non raggiungibile");return list;}
 const SRC={
