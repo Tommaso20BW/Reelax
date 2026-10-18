@@ -455,20 +455,25 @@ body.pre #app{opacity:0}
 .sw i{position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;background:var(--fg);transition:transform .2s var(--ease),background .2s}
 .sw.on{background:var(--grad);border-color:transparent}
 .sw.on i{transform:translateX(18px);background:#fff}
-.pfg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px 10px;align-items:start}
-.pfg .lemp{grid-column:1/-1}
-.pft{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;transition:transform .1s}
-.pft:active{transform:scale(.94)}
-.pfl{position:relative;display:grid;place-items:center;width:100%;aspect-ratio:1;border-radius:16px;overflow:hidden;border:2px solid var(--line);background:var(--s3);transition:border-color .15s,box-shadow .15s}
-.pfl img{width:100%;height:100%;object-fit:cover}
-.pfl b{font:800 1.1rem var(--fd);color:var(--mut)}
-.pft.on .pfl{border-color:var(--red);box-shadow:0 0 0 1px var(--red)}
-.pfc{position:absolute;right:4px;top:4px;width:22px;height:22px;border-radius:50%;background:var(--red);color:#fff;display:none;place-items:center}
-.pfc svg{width:14px;height:14px;stroke-width:3}
-.pft.on .pfc{display:grid}
-.pfn{font-size:.72rem;font-weight:600;color:var(--mut);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pft.on .pfn{color:var(--fg)}
-@media (min-width:560px){.pfg{grid-template-columns:repeat(6,minmax(0,1fr))}}
+.pfg{display:flex;flex-direction:column;gap:8px}
+.pfg .lemp{padding:36px 0}
+.pfr{display:flex;align-items:center;gap:12px;width:100%;min-height:54px;padding:8px 14px 8px 8px;text-align:left;border-radius:var(--r2);border:1px solid var(--line);background:linear-gradient(160deg,var(--s2),var(--s1));transition:border-color .15s,transform .1s}
+.pfr:active{transform:scale(.99)}
+.pfi{display:grid;place-items:center;flex:none;width:38px;height:38px;border-radius:11px;overflow:hidden;border:1px solid var(--line);background:var(--s3)}
+.pfi img{width:100%;height:100%;object-fit:cover}
+.pfi b{font:800 .9rem var(--fd);color:var(--mut)}
+.pfn{flex:1;min-width:0;font-size:1rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pfk{flex:none;display:grid;place-items:center;width:24px;height:24px;border-radius:50%;border:2px solid var(--line2);color:#fff;transition:background .15s,border-color .15s}
+.pfk svg{width:14px;height:14px;stroke-width:3;opacity:0}
+.pfr.on{border-color:var(--red)}
+.pfr.on .pfk{background:var(--red);border-color:var(--red)}
+.pfr.on .pfk svg{opacity:1}
+@media (hover:hover){.pfr:hover{border-color:var(--line2)}.pfr.on:hover{border-color:var(--red)}}
+/* impostazioni: sezioni con titolo, righe raggruppate */
+.sgrp{display:flex;flex-direction:column;overflow:hidden;border-radius:var(--r2);border:1px solid var(--line);background:linear-gradient(160deg,var(--s2),var(--s1))}
+.sgrp .srow{border:0;border-radius:0;background:none;min-height:56px}
+.sgrp .srow+.srow{border-top:1px solid var(--line)}
+.sgrp .srow:active{transform:none;background:var(--soft2)}
 .srow.out{margin-top:auto;color:var(--red)}
 .srow.out svg{color:var(--red)}
 .srow.out.ask{border-color:var(--red)}
@@ -1288,23 +1293,22 @@ const pfOn=()=>{try{return localStorage.getItem(PFKEY)==="1";}catch(e){return fa
 const pfSet=v=>{try{localStorage.setItem(PFKEY,v?"1":"0");}catch(e){}};
 const pfSel=()=>L.platforms.filter(x=>x&&typeof x==="object"&&Array.isArray(x.ids));
 const pfIds=()=>pfOn()?[].concat(...pfSel().map(x=>x.ids)):[];
-function settingsRows(){
+function pfGroup(){
   const on=pfOn(),n=pfSel().length;
-  return '<button type="button" class="srow" data-act="recent">'+IC.clock+'<span class="sl">Trovati di recente</span><span class="sn">'+RECENT.length+'</span>'+IC.chev+'</button>'+
-    '<button type="button" class="srow" data-act="pfsw" role="switch" aria-checked="'+on+'">'+IC.tv+'<span class="sl">Filtra per piattaforme</span><span class="sw'+(on?' on':'')+'"><i></i></span></button>'+
-    (on?'<button type="button" class="srow" data-act="pfpick">'+IC.grid+'<span class="sl">Le mie piattaforme</span><span class="sn">'+(n?n:'Scegli')+'</span>'+IC.chev+'</button>':'')+
-    '<button type="button" class="srow" data-act="acuser">'+IC.user+'<span class="sl">Cambia username</span>'+IC.chev+'</button>'+
-    '<button type="button" class="srow" data-act="acpass">'+IC.lock+'<span class="sl">Cambia password</span>'+IC.chev+'</button>';
+  return '<button type="button" class="srow" data-act="pfsw" role="switch" aria-checked="'+on+'">'+IC.tv+'<span class="sl">Filtra per piattaforme</span><span class="sw'+(on?' on':'')+'"><i></i></span></button>'+
+    (on?'<button type="button" class="srow" data-act="pfpick">'+IC.grid+'<span class="sl">Le mie piattaforme</span><span class="sn">'+(n?n:'Scegli')+'</span>'+IC.chev+'</button>':'');
 }
 function settingsPage(){
   RUN++;SRUN++;setBd(null);
-  swap('<div class="page"><h1>Impostazioni</h1><div class="srows" id="srows">'+settingsRows()+'</div>'+
-    '<div class="sblock"><div class="sh">Tema</div><div class="seg" id="thseg">'+
-      [["auto","Auto"],["light","Chiaro"],["dark","Scuro"]].map(x=>'<button type="button" data-t="'+x[0]+'">'+x[1]+'</button>').join('')+
-    '</div></div>'+
+  const sec=(t,h)=>'<div class="sblock"><div class="sh">'+t+'</div>'+h+'</div>';
+  swap('<div class="page"><h1>Impostazioni</h1>'+
+    sec('Ricerca','<div class="sgrp" id="sg_pf">'+pfGroup()+'</div>')+
+    sec('Cronologia','<div class="sgrp"><button type="button" class="srow" data-act="recent">'+IC.clock+'<span class="sl">Trovati di recente</span><span class="sn">'+RECENT.length+'</span>'+IC.chev+'</button></div>')+
+    sec('Aspetto','<div class="seg" id="thseg">'+[["auto","Auto"],["light","Chiaro"],["dark","Scuro"]].map(x=>'<button type="button" data-t="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>')+
+    sec('Account','<div class="sgrp"><button type="button" class="srow" data-act="acuser">'+IC.user+'<span class="sl">Cambia username</span>'+IC.chev+'</button><button type="button" class="srow" data-act="acpass">'+IC.lock+'<span class="sl">Cambia password</span>'+IC.chev+'</button></div>')+
     '<button type="button" class="srow out" data-act="logout">'+IC.out+'<span class="sl">Esci</span></button></div>',true);
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>home(),recent:()=>recentPage(),logout:confirmLogout,
-    pfsw:()=>{const v=!pfOn();pfSet(v);const box=$("srows");if(box)box.innerHTML=settingsRows();if(v&&!pfSel().length)pfPage();},
+    pfsw:()=>{const v=!pfOn();pfSet(v);const box=$("sg_pf");if(box)box.innerHTML=pfGroup();if(v&&!pfSel().length)pfPage();},
     pfpick:()=>pfPage(),acuser:()=>accountPage("user"),acpass:()=>accountPage("pass")}});
   const th=$("thseg"),pr=window.themePref();
   th.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.t===pr));
@@ -1368,11 +1372,11 @@ async function pfPage(){
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>settingsPage()}});
   const box=$("pfg");
   let list=[];
-  try{list=await pfLoad();}catch(e){}
+  try{list=(await pfLoad()).slice().sort((x,y)=>x.n.localeCompare(y.n,"it",{sensitivity:"base"}));}catch(e){}
   if(!box||!box.isConnected)return;
   if(!list.length){box.innerHTML='<div class="lemp">'+IC.tv+'<span>Non riesco a caricare l\'elenco</span></div>';return;}
   const isOn=k=>pfSel().some(x=>x.k===k);
-  box.innerHTML=list.map((x,i)=>'<button type="button" class="pft'+(isOn(x.k)?' on':'')+'" data-i="'+i+'" aria-pressed="'+isOn(x.k)+'"><span class="pfl">'+(x.l?'<img src="https://image.tmdb.org/t/p/w92'+esc(x.l)+'" alt="" loading="lazy" referrerpolicy="no-referrer">':'<b>'+esc(x.n.slice(0,2))+'</b>')+'<i class="pfc">'+IC.check+'</i></span><span class="pfn">'+esc(x.n)+'</span></button>').join('');
+  box.innerHTML=list.map((x,i)=>'<button type="button" class="pfr'+(isOn(x.k)?' on':'')+'" data-i="'+i+'" aria-pressed="'+isOn(x.k)+'"><span class="pfi">'+(x.l?'<img src="https://image.tmdb.org/t/p/w92'+esc(x.l)+'" alt="" loading="lazy" referrerpolicy="no-referrer">':'<b>'+esc(x.n.slice(0,2))+'</b>')+'</span><span class="pfn">'+esc(x.n)+'</span><span class="pfk">'+IC.check+'</span></button>').join('');
   box.onclick=e=>{
     const b=e.target.closest&&e.target.closest("[data-i]");if(!b)return;tap();
     const x=list[+b.dataset.i],i=L.platforms.findIndex(y=>y&&y.k===x.k);
