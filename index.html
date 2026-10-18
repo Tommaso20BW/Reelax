@@ -315,9 +315,9 @@ body.pre #app{opacity:0}
 @keyframes chipIn{from{opacity:0;transform:translate3d(0,8px,0)}}
 @keyframes sel{0%{box-shadow:0 0 0 0 rgba(255,61,82,.55)}100%{box-shadow:0 0 0 16px rgba(255,61,82,0)}}
 .opt.hit{animation:sel .5s ease-out}
-.in .res>*{animation:up .6s var(--ease) backwards;animation-delay:calc(var(--k,0)*70ms + 40ms)}
+.in .res>*{animation:chipIn .8s var(--ease) backwards;animation-delay:calc(var(--k,0)*70ms + 40ms)}
 .in .chip{animation:chipIn .8s var(--ease) backwards;animation-delay:calc(.3s + var(--c,0)*60ms)}
-.in .why li{animation:up .5s var(--ease) backwards;animation-delay:calc(.45s + var(--c,0)*100ms)}
+.in .why li{animation:chipIn .8s var(--ease) backwards;animation-delay:calc(.4s + var(--c,0)*90ms)}
 .in .pv{animation:chipIn .8s var(--ease) backwards;animation-delay:calc(.3s + var(--c,0)*45ms)}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-delay:0s!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
 
@@ -389,7 +389,8 @@ body.pre #app{opacity:0}
 .res .sres.lib{margin-bottom:6px}
 .bk .s{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
 @media (min-width:900px) and (min-height:560px){.res .sres.lib{grid-template-columns:repeat(4,minmax(0,1fr));gap:22px 16px}}
-.in .res>a.btn{animation:chipIn .85s var(--ease) backwards;animation-delay:.42s}
+.poster.still{cursor:default}
+.poster.still:hover,.poster.still:active{transform:none}
 </style>
 </head>
 <body class="pre">
@@ -709,7 +710,7 @@ const bkPreload=async list=>{   // max ~1,4 s: la griglia compare già completa
   ]);
   return ok;
 };
-const bkReveal=(box,delay)=>{if(RM())return;box.querySelectorAll(".bk").forEach((el,i)=>{if(el.animate)el.animate([{opacity:0,transform:"translate3d(0,18px,0) scale(.98)"},{opacity:1,transform:"none"}],{duration:600,delay:(delay||0)+Math.min(i,11)*45,easing:"cubic-bezier(.2,.85,.25,1)",fill:"backwards"});});};
+const bkReveal=(box,delay)=>{if(RM())return;box.querySelectorAll(".bk").forEach((el,i)=>{if(el.animate)el.animate([{opacity:0,transform:"translate3d(0,8px,0)"},{opacity:1,transform:"none"}],{duration:800,delay:(delay||0)+Math.min(i,11)*45,easing:"cubic-bezier(.2,.85,.25,1)",fill:"backwards"});});};
 async function doSearch(q){
   const my=++SRUN,box=$("sres");
   if(!box)return;
@@ -788,7 +789,7 @@ async function personPage(p,backFn){
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>{RUN++;backFn();}}});
   stage.classList.remove("q");
   // 1) scheda subito: foto (come la locandina), nome e spazio per i chip. Entra con lo stesso movimento del risultato.
-  const poster=p.img?'<div class="poster" role="button" tabindex="0" aria-label="Ingrandisci la foto"><img src="'+PIMG+esc(p.img)+'" alt="Foto di '+esc(p.name)+'" referrerpolicy="no-referrer"></div>':fbPoster(p.name,"");
+  const poster=p.img?'<div class="poster still"><img src="'+PIMG+esc(p.img)+'" alt="Foto di '+esc(p.name)+'" referrerpolicy="no-referrer"></div>':fbPoster(p.name,"").replace(' role="button" tabindex="0" aria-label="Ingrandisci"',"").replace('class="poster fb"','class="poster fb still"');
   swap('<div class="res"><div class="hero">'+poster+'<h2>'+esc(p.name)+'</h2><div class="chips" id="pchips"></div></div></div>');
   const res=stage.querySelector(".res");
   polish(0);   // foto cliccabile (stesso lightbox) e caricamento immagine
@@ -1486,7 +1487,7 @@ function polish(p,r){
   [['.chips>*'],['.why li'],['.pv']].forEach(q=>stage.querySelectorAll(q[0]).forEach((el,i)=>el.style.setProperty('--c',i)));
   stage.querySelectorAll('.poster img').forEach(im=>{const ok=()=>im.classList.add('ld');if(im.complete)ok();else{im.addEventListener('load',ok);im.addEventListener('error',ok);}});
   const pe=stage.querySelector('.poster');
-  if(pe){pe.onclick=()=>{tap();openLb(pe);};pe.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openLb(pe);}};}
+  if(pe&&!pe.classList.contains('still')){pe.onclick=()=>{tap();openLb(pe);};pe.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openLb(pe);}};}
   const pl=$('plot'),pm=$('pmore');
   const pc=$('plotcard');
   if(pl&&pm&&pc){
