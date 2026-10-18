@@ -448,6 +448,9 @@ body.pre #app{opacity:0}
 .srow:active{transform:scale(.985)}
 .srow svg{width:20px;height:20px;flex:none;color:var(--mut)}
 .srow .sl{flex:1;min-width:0}
+.acf{display:flex;flex-direction:column;gap:12px}
+.acm{min-height:1.3em;margin:0;font-size:.9rem;font-weight:600;color:var(--red)}
+.acm.ok{color:#2fb859}
 .sw{position:relative;flex:none;width:46px;height:28px;border-radius:999px;background:var(--s3);border:1px solid var(--line2);transition:background .2s,border-color .2s}
 .sw i{position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;background:var(--fg);transition:transform .2s var(--ease),background .2s}
 .sw.on{background:var(--grad);border-color:transparent}
@@ -567,6 +570,8 @@ const IC={
   plus:sv('<path d="M12 5v14M5 12h14"/>'),
   gear:sv('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/>'),
   chev:sv('<path d="M9 5l7 7-7 7"/>'),
+  user:sv('<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/>'),
+  lock:sv('<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/>'),
   tv:sv('<rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8M12 17v4"/>'),
   grid:sv('<rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/>'),
   clock:sv('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
@@ -1207,8 +1212,8 @@ const tm=(path,params)=>fjr(TMDB_PROXY.replace(/\/+$/,"")+path+"?"+new URLSearch
   LASTERR=(e&&(e.name==="AbortError"?"timeout":e.message))||"errore";throw e;});
 /* ---------- Liste personali: già visto / da vedere (locale + sincronizzate dal Worker) ---------- */
 const LKEY="reelax_lists",LDIRTY="reelax_lists_dirty",LCAP={seen:2000,watch:500};
-let L={watch:[],seen:[],platforms:[]},LTAB="watch";
-try{const j=JSON.parse(localStorage.getItem(LKEY)||"null");if(j){L.watch=Array.isArray(j.watch)?j.watch:[];L.seen=Array.isArray(j.seen)?j.seen:[];L.platforms=Array.isArray(j.platforms)?j.platforms:[];}}catch(e){}
+let L={watch:[],seen:[],platforms:[],recent:[]},LTAB="watch";
+try{const j=JSON.parse(localStorage.getItem(LKEY)||"null");if(j){L.watch=Array.isArray(j.watch)?j.watch:[];L.seen=Array.isArray(j.seen)?j.seen:[];L.platforms=Array.isArray(j.platforms)?j.platforms:[];L.recent=Array.isArray(j.recent)?j.recent:[];}}catch(e){}
 const PX=()=>TMDB_PROXY.replace(/\/+$/,"");
 const AUTHH=()=>({Authorization:"Bearer "+getTok(),"Content-Type":"application/json"});
 let pushT=null;
@@ -1229,7 +1234,10 @@ async function syncPull(){
     if(r.status===401){doLogout();return;}
     if(!r.ok)return;
     const j=await r.json();
-    L={watch:Array.isArray(j.watch)?j.watch:[],seen:Array.isArray(j.seen)?j.seen:[],platforms:Array.isArray(j.platforms)?j.platforms:[]};
+    const keep=RECENT;
+    L={watch:Array.isArray(j.watch)?j.watch:[],seen:Array.isArray(j.seen)?j.seen:[],platforms:Array.isArray(j.platforms)?j.platforms:[],recent:Array.isArray(j.recent)?j.recent:[]};
+    RECENT=L.recent;
+    if(!RECENT.length&&keep.length){RECENT=L.recent=keep;lsave();}   // il server non ha ancora la lista: invio quella di questo dispositivo
     try{localStorage.setItem(LKEY,JSON.stringify(L));}catch(e){}
   }catch(e){}
 }
@@ -1256,12 +1264,13 @@ async function openItem(it,back){
 }
 /* ---------- Trovati di recente (solo su questo dispositivo) ---------- */
 const RKEY="reelax_recent",RCAP=60;
-let RECENT=[];try{const j=JSON.parse(localStorage.getItem(RKEY)||"[]");if(Array.isArray(j))RECENT=j;}catch(e){}
+let RECENT=L.recent;
+if(!RECENT.length){try{const j=JSON.parse(localStorage.getItem(RKEY)||"[]");if(Array.isArray(j)&&j.length)RECENT=L.recent=j;}catch(e){}}   // dalla vecchia versione solo-locale
 function addRecent(r){
   try{
     const it=itemOf(r);if(!it||!it.t)return;
     RECENT=RECENT.filter(x=>x.k!==it.k);RECENT.unshift(it);if(RECENT.length>RCAP)RECENT.length=RCAP;
-    localStorage.setItem(RKEY,JSON.stringify(RECENT));
+    L.recent=RECENT;lsave();
   }catch(e){}
 }
 function recentPage(){
@@ -1286,7 +1295,9 @@ function settingsRows(){
   const on=pfOn(),n=pfSel().length;
   return '<button type="button" class="srow" data-act="recent">'+IC.clock+'<span class="sl">Trovati di recente</span><span class="sn">'+RECENT.length+'</span>'+IC.chev+'</button>'+
     '<button type="button" class="srow" data-act="pfsw" role="switch" aria-checked="'+on+'">'+IC.tv+'<span class="sl">Filtra per piattaforme</span><span class="sw'+(on?' on':'')+'"><i></i></span></button>'+
-    (on?'<button type="button" class="srow" data-act="pfpick">'+IC.grid+'<span class="sl">Le mie piattaforme</span><span class="sn">'+(n?n:'Scegli')+'</span>'+IC.chev+'</button>':'');
+    (on?'<button type="button" class="srow" data-act="pfpick">'+IC.grid+'<span class="sl">Le mie piattaforme</span><span class="sn">'+(n?n:'Scegli')+'</span>'+IC.chev+'</button>':'')+
+    '<button type="button" class="srow" data-act="acuser">'+IC.user+'<span class="sl">Cambia username</span>'+IC.chev+'</button>'+
+    '<button type="button" class="srow" data-act="acpass">'+IC.lock+'<span class="sl">Cambia password</span>'+IC.chev+'</button>';
 }
 function settingsPage(){
   RUN++;SRUN++;setBd(null);
@@ -1297,10 +1308,43 @@ function settingsPage(){
     '<button type="button" class="srow out" data-act="logout">'+IC.out+'<span class="sl">Esci</span></button></div>',true);
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>home(),recent:()=>recentPage(),logout:confirmLogout,
     pfsw:()=>{const v=!pfOn();pfSet(v);const box=$("srows");if(box)box.innerHTML=settingsRows();if(v&&!pfSel().length)pfPage();},
-    pfpick:()=>pfPage()}});
+    pfpick:()=>pfPage(),acuser:()=>accountPage("user"),acpass:()=>accountPage("pass")}});
   const th=$("thseg"),pr=window.themePref();
   th.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.t===pr));
   th.onclick=e=>{const b=e.target.closest&&e.target.closest("button[data-t]");if(!b)return;tap();window.setTheme(b.dataset.t);th.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));};
+}
+/* ---------- Cambio username / password ---------- */
+function accountPage(mode){
+  RUN++;SRUN++;setBd(null);
+  const u=mode==="user";
+  const f=(id,ph,type,ac)=>'<input class="lgi sin" id="'+id+'" type="'+type+'" placeholder="'+ph+'" autocomplete="'+ac+'" autocapitalize="none" autocorrect="off" spellcheck="false" aria-label="'+ph+'">';
+  swap('<div class="page"><h1>'+(u?'Cambia username':'Cambia password')+'</h1><div class="acf">'+
+    (u?f('ac_n','Nuovo username','text','username'):f('ac_n','Nuova password (almeno 8 caratteri)','password','new-password')+f('ac_r','Ripeti la nuova password','password','new-password'))+
+    f('ac_c','Password attuale','password','current-password')+
+    '<p class="acm" id="acm" role="alert"></p>'+
+    '<button type="button" class="btn primary" id="acs" style="flex:none;width:100%">Salva</button></div></div>',true);
+  ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>settingsPage()}});
+  const m=$("acm"),btn=$("acs"),say=(t,ok)=>{m.textContent=t;m.classList.toggle("ok",!!ok);};
+  btn.onclick=async()=>{
+    tap();
+    const cur=$("ac_c").value,nv=$("ac_n").value;
+    if(u){if(!nv.trim()){say("Scrivi il nuovo username.");return;}}
+    else{if(nv.length<8){say("La nuova password deve avere almeno 8 caratteri.");return;}if(nv!==$("ac_r").value){say("Le due password non coincidono.");return;}}
+    if(!cur){say("Inserisci la password attuale.");return;}
+    btn.disabled=true;say("");
+    try{
+      const r=await fetch(PX()+"/auth/change",{method:"POST",headers:AUTHH(),body:JSON.stringify(u?{current:cur,newUsername:nv}:{current:cur,newPassword:nv})});
+      const j=await r.json().catch(()=>({}));
+      if(r.ok&&j.token){
+        try{localStorage.setItem(AUTH_KEY,j.token);}catch(e){}
+        say(u?"Username cambiato.":"Password cambiata. Sugli altri dispositivi dovrai rifare l'accesso.",true);
+        setTimeout(()=>{if(m.isConnected)settingsPage();},1400);return;
+      }
+      if(r.status===401){doLogout();return;}
+      say(r.status===404||r.status===405?"Il server non supporta ancora questa funzione: aggiorna il Worker.":(j.error||"Non riesco a salvare adesso. Riprova."));
+    }catch(e){say("Impossibile contattare il server. Controlla la connessione.");}
+    btn.disabled=false;
+  };
 }
 let PFLIST=null;
 async function pfLoad(){
