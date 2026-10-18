@@ -739,18 +739,7 @@ document.addEventListener("click",e=>{
   if(!b||b.disabled)return;
   const f=ACT[b.dataset.act];if(f){tap();const an=b.dataset.act;NAV=0;const onHome=!!stage.querySelector(".opts");if(an==="settings"&&onHome)NAV=-1;else if(an==="search"&&onHome)NAV=1;else if(an==="back"){if(stage.querySelector(".srow.out"))NAV=1;else if($("sq"))NAV=-1;}clearTimeout(NAVT);NAVT=setTimeout(()=>{NAV=0;},700);try{f();}catch(x){}}
 });
-const HKEY="reelax_hap";
-const hapOn=()=>{try{return localStorage.getItem(HKEY)!=="0";}catch(e){return true;}};
-const hapSet=v=>{try{localStorage.setItem(HKEY,v?"1":"0");}catch(e){}};
-let HAP=null;
-function hapIOS(){   // iPhone: niente navigator.vibrate, ma un interruttore "switch" nativo (iOS 17.4+) fa il tocco aptico
-  try{
-    if(!HAP){const l=document.createElement("label");l.setAttribute("aria-hidden","true");l.style.cssText="position:fixed;left:-60px;top:-60px;width:2px;height:2px;opacity:.01;pointer-events:none";
-      const i=document.createElement("input");i.type="checkbox";i.setAttribute("switch","");i.tabIndex=-1;l.appendChild(i);document.body.appendChild(l);HAP=l;}
-    HAP.click();
-  }catch(e){}
-}
-const tap=()=>{if(!hapOn())return;try{if(navigator.vibrate){navigator.vibrate(8);return;}}catch(e){}hapIOS();};
+const tap=()=>{};   // vibrazione al tocco rimossa
 function setBd(u){   // cambio sfondo morbido: se ce n'è già uno si dissolve prima di mostrare il nuovo (niente scatto)
   const b=$("bd"),i=b.firstElementChild;clearTimeout(b._t);
   const put=()=>{i.style.backgroundImage='url("'+u.replace(/"/g,"%22")+'")';i._u=u;b.classList.add("on");};
@@ -1392,12 +1381,10 @@ function settingsPage(){
   swap('<div class="page"><h1>Impostazioni</h1>'+
     sec('Ricerca','<div class="sgrp" id="sg_pf">'+pfGroup()+'</div>')+
     sec('Cronologia','<div class="sgrp"><button type="button" class="srow" data-act="recent">'+IC.clock+'<span class="sl">Trovati di recente</span><span class="sn">'+RECENT.length+'</span>'+IC.chev+'</button></div>')+
-    sec('Aspetto','<div class="seg" id="thseg">'+[["auto","Auto"],["light","Chiaro"],["dark","Scuro"]].map(x=>'<button type="button" data-t="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>'+
-      '<button type="button" class="srow" data-act="hap" role="switch" aria-checked="'+hapOn()+'" style="margin-top:8px">'+IC.phone+'<span class="sl">Vibrazione al tocco</span><span class="sw'+(hapOn()?' on':'')+'"><i></i></span></button>')+
+    sec('Aspetto','<div class="seg" id="thseg">'+[["auto","Auto"],["light","Chiaro"],["dark","Scuro"]].map(x=>'<button type="button" data-t="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>')+
     sec('Account','<div class="sgrp"><button type="button" class="srow" data-act="acuser">'+IC.user+'<span class="sl">Cambia username</span>'+IC.chev+'</button><button type="button" class="srow" data-act="acpass">'+IC.lock+'<span class="sl">Cambia password</span>'+IC.chev+'</button><button type="button" class="srow" data-act="acall">'+IC.devs+'<span class="sl">Esci da tutti i dispositivi</span></button></div>')+
     '<button type="button" class="srow out" data-act="logout">'+IC.out+'<span class="sl">Esci</span></button></div>',true);
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>home(),recent:()=>recentPage(),logout:confirmLogout,acall:revokeAll,
-    hap:()=>{const v=!hapOn();hapSet(v);const b=document.querySelector('[data-act="hap"]');if(b){b.setAttribute("aria-checked",v?"true":"false");const s=b.querySelector(".sw");if(s)s.classList.toggle("on",v);}if(v)tap();},
     pfsw:()=>{const v=!pfOn();pfSet(v);const box=$("sg_pf");if(box)box.innerHTML=pfGroup();if(v&&!pfSel().length)pfPage();},
     pfpick:()=>pfPage(),acuser:()=>accountPage("user"),acpass:()=>accountPage("pass")}});
   const th=$("thseg"),pr=window.themePref();
