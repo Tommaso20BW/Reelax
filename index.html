@@ -398,7 +398,6 @@ body.pre #app{opacity:0}
 .opts.av .opt .em{transition:opacity .2s,filter .2s}
 .opts.av .opt.on{border-color:var(--red);background:linear-gradient(135deg,rgba(255,61,82,.3),rgba(255,61,82,.12));box-shadow:0 0 0 1px var(--red) inset}
 .opts.av .opt.on .em{opacity:.45;filter:grayscale(1)}
-.opts.av .opt.on::after{content:"✕";position:absolute;top:10px;right:12px;font:800 .8rem var(--fb);color:var(--red)}
 @media (max-width:899px){.opts.av .opt:last-child:nth-child(odd){grid-column:1/-1}}
 @media (max-width:899px) and (max-height:740px){.opts.g2.av{grid-auto-rows:minmax(78px,1fr);gap:10px}.opts.g2.av .opt{padding:8px 8px}.opts.g2.av .opt .em{font-size:1.9rem}.opts.g2.av .opt .t{font-size:.98rem}}
 @media (min-width:900px) and (min-height:560px){.page .sub{text-align:center;margin:-22px 0 0}.opts.g2.av{grid-template-columns:repeat(4,1fr)}}
@@ -510,7 +509,7 @@ const timeOpts=()=>(S.cat==="film"||S.fmt==="movie")?TIME_FILM:S.cat==="anime"?T
 const ERA=[["new","🆕","Novità","Usciti dal 2020 a oggi"],["mid","📼","Recenti","Anni 2000 e 2010"],["old","🎞️","Classici","Prima del 2000"],["any","🔥","Non importa","Qualsiasi epoca"]];
 const ERA_R={new:[2020,9999],mid:[2000,2019],old:[0,1999],any:[0,9999]};
 const eraOk=(y,a)=>{if(!a.era||a.era==="any"||!y)return true;const r=ERA_R[a.era];return +y>=r[0]&&+y<=r[1];};
-const AVOID=[["horror","😱","Horror e paura"],["gore","🩸","Violenza e gore"],["romance","💔","Storie d'amore"],["war","🪖","Guerra"],["sexual","🔞","Scene spinte"],["musical","🎭","Musical"],["kids","🧸","Roba da bambini"]];
+const AVOID=[["horror","😱","Horror e paura"],["gore","🩸","Violenza"],["romance","💔","Storie d'amore"],["war","🪖","Guerra"],["sexual","🔞","Scene spinte"],["musical","🎭","Musical"],["kids","🧸","Roba da bambini"]];
 const avoidOpts=()=>AVOID.filter(o=>!((o[0]==="horror"&&S.mood==="scare")||(o[0]==="romance"&&S.mood==="love")||(o[0]==="kids"&&S.cat==="cartoni")));
 const avoidNow=()=>{const ok=avoidOpts().map(o=>o[0]);return S.avoid.filter(x=>ok.indexOf(x)>=0);};
 const avLabel=()=>{const n=avoidNow().length;return n?"Cerca ("+n+")":"Niente da evitare";};
