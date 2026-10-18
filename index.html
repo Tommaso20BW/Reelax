@@ -400,6 +400,7 @@ body.pre #app{opacity:0}
 .opts.av .opt.on .em{opacity:.45;filter:grayscale(1)}
 .opts.av .opt.on::after{content:"✕";position:absolute;top:10px;right:12px;font:800 .8rem var(--fb);color:var(--red)}
 @media (max-width:899px){.opts.av .opt:last-child:nth-child(odd){grid-column:1/-1}}
+@media (max-width:899px) and (max-height:740px){.opts.g2.av{grid-auto-rows:minmax(78px,1fr);gap:10px}.opts.g2.av .opt{padding:8px 8px}.opts.g2.av .opt .em{font-size:1.9rem}.opts.g2.av .opt .t{font-size:.98rem}}
 @media (min-width:900px) and (min-height:560px){.page .sub{text-align:center;margin:-22px 0 0}.opts.g2.av{grid-template-columns:repeat(4,1fr)}}
 </style>
 </head>
@@ -665,6 +666,7 @@ function home(anim){
       const bt=document.querySelector('#dockin [data-act="go"]');if(bt)bt.textContent=avLabel();
       return;
     }
+    S.style="";
     if(g==="cat"&&S.cat!==v){S.time="";S.fmt="";}
     S[g]=v;mark(b);b.classList.add('hit');
     if(g==="cat"&&(v==="anime"||v==="cartoni")){      // formato scelto sulla stessa schermata
@@ -993,7 +995,7 @@ async function enrich(title,kind){const ok=r=>r&&r.extract&&r.type!=='disambigua
 async function sparql(q){const d=await fj("https://query.wikidata.org/sparql?format=json&query="+encodeURIComponent(q),30000);return(d.results&&d.results.bindings)||[];}
 async function wdFilms(a,strict,anim){let genres=(G.film.mood[a.mood]||["drama film"]).filter(x=>x!=="animated film");if(!anim&&!genres.length)genres=["drama film","comedy film"];const useMood=anim?(strict&&genres.length>0):true;const minL=Math.max(2,Math.round((a.risk<30?40:a.risk<60?18:a.risk<80?8:3)/(strict?1:3)/(anim?2:1)));const AN='?film wdt:P136 ?ga. ?ga rdfs:label "animated film"@en. ';const q="SELECT ?film ?filmLabel ?sl ?d ?rt ?img WHERE{"+(useMood?"VALUES ?gl{"+VALS(genres)+"} ?g rdfs:label ?gl. ?film wdt:P136 ?g. ":"")+"?film wdt:P31 wd:Q11424; wikibase:sitelinks ?sl. FILTER(?sl>="+minL+") "+(anim?AN+"FILTER NOT EXISTS{?film wdt:P495 wd:Q17} ":"FILTER NOT EXISTS{"+AN+"} ")+"OPTIONAL{?film wdt:P577 ?d} OPTIONAL{?film wdt:P2047 ?rt} OPTIONAL{?film wdt:P18 ?img} SERVICE wikibase:label{bd:serviceParam wikibase:language \"it,en\"}} LIMIT 200";const seen={},out=[];(await sparql(q)).forEach(b=>{const id=b.film.value.split("/").pop(),t=b.filmLabel&&b.filmLabel.value;if(seen[id]||!t||/^Q\d+$/.test(t))return;seen[id]=1;out.push({id,title:t,year:b.d?b.d.value.slice(0,4):"",sl:+b.sl.value,runtime:b.rt?Math.round(+b.rt.value):null,img:b.img?b.img.value.replace(/^http:/,"https:")+"?width=500":null,genres:useMood?genres:[],movie:true});});return out;}
 async function wpFilms(a,anim){const term=anim?'"film d\'animazione" -giapponese':MOOD_TXT[a.mood];const url="https://it.wikipedia.org/w/api.php?action=query&generator=search&format=json&origin=*&gsrnamespace=0&gsrlimit=30&gsroffset="+rand(200)+"&gsrsearch="+encodeURIComponent('hastemplate:Film "è un film" '+term)+"&prop=extracts|pageimages&exintro=1&explaintext=1&exsentences=4&exlimit=30&piprop=thumbnail&pithumbsize=500";const d=await fj(url,12000),p=d.query&&d.query.pages?Object.values(d.query.pages):[];return p.filter(x=>x.extract&&/film/i.test(x.extract.slice(0,200))).map(x=>({id:"wp"+x.pageid,title:x.title.replace(/\s*\(film.*\)$/,""),year:(x.extract.match(/\b(19|20)\d\d\b/)||[""])[0],sl:10,runtime:null,genres:[],movie:true,pre:{extract:x.extract,thumb:x.thumbnail&&x.thumbnail.source}}));}
-async function filmDiscover(a,anim){let list=[],err=null;try{list=await wdFilms(a,true,anim);const rtMin=a.time==="mid"?85:a.time==="long"?115:0,rtMax=a.time==="short"?95:a.time==="mid"?125:999;list=tier(list,[m=>!m.runtime||(m.runtime>=rtMin&&m.runtime<=rtMax),()=>true]);}catch(e){err=e;}if(list.length<5){try{list=list.concat(await wdFilms(a,false,anim));}catch(e){err=err||e;}}if(list.length<3){try{list=list.concat(await wpFilms(a,anim));}catch(e){err=err||e;}}if(!list.length&&err)throw err;return list;}
+async function filmDiscover(a,anim){let list=[],err=null;try{list=await wdFilms(a,true,anim);const rtMin=a.time==="mid"?85:a.time==="long"?120:0,rtMax=a.time==="short"?95:a.time==="mid"?125:999;list=tier(list,[m=>!m.runtime||(m.runtime>=rtMin&&m.runtime<=rtMax),()=>true]);}catch(e){err=e;}if(list.length<5){try{list=list.concat(await wdFilms(a,false,anim));}catch(e){err=err||e;}}if(list.length<3){try{list=list.concat(await wpFilms(a,anim));}catch(e){err=err||e;}}if(!list.length&&err)throw err;return list;}
 async function wdMeta(id){if(!/^Q\d+$/.test(id))return{};try{const q='SELECT ?gl ?dl WHERE{OPTIONAL{wd:'+id+' wdt:P136 ?g. ?g rdfs:label ?gl. FILTER(LANG(?gl)="it")} OPTIONAL{wd:'+id+' wdt:P57 ?dr. ?dr rdfs:label ?dl. FILTER(LANG(?dl)="en")}}';const rows=await Promise.race([sparql(q),sleep(8000).then(()=>{throw new Error("t");})]);const gl=[],dr=[];rows.forEach(b=>{if(b.gl)gl.push(b.gl.value.replace(/^film\s+(di\s+|d['’]\s*)?/i,""));if(b.dl)dr.push(b.dl.value);});return{glist:uniq(gl).slice(0,4),dir:uniq(dr).slice(0,2).join(", ")};}catch(e){return{};}}
 async function itTitleOf(qid){try{const d=await fjr("https://www.wikidata.org/w/api.php?action=wbgetentities&format=json&origin=*&props=sitelinks&sitefilter=itwiki&ids="+qid,8000);const e=d.entities&&d.entities[qid];return e&&e.sitelinks&&e.sitelinks.itwiki?e.sitelinks.itwiki.title:null;}catch(e){return null;}}
 async function enrichFilm(c){if(!/^Q\d+$/.test(String(c.id)))return null;const t=await itTitleOf(c.id);if(!t)return null;try{const r=await wsum(t);if(r&&r.extract&&r.type!=="disambiguation")return{extract:r.extract,thumb:r.thumbnail&&r.thumbnail.source};}catch(e){}return null;}
@@ -1009,6 +1011,25 @@ const mainstream=m=>m.vc!=null?Math.max(0,Math.min(1,Math.log10(Math.max(10,m.vc
 const hit=(g,w)=>g&&w&&g.some(x=>w.indexOf(x)>=0)?1:0;
 function score(cat,m,a){const g=m.genres||[],gs=G[cat==="cartoni"?(isFilmItem(m)?"film":"serie"):gkey(cat,a)],ms=mainstream(m);return 45*Math.max(hit(g,gs.mood[a.mood]),m.kwm?1:0)+15+20*Math.max(0,1-Math.abs((1-ms)*100-a.risk)/70)+15*(m.sl!=null?ms:m.rating?Math.max(0,Math.min(1,(m.rating-5)/4)):.5)+Math.random()*6;}
 const pct=s=>Math.round(Math.min(98,52+46*Math.pow(Math.max(0,s)/100,1.3)));
+/* il tempo/la lunghezza del titolo rientra in ciò che hai scelto? true/false, oppure null se non applicabile o dato mancante */
+function timeOk(d,a){
+  if(!a||!a.time||a.time==="any")return null;
+  if(d.isTv&&S.cat==="anime"){const e=d.episodes;if(!e)return null;return a.time==="short"?e<=13:a.time==="mid"?e<=26:e>26;}
+  const t=d.runtime;if(!t)return null;
+  if(d.isTv)return a.time==="short"?t<=30:a.time==="mid"?(t>=30&&t<=55):t>=50;
+  return a.time==="short"?t<=90:a.time==="mid"?(t>=85&&t<=125):t>=120;
+}
+/* Compatibilità: deterministica (niente casualità) e spiegabile. 50 = voglia (genere 50, solo parola chiave 42, altrimenti 12),
+   30 = epoca e durata rispettate (quelle verificabili), 20 = voto del pubblico. Minimo 35, massimo 99. */
+function compat(r){
+  const a=S.a,d=r.d,m=r.m,g=m.genres||[],gs=G[S.cat==="cartoni"?(isFilmItem(m)?"film":"serie"):gkey(S.cat,a)];
+  const mood=hit(g,gs.mood[a.mood])?50:(m.kwm?42:12),t=[];
+  if(a.era&&a.era!=="any"&&d.year)t.push(eraOk(d.year,a));
+  const tk=timeOk(d,a);if(tk!==null)t.push(tk);
+  const ans=t.length?30*t.filter(Boolean).length/t.length:30;
+  const q=d.rv?Math.max(0,Math.min(1,(+d.rv-5)/4)):.5;
+  return Math.round(Math.max(35,Math.min(99,mood+ans+20*q)));
+}
 
 function parseDur(d){if(!d)return null;const h=/(\d+)\s*hr/.exec(d),m=/(\d+)\s*min/.exec(d);const v=(h?+h[1]*60:0)+(m?+m[1]:0);return v||null;}
 const cleanHtml=h=>{try{return (new DOMParser().parseFromString(String(h||"").replace(/<br\s*\/?>/gi," "),"text/html").body.textContent||"").replace(/\s+/g," ").trim();}catch(e){return "";}};
@@ -1143,7 +1164,7 @@ async function tmDiscover(kind,a,anim,ja){
   if(film){
     if(a.time==="short")p["with_runtime.lte"]=90;
     if(a.time==="mid"){p["with_runtime.gte"]=85;p["with_runtime.lte"]=125;}
-    if(a.time==="long")p["with_runtime.gte"]=115;
+    if(a.time==="long")p["with_runtime.gte"]=120;
   }else if(!anim){
     if(a.time==="short")p["with_runtime.lte"]=30;
     if(a.time==="mid"){p["with_runtime.gte"]=30;p["with_runtime.lte"]=55;}
@@ -1303,7 +1324,8 @@ async function run(surprise,fresh){
     let d,tries=0;
     for(;;){
       S.seen.push(cand.m.id);d=await detailsOf(cand.m);
-      if(cand.m.sl==null||d.it||tries++>=4)break;
+      const wd=cand.m.sl!=null&&!d.it,epBad=S.cat==="anime"&&d.isTv&&timeOk(d,S.a)===false;
+      if(!(wd||epBad)||tries++>=6)break;
       const pool=ranked||S.cands,nx=pickFrom(pool,false);
       if(!nx)break;cand=nx;
     }
@@ -1314,16 +1336,23 @@ async function run(surprise,fresh){
 /* ---------- Risultato ---------- */
 function fbPoster(t,y){const h=Array.from(t).reduce((a,ch)=>((a*31+ch.charCodeAt(0))%360),0);return '<div class="poster fb" role="button" tabindex="0" aria-label="Ingrandisci" style="background:linear-gradient(135deg,hsl('+h+' 68% 42%),hsl('+((h+55)%360)+' 58% 30%))"><small>Reelax</small><h3>'+esc(t)+'</h3><small>'+esc(y||'')+'</small></div>';}
 function why(r,sur){
-  const a=S.a,d=r.d,m=r.m,g=m.genres||[],gs=G[S.cat==="cartoni"?(isFilmItem(m)?"film":"serie"):gkey(S.cat,a)],o=[];
-  if(sur)o.push('È una scelta volutamente fuori dalla tua comfort zone.');
-  if(hit(g,gs.mood[a.mood])||m.kwm)o.push('Cercavi '+MOOD_TXT[a.mood]+(d.glist&&d.glist.length?" e i suoi generi ("+d.glist.slice(0,3).join(', ')+") vanno in quella direzione.":"."));
-  else o.push('Non è il genere più ovvio per chi cerca '+MOOD_TXT[a.mood]+(d.glist&&d.glist.length?" ("+d.glist.slice(0,3).join(', ')+")":"")+': lo propongo per gli altri criteri.');
-  if(a.era&&a.era!=="any"&&d.year)o.push('Del '+d.year+', nella fascia di anni che volevi.');
-  if(d.runtime)o.push(d.movie===false?'Episodi da '+d.runtime+' min.':'Dura '+fmtMin(d.runtime)+'.');
-  if(!d.runtime&&d.episodes)o.push(d.episodes+' episodi.');
-  if(d.rv)o.push('Voto '+(+d.rv).toFixed(1)+' / 10.');
-  if(a.risk>=70)o.push('È abbastanza fuori dagli schemi da risultare interessante.');
-  return o.slice(0,4);
+  const a=S.a,d=r.d,m=r.m,g=m.genres||[],gs=G[S.cat==="cartoni"?(isFilmItem(m)?"film":"serie"):gkey(S.cat,a)],o=[],rnd=S.style==="surprise";
+  const gl=d.glist&&d.glist.length?d.glist.slice(0,3).join(", "):"",mt=MOOD_TXT[a.mood];
+  if(rnd)o.push("Sorpresa totale: categoria e voglia sono state scelte a caso.");
+  else{
+    if(sur)o.push("Scelta a sorpresa: un titolo meno battuto del solito.");
+    if(hit(g,gs.mood[a.mood]))o.push("Volevi "+mt+(gl?" e i suoi generi ("+gl+") vanno in quella direzione.":"."));
+    else if(m.kwm)o.push("Volevi "+mt+(gl?": rientra tra i titoli di quel tema, anche se il genere è "+gl+".":" e rientra tra i titoli di quel tema."));
+    else o.push("Non è il genere più ovvio per chi vuole "+mt+(gl?" ("+gl+")":"")+": lo propongo per gli altri criteri.");
+  }
+  const av=avoidNow().map(x=>(AVOID.find(y=>y[0]===x)||[0,0,x])[2].toLowerCase());
+  if(av.length)o.push("Senza: "+av.join(", ")+".");
+  if(a.era&&a.era!=="any"&&d.year&&eraOk(d.year,a))o.push("Del "+d.year+", nella fascia di anni che volevi.");
+  const tk=timeOk(d,a);
+  if(d.runtime)o.push((d.movie===false?"Episodi da "+d.runtime+" min":"Dura "+fmtMin(d.runtime))+(tk===true?", nel tempo che avevi.":"."));
+  else if(d.episodes)o.push(d.episodes+" episodi"+(tk===true?", nella lunghezza che volevi.":"."));
+  if(d.rv)o.push("Voto "+(+d.rv).toFixed(1)+" / 10.");
+  return o.slice(0,5);
 }
 // stesso servizio venduto anche come "canale" dentro Prime Video / Apple TV (es. Paramount+, Paramount+ Amazon Channel, Paramount Plus Apple TV Channel): un solo logo
 const CH_RE=/\s+(Apple\s*TV|Amazon|Prime\s*Video)(\s+Amazon)?\s+Channel$/i;
@@ -1567,7 +1596,7 @@ function settle(snap){
   });
 }
 function show(r,sur,man,quiet){
-  S.cur=r;S.curSur=sur;S.curMan=man;const d=r.d;let p=pct(r.s);if(sur)p=Math.max(60,p-6);
+  S.cur=r;S.curSur=sur;S.curMan=man;const d=r.d,rnd=S.style==="surprise";const p=man?0:compat(r);
   const poster=d.poster
     ?'<div class="poster" role="button" tabindex="0" aria-label="Ingrandisci la locandina"><img'+(quiet?' class="ld"':'')+' src="'+esc(d.poster)+'" alt="Locandina di '+esc(d.title)+'" referrerpolicy="no-referrer"></div>'
     :fbPoster(d.title,d.year);
@@ -1582,7 +1611,7 @@ function show(r,sur,man,quiet){
   const h='<div class="res">'+
     '<div class="hero">'+poster+'<h2>'+esc(d.title)+'</h2>'+(d.tagline?'<p class="tag">'+esc(d.tagline)+'</p>':'')+'<div class="chips">'+chips.join('')+'</div></div>'+
     (d.ytKey?'<a class="btn" href="https://www.youtube.com/watch?v='+esc(d.ytKey)+'" data-yt="'+esc(d.ytKey)+'" target="_blank" rel="noopener" style="flex:none;color:var(--fg)"><span style="color:var(--red);display:grid">'+IC.play+'</span>Guarda il trailer</a>':'')+
-    '<section class="card compat"><div class="ringw"><svg viewBox="0 0 64 64"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6c653"/><stop offset="1" stop-color="#ff3d52"/></linearGradient></defs><circle class="bgc" cx="32" cy="32" r="27"/><circle class="fgc" cx="32" cy="32" r="27"/></svg><div class="pn"><span><span id="pn">0</span>%</span></div></div><div><b>Compatibilità</b><span class="sub">Quanto combacia con le tue risposte</span></div></section>'+
+    (rnd?'':'<section class="card compat"><div class="ringw"><svg viewBox="0 0 64 64"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6c653"/><stop offset="1" stop-color="#ff3d52"/></linearGradient></defs><circle class="bgc" cx="32" cy="32" r="27"/><circle class="fgc" cx="32" cy="32" r="27"/></svg><div class="pn"><span><span id="pn">0</span>%</span></div></div><div><b>Compatibilità</b><span class="sub">Risposte date e voto del pubblico</span></div></section>')+
     (man?'':'<section class="card"><h3>Perché fa per te</h3><ul class="why">'+why(r,sur).map(x=>'<li><b>✓</b><span>'+esc(x)+'</span></li>').join('')+'</ul></section>')+
     '<section class="card'+(long?' tap':'')+'" id="plotcard"'+(long?' role="button" tabindex="0" aria-expanded="false"':'')+'><h3>Trama</h3><p class="'+(long?'clamp':'')+'" id="plot">'+esc(d.overview||'Trama non disponibile.')+'</p>'+(long?'<button type="button" class="lnk-btn" id="pmore">Leggi tutto</button>':'')+'</section>'+
     (d.castList&&d.castList.length?'<button type="button" class="card castbtn" data-act="cast"><h3>Cast</h3><span class="cav">'+d.castList.slice(0,5).map(x=>x.img?'<img src="'+PIMG+esc(x.img)+'" alt="" loading="lazy" referrerpolicy="no-referrer">':'<i>👤</i>').join('')+'</span><span class="cgo">Vedi tutto il cast →</span></button>':'')+
