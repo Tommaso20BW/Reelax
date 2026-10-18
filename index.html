@@ -1312,11 +1312,11 @@ const tm=(path,params)=>fjr(TMDB_PROXY.replace(/\/+$/,"")+path+"?"+new URLSearch
 /* ---------- Liste personali: già visto / da vedere (locale + sincronizzate dal Worker) ---------- */
 const LKEY="reelax_lists",LDIRTY="reelax_lists_dirty";
 let L={platforms:[],recent:[]};
-try{const j=JSON.parse(localStorage.getItem(LKEY)||"null");if(j){L.platforms=Array.isArray(j.platforms)?j.platforms:[];L.recent=Array.isArray(j.recent)?j.recent:[];if(typeof j.pf==="boolean")L.pf=j.pf;if(typeof j.rg==="string")L.rg=j.rg;if(j.st&&typeof j.st==="object"&&!Array.isArray(j.st))L.st=j.st;}}catch(e){}
+try{const j=JSON.parse(localStorage.getItem(LKEY)||"null");if(j){L.platforms=Array.isArray(j.platforms)?j.platforms:[];L.recent=Array.isArray(j.recent)?j.recent:[];if(typeof j.pf==="boolean")L.pf=j.pf;if(typeof j.rg==="string")L.rg=j.rg;if(j.st&&typeof j.st==="object"&&!Array.isArray(j.st))L.st=j.st;if(typeof j.ts==="number")L.ts=j.ts;}}catch(e){}
 const PX=()=>TMDB_PROXY.replace(/\/+$/,"");
 const AUTHH=()=>({Authorization:"Bearer "+getTok(),"Content-Type":"application/json"});
 let pushT=null;
-function lsave(){try{localStorage.setItem(LKEY,JSON.stringify(L));localStorage.setItem(LDIRTY,"1");}catch(e){}clearTimeout(pushT);pushT=setTimeout(syncPush,900);}
+function lsave(){L.ts=Date.now();try{localStorage.setItem(LKEY,JSON.stringify(L));localStorage.setItem(LDIRTY,"1");}catch(e){}clearTimeout(pushT);pushT=setTimeout(syncPush,900);}
 /* Impostazioni generiche: getSet(chiave,predefinito) / setSet(chiave,valore). Si salvano su questo dispositivo e nel Worker (L.st), quindi vale anche per quelle future. */
 const getSet=(k,d)=>{const v=L.st&&L.st[k];return v===undefined?d:v;};
 const setSet=(k,v)=>{if(!L.st||typeof L.st!=="object")L.st={};L.st[k]=v;lsave();};
@@ -1336,9 +1336,11 @@ async function syncPull(){
     if(r.status===401){doLogout();return;}
     if(!r.ok)return;
     const j=await r.json();
+    if((+j.ts||0)<(+L.ts||0)){syncPush();return;}   // il server ha una copia piu' vecchia della mia (lettura ritardata del KV): vince la mia
     const keep=RECENT;
     const pf0=L.pf,rg0=L.rg,st0=L.st;
     L={platforms:Array.isArray(j.platforms)?j.platforms:[],recent:Array.isArray(j.recent)?j.recent:[]};
+    if(typeof j.ts==="number")L.ts=j.ts;
     if(typeof j.pf==="boolean")L.pf=j.pf;else if(typeof pf0==="boolean"){L.pf=pf0;lsave();}   // il server non lo conosce ancora: invio il valore di questo dispositivo
     {const rl=(()=>{try{const v=rg0||localStorage.getItem(RGKEY);return REGIONS.indexOf(v)>=0?v:"";}catch(e){return REGIONS.indexOf(rg0)>=0?rg0:"";}})();
       if(REGIONS.indexOf(j.rg)>=0){L.rg=j.rg;if(j.rg!==rl){try{localStorage.setItem(RGKEY,j.rg);}catch(e){}S.seen=[];S.cands=[];setTimeout(i18nRefresh,0);}}   // regione scelta su un altro dispositivo
