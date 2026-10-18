@@ -651,6 +651,7 @@ const JID={"Sports":30,"Action":1,"Adventure":2,"Comedy":4,"Drama":8,"Fantasy":1
 /* ---------- Stato ---------- */
 let FIRST=true;
 const S={cat:"",fmt:"",mood:"",time:"",era:"",style:"",step:0,seen:[],cands:[],cur:null,a:null,avoid:[]};
+try{const j=JSON.parse(sessionStorage.getItem("reelax_s")||"null");if(j&&typeof j==="object"){["cat","fmt","mood","time","era","style"].forEach(k=>{if(typeof j[k]==="string")S[k]=j[k];});if(Array.isArray(j.avoid))S.avoid=j.avoid.filter(x=>typeof x==="string");S.step=Math.max(0,parseInt(j.step,10)||0);}}catch(e){}   // dopo un aggiornamento della pagina le risposte restano
 const buildA=()=>({
   cat:S.cat,mood:S.mood,time:timeShown()?(S.time||"any"):"any",risk:S.style==="surprise"?85:55,
   era:S.era||"any",
@@ -663,6 +664,50 @@ const stage=$("stage");
 /* regole: tra due domande scorrimento (avanti e indietro, come in origine). Ovunque altrove dissolvenza, sia in apertura che tornando indietro */
 let TDX=0,LASTSTEP=-1,NAV=0,NAVT=0;
 /* scorrimento solo tra home e impostazioni (da sinistra, dov'è il tasto) o ricerca (da destra); indietro fa il contrario */
+/* ---------- Indirizzi delle pagine (#/...) ----------
+   Ogni pagina ha il suo indirizzo: aggiornando la pagina (o aprendo il link) si torna lì; il tasto Indietro del browser funziona.
+   #/ e #/domanda/N (domande) · #/cerca[/testo] · #/recenti · #/impostazioni[/piattaforme|regione|username|password]
+   #/r/ID (risultato) · #/t/ID (scheda titolo) · #/t/ID/cast · #/p/ID (persona) */
+let CURR="",REPL=false,ROUTED=false,PENDCAST="";
+const RCACHE=new Map();
+const enc=encodeURIComponent,nrm=x=>{try{return decodeURIComponent(x);}catch(e){return x;}};
+const curHash=()=>{const h=location.hash.replace(/^#/,"");return h===""?"/":h;};
+function setRoute(path,o){
+  const rep=REPL||!!(o&&o.replace);REPL=false;ROUTED=true;
+  if(nrm(curHash())===nrm(path)){CURR=path;return;}
+  try{
+    const d=(history.state&&history.state.d)||0;
+    if(rep)history.replaceState({d:d},"","#"+path);else history.pushState({d:d+1},"","#"+path);
+  }catch(e){}
+  CURR=path;
+}
+/* torna alla pagina precedente dell'app (cronologia del browser); se non c'e' (pagina aperta da un link) apre fn al suo posto */
+function goBack(fn){if(ROUTED&&!LB&&history.state&&history.state.d>0)history.back();else{REPL=true;fn();}}
+async function restoreTitle(k,cast){
+  const c=RCACHE.get(k);
+  PENDCAST=cast?k:"";   // pagina cast: la scheda sotto si disegna senza cambiare indirizzo, poi arriva il cast
+  if(c){show(c.r,c.sur,c.man,"fade");PENDCAST="";if(cast&&c.r&&c.r.d)castPage(c.r.d);return;}
+  let it=RECENT.find(x=>String(x.k)===k);
+  const m=/^tm(film|tv)(\d+)$/.exec(k);
+  if(!it&&m)it={k:k,t:"",y:"",p:"",mv:m[1]==="film",sr:"tmdb",ti:+m[2]};
+  if(!it){PENDCAST="";S.step=0;home();return;}
+  try{await openItem(it);}finally{PENDCAST="";}
+  if(cast&&S.cur&&S.cur.d&&S.cur.m&&String(S.cur.m.id)===k)castPage(S.cur.d);
+}
+function routeFromHash(force){
+  if(!force&&nrm(curHash())===nrm(CURR))return;
+  RUN++;SRUN++;REPL=true;
+  const seg=curHash().split("/").filter(Boolean).map(nrm),a=seg[0]||"",b=seg[1]||"";
+  try{
+    if(a==="impostazioni"){if(b==="piattaforme")return pfPage();if(b==="regione")return regionPage();if(b==="username")return accountPage("user");if(b==="password")return accountPage("pass");return settingsPage();}
+    if(a==="recenti")return recentPage();
+    if(a==="cerca"){SQ=b;return searchPage();}
+    if(a==="t"||a==="r")return restoreTitle(b,seg[2]==="cast");
+    if(a==="p"&&/^\d+$/.test(b)){const c=PCACHE.get(+b);return personPage({id:+b,name:c?c.name:"",img:c&&c.profile_path||""},()=>{S.step=0;home();});}
+    if(a==="domanda"&&S.cat){S.step=Math.max(0,parseInt(b,10)||0);return home();}
+  }catch(e){}
+  S.step=0;home();
+}
 function swap(h,anim){
   if(h.indexOf('class="load"')<0)killWall();
   const old=stage.innerHTML,app=$("app");
@@ -738,7 +783,7 @@ document.addEventListener("click",e=>{
   if(y){openYt(e,y.dataset.yt);return;}
   const b=e.target.closest&&e.target.closest("[data-act]");
   if(!b||b.disabled)return;
-  const f=ACT[b.dataset.act];if(f){tap();const an=b.dataset.act;NAV=0;const onHome=!!stage.querySelector(".opts");if(an==="settings"&&onHome)NAV=-1;else if(an==="search"&&onHome)NAV=1;else if(an==="back"){if(stage.querySelector(".srow.out"))NAV=1;else if($("sq"))NAV=-1;}clearTimeout(NAVT);NAVT=setTimeout(()=>{NAV=0;},700);try{f();}catch(x){}}
+  const f=ACT[b.dataset.act];if(f){tap();const an=b.dataset.act;NAV=0;const onHome=!!stage.querySelector(".opts");if(an==="settings"&&onHome)NAV=-1;else if(an==="search"&&onHome)NAV=1;else if(an==="back"){if(stage.querySelector(".srow.out"))NAV=1;else if($("sq"))NAV=-1;}clearTimeout(NAVT);NAVT=setTimeout(()=>{NAV=0;},700);try{if(an==="back")goBack(f);else f();}catch(x){}}
 });
 const tap=()=>{};   // vibrazione al tocco rimossa
 function setBd(u){   // cambio sfondo morbido: se ce n'è già uno si dissolve prima di mostrare il nuovo (niente scatto)
@@ -770,6 +815,8 @@ function home(anim){
   setBd(null);wallIdle();
   const ST=steps();
   if(S.step>ST.length-1)S.step=ST.length-1;
+  setRoute(S.step>0?"/domanda/"+S.step:"/");
+  try{sessionStorage.setItem("reelax_s",JSON.stringify({cat:S.cat,fmt:S.fmt,mood:S.mood,time:S.time,era:S.era,style:S.style,step:S.step,avoid:S.avoid}));}catch(e){}
   const st=ST[S.step],items=st.get(),n=items.length,q=typeof st.q==="function"?st.q():st.q;
   const seg=st.k==="cat"?'<div class="segw'+(isAnim()?' show':'')+'" id="segw"><span class="segq">Film o serie?</span><div class="seg">'+FMT.map(f=>'<button type="button" class="'+(S.fmt===f[0]?'on':'')+'" data-f="'+f[0]+'">'+({movie:"Film",tv:"Serie",any:"Indifferente"})[f[0]]+'</button>').join('')+'</div></div>':'';
   TDX=(stage.querySelector(".opts")&&LASTSTEP>=0&&S.step!==LASTSTEP)?(S.step>LASTSTEP?1:-1):0;LASTSTEP=S.step;
@@ -817,7 +864,7 @@ function home(anim){
 let SQ="",SRUN=0,SLIST=[];
 function searchPage(){
   RUN++;
-  setBd(null);
+  setBd(null);setRoute("/cerca"+(SQ?"/"+enc(SQ):""));
   swap('<div class="page"><h1>Cerca un titolo</h1><input class="lgi sin" id="sq" type="search" placeholder="Film o serie TV" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="search" aria-label="Cerca un titolo"><div class="sres lib" id="sres"></div></div>',true);
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>{SRUN++;RUN++;home();}}});
   const inp=$("sq"),box=$("sres");
@@ -896,6 +943,7 @@ async function trendTitles(){
 async function doSearch(q){
   const my=++SRUN,box=$("sres");
   if(!box)return;
+  setRoute("/cerca"+(q?"/"+enc(q):""),{replace:true});
   const trend=q.length<2;   // campo vuoto: mostro i titoli più in voga del momento
   if(box.querySelector(".bk"))box.classList.add("busy");   // risultati precedenti restano, attenuati: niente sfarfallio a ogni lettera
   else box.innerHTML='<p class="smsg">'+(trend?"Carico le tendenze...":"Cerco...")+'</p>';
@@ -964,6 +1012,7 @@ const bkPerson=(x,i)=>'<button type="button" class="bk" data-i="'+i+'"><span cla
 function castPage(d,snap){
   setBd(null);
   snap=snap||{r:S.cur,sur:S.curSur,man:S.curMan};
+  {const k=snap.r&&snap.r.m&&snap.r.m.id!=null?String(snap.r.m.id):"";if(k)setRoute("/t/"+enc(k)+"/cast");else ROUTED=false;}
   const list=d.castList||[];
   swap('<div class="page"><h1>Cast</h1><div class="sres lib" id="cres">'+list.map(bkPerson).join('')+'</div></div>',true);
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>{show(snap.r,snap.sur,snap.man,"fade");}}});
@@ -982,6 +1031,7 @@ function personInfo(d){
 async function personPage(p,backFn){
   if(!p)return;
   const my=++RUN;
+  setRoute("/p/"+p.id);
   setBd(p.img?PIMG+p.img:null);
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>{RUN++;backFn();}}});
   stage.classList.remove("q");
@@ -1007,6 +1057,7 @@ async function personPage(p,backFn){
   if(my!==RUN||!res.isConnected)return;
   if(!d){res.insertAdjacentHTML("beforeend",'<p class="smsg" style="--k:0">Non riesco a caricare i dettagli'+(navigator.onLine===false?': sei offline':'')+'. Riprova tra poco.</p>');return;}
   const I=personInfo(d);
+  {const h2=res.querySelector("h2");if(h2&&!h2.textContent.trim()&&d.name)h2.textContent=d.name;}   // pagina aperta da un indirizzo: il nome arriva ora
   const cc=d.combined_credits||{},seen={},items=[];
   const bad=x=>(x.genre_ids||[]).some(g=>g===10767||g===10763||g===10764)||/\b(self|himself|herself)\b/i.test(x.character||"");
   (cc.cast||[]).filter(x=>!bad(x)).concat((cc.crew||[]).filter(x=>x.job==="Director"&&!bad(x))).forEach(x=>{
@@ -1136,7 +1187,7 @@ function wallOn(){
   requestAnimationFrame(()=>requestAnimationFrame(()=>o.classList.add("on")));
 }
 function loading(){
-  setBd(null);
+  ROUTED=false;setBd(null);
   const t=["Cerco un titolo adatto a te...","Controllo i tuoi gusti...","Ci siamo quasi..."];
   const cancel=()=>{RUN++;home();};
   ui({l:tbtn('cancel','x','Annulla'),r:'',d:bb('cancel','Annulla'),p:[1,1],a:{cancel,back:cancel}});
@@ -1147,7 +1198,7 @@ function loading(){
 }
 
 function showError(e){
-  setBd(null);
+  ROUTED=false;setBd(null);
   const off=navigator.onLine===false, empty=e&&e.message==="EMPTY";
   const msg=off?"Sembra che il telefono sia offline: controlla la connessione e riprova.":empty?"Nessun titolo trovato con queste regole. Prova ad allargare qualche filtro (epoca, durata o cose da evitare)"+(pfIds().length?" oppure a togliere il filtro per piattaforme nelle Impostazioni.":"."):"Non riesco a trovare un risultato adesso.";
   swap('<div class="err"><h2>Qualcosa non va</h2><p>'+esc(msg)+'</p>'+(empty||off?'':'<small style="word-break:break-all">Dettaglio: '+esc(e&&e.message||'errore')+'</small>')+'</div>');
@@ -1327,7 +1378,7 @@ function clearRecent(){
   b.classList.remove("ask");sl.textContent="Svuota la cronologia";
 }
 function recentPage(){
-  RUN++;SRUN++;setBd(null);
+  RUN++;SRUN++;setBd(null);setRoute("/recenti");
   swap('<div class="page"><h1>Trovati di recente</h1><div class="sres lib" id="lres"></div>'+'<button type="button" class="srow dng" data-act="clr" style="flex:none">'+IC.trash+'<span class="sl">Svuota la cronologia</span></button>'+'</div>',true);
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>settingsPage(),clr:clearRecent}});
   const box=$("lres");
@@ -1384,7 +1435,7 @@ async function revokeAll(){
   b.disabled=false;reset(3500);
 }
 function settingsPage(){
-  RUN++;SRUN++;setBd(null);
+  RUN++;SRUN++;setBd(null);setRoute("/impostazioni");
   const sec=(t,h)=>'<div class="sblock"><div class="sh">'+t+'</div>'+h+'</div>';
   swap('<div class="page"><h1>Impostazioni</h1>'+
     sec('Ricerca','<div class="sgrp" id="sg_pf">'+pfGroup()+'</div>')+
@@ -1401,18 +1452,18 @@ function settingsPage(){
 }
 /* ---------- Regione ---------- */
 function regionPage(){
-  RUN++;SRUN++;setBd(null);
+  RUN++;SRUN++;setBd(null);setRoute("/impostazioni/regione");
   const cur=REG(),list=REGIONS.slice().sort((a,b)=>regName(a).localeCompare(regName(b),"it",{sensitivity:"base"}));
   list.sort((a,b)=>(b===cur?1:0)-(a===cur?1:0));   // quella scelta sta in cima
   swap('<div class="page"><h1>Regione</h1><p class="sub">Serve per mostrarti dove guardare i titoli e l\'età consigliata del tuo paese.</p><div class="sgrp" id="rgl" role="radiogroup" aria-label="Regione">'+
     list.map(c=>'<button type="button" class="srow sm" role="radio" aria-checked="'+(c===cur)+'" data-r="'+c+'"><span class="sl">'+esc(regName(c))+'</span>'+(c===cur?IC.check:'')+'</button>').join('')+'</div></div>',true);
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>settingsPage()}});
   const box=$("rgl");
-  if(box)box.onclick=e=>{const b=e.target.closest&&e.target.closest("[data-r]");if(!b)return;tap();setRegion(b.dataset.r);settingsPage();};
+  if(box)box.onclick=e=>{const b=e.target.closest&&e.target.closest("[data-r]");if(!b)return;tap();setRegion(b.dataset.r);goBack(settingsPage);};
 }
 /* ---------- Cambio username / password ---------- */
 function accountPage(mode){
-  RUN++;SRUN++;setBd(null);
+  RUN++;SRUN++;setBd(null);setRoute("/impostazioni/"+(mode==="user"?"username":"password"));
   const u=mode==="user";
   const f=(id,ph,type,ac)=>'<input class="lgi sin" id="'+id+'" type="'+type+'" placeholder="'+ph+'" autocomplete="'+ac+'" autocapitalize="none" autocorrect="off" spellcheck="false" aria-label="'+ph+'">';
   swap('<div class="page"><h1>'+(u?'Cambia username':'Cambia password')+'</h1><div class="acf">'+
@@ -1435,7 +1486,7 @@ function accountPage(mode){
       if(r.ok&&j.token){
         try{localStorage.setItem(AUTH_KEY,j.token);}catch(e){}
         say(u?"Username cambiato.":"Password cambiata. Sugli altri dispositivi dovrai rifare l'accesso.",true);
-        setTimeout(()=>{if(m.isConnected)settingsPage();},1400);return;
+        setTimeout(()=>{if(m.isConnected)goBack(settingsPage);},1400);return;
       }
       if(r.status===401){doLogout();return;}
       say(r.status===404||r.status===405?"Il server non supporta ancora questa funzione: aggiorna il Worker.":(j.error||"Non riesco a salvare adesso. Riprova."));
@@ -1467,7 +1518,7 @@ async function pfLoad(){
   return l;
 }
 async function pfPage(){
-  RUN++;SRUN++;setBd(null);pfNorm();
+  RUN++;SRUN++;setBd(null);setRoute("/impostazioni/piattaforme");pfNorm();
   swap('<div class="page"><h1>Le mie piattaforme</h1><p class="sub">Scegli i servizi che hai: ti propongo solo titoli disponibili lì, in abbonamento o gratis.</p><div class="pfg" id="pfg"><div class="lemp">'+IC.tv+'<span>Carico…</span></div></div></div>',true);
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>settingsPage()}});
   const box=$("pfg");
@@ -1665,6 +1716,7 @@ async function tmdbDetails(c){
   let d={};
   try{d=await tm(base,{append_to_response:c.movie?"watch/providers,credits,videos,release_dates":"watch/providers,credits,videos,content_ratings",include_video_language:"it,en,null"});}
   catch(e){try{d=await tm(base);}catch(x){}}
+  if((!c.title||c.title==="Senza titolo")&&(d.title||d.name))c=Object.assign({},c,{title:d.title||d.name});   // scheda aperta da un indirizzo: il titolo arriva dai dettagli
   const rt=c.movie?(d.runtime||null):((d.episode_run_time&&d.episode_run_time[0])||(d.last_episode_to_air&&d.last_episode_to_air.runtime)||null);
   const gl=itg((d.genres||[]).map(g=>g.name)).slice(0,4);
   const wpAll=d["watch/providers"],wp=wpAll&&wpAll.results&&wpAll.results[REG()];
@@ -2156,6 +2208,7 @@ function settle(snap){
   });
 }
 function show(r,sur,man,quiet){
+  {const k=r.m&&r.m.id!=null?String(r.m.id):"";if(k){RCACHE.set(k,{r:r,sur:sur,man:man});if(RCACHE.size>12)RCACHE.delete(RCACHE.keys().next().value);if(PENDCAST!==k)setRoute((man?"/t/":"/r/")+enc(k),{replace:!man&&CURR.indexOf("/r/")===0});}else ROUTED=false;}   // "Un altro" sostituisce il risultato, non allunga la cronologia
   addRecent(r);S.cur=r;S.curSur=sur;S.curMan=man;const d=r.d,rnd=S.style==="surprise";const p=man?0:compat(r);
   const poster=d.poster
     ?'<div class="poster" role="button" tabindex="0" aria-label="Ingrandisci la locandina"><img'+(quiet?' class="ld"':'')+' src="'+esc(d.poster)+'" alt="Locandina di '+esc(d.title)+'" referrerpolicy="no-referrer"></div>'
@@ -2214,7 +2267,7 @@ function show(r,sur,man,quiet){
 }
 
 
-addEventListener("popstate",()=>{if(LB)doCloseLb();});
+addEventListener("popstate",()=>{if(LB){doCloseLb();return;}if(document.body.classList.contains("locked"))return;routeFromHash();});
 
 /* ---------- Altezza reale dell'app (iOS: a volte la pagina finisce sopra il bordo basso) ---------- */
 /* Se iOS lascia una fascia sotto l'area della pagina, quella fascia fa già da margine di sicurezza:
@@ -2256,13 +2309,15 @@ function unlockApp(){
   resetScroll();[100,300,600,1000].forEach(t=>setTimeout(()=>{resetScroll();fit();},t));
   if(!RM()&&lg.animate){lg.animate([{opacity:1,filter:"blur(0)"},{opacity:0,filter:"blur(16px)"}],{duration:600,easing:"cubic-bezier(.4,0,.6,1)",fill:"forwards"}).onfinish=()=>{lg.hidden=true;lg.getAnimations().forEach(x=>x.cancel());};setTimeout(()=>{lg.hidden=true;},900);}
   else lg.hidden=true;
-  home();   // la prima pagina compare con la sfocatura incrociata mentre il login svanisce
+  routeFromHash(true);   // la prima pagina compare con la sfocatura incrociata mentre il login svanisce
   syncPull();
 }
 function doLogout(){
   try{localStorage.removeItem(AUTH_KEY);}catch(e){}
   Object.assign(S,{cat:"",fmt:"",mood:"",time:"",era:"",style:"",step:0,seen:[],cands:[],cur:null,avoid:[]});
   stage.innerHTML="";FIRST=true;
+  try{sessionStorage.removeItem("reelax_s");}catch(e){}
+  CURR="";ROUTED=false;try{history.replaceState({d:0},"","#/");}catch(e){}
   lockApp();
 }
 let lgBusy=false;
@@ -2292,7 +2347,7 @@ function hideSplash(){
   sp.animate([{opacity:1},{opacity:0}],{duration:560,delay:420,easing:"ease",fill:"forwards"}).onfinish=()=>{sp.hidden=true;};
   setTimeout(()=>{sp.hidden=true;},1600);
 }
-const boot=()=>{document.body.classList.remove("pre");if(isAuthed()){home();syncPull();}else lockApp();hideSplash();};
+const boot=()=>{document.body.classList.remove("pre");try{if(!(history.state&&typeof history.state.d==="number"))history.replaceState({d:0},"");}catch(e){}if(isAuthed()){routeFromHash(true);syncPull();}else lockApp();hideSplash();};
 const fontsOk=(document.fonts&&document.fonts.ready)?Promise.race([document.fonts.ready,sleep(1200)]):Promise.resolve();
 const pageOk=document.readyState==="complete"?Promise.resolve():new Promise(r=>{addEventListener("load",r,{once:true});setTimeout(r,3000);});
 Promise.all([fontsOk,pageOk,sleep(IS_APP?Math.max(0,1500-performance.now()):0)]).then(()=>requestAnimationFrame(()=>requestAnimationFrame(boot)));
