@@ -1174,7 +1174,16 @@ async function tmDiscover(kind,a,anim,ja){
   // TMDB per le serie non ha il genere "Romance" (e l'horror è debole): per amore/paura uso la parola chiave
   const KL=KWL[a.mood],useKw=!!KL&&(film?!!KL.film:(KL.use==="all"||(KL.use==="anim"&&!!anim)));
   const kwl=useKw?(await Promise.all(KL.p.filter(x=>AV.k.indexOf(x)<0).map(tmKw))).filter(Boolean):[];
-  const kw=kwl.length?uniq(kwl).join("|"):null;
+  let kw=kwl.length?uniq(kwl).join("|"):null;
+  // umore Sport: la parola chiave sportiva è OBBLIGATORIA. Se le precise non si risolvono provo le larghe, poi "sport" da solo;
+  // se non c'è nulla non ripiego mai su drammatici/commedie qualsiasi: meglio nessun risultato.
+  const must=a.mood==="sport"&&useKw;
+  if(must&&!kw){
+    const bk0=(await Promise.all(KL.b.filter(x=>AV.k.indexOf(x)<0).map(tmKw))).filter(Boolean);
+    const fx=bk0.length?bk0:[await tmKw("sport")].filter(Boolean);
+    if(fx.length)kw=uniq(fx).join("|");
+  }
+  if(must&&!kw)throw new Error("EMPTY");
   const akw=AV.k.length?uniq((await Promise.all(AV.k.map(tmKw))).filter(Boolean)):[];
   // genere di ripiego: usato quando la parola chiave non c'è o viene tolta (mai un titolo "a caso")
   const gFall=anim?"16,"+pick(mood.split("|")):mood;
@@ -1215,7 +1224,8 @@ async function tmDiscover(kind,a,anim,ja){
     const broadKw=Object.assign({},keepKw,{with_keywords:bkw||keepKw.with_keywords});
     const looser=Object.assign({},keepKw);delete looser.with_keywords;looser.with_genres=gFall;
     const widest=Object.assign({},looser,{"vote_count.gte":5});if(AV.g.length)widest.without_genres=AV.g.join("|");else delete widest.without_genres;widest.sort_by="popularity.desc";
-    for(const q of (useKw&&kw?[p,loose,keepKw,broadKw,looser,widest]:[p,loose,keepKw,looser,widest])){const x=await tm(path,Object.assign({page:1},q));raw=x.results||[];if(raw.length){if(!q.with_keywords)kwUsed=false;break;}}
+    // con Sport le varianti che tolgono la parola chiave (looser/widest) sono escluse: lo sport resta sempre vincolante
+    for(const q of (must?[p,loose,keepKw,broadKw]:useKw&&kw?[p,loose,keepKw,broadKw,looser,widest]:[p,loose,keepKw,looser,widest])){const x=await tm(path,Object.assign({page:1},q));raw=x.results||[];if(raw.length){if(!q.with_keywords)kwUsed=false;break;}}
   }
   // pochi risultati (es. anime sportivi): allargo fascia di voti e parole chiave, mantenendo epoca, durata e cose da evitare
   if(raw.length<8){
