@@ -1122,8 +1122,9 @@ const KWL={
     p:["romance","romcom","unrequited love","love triangle","first love","boyfriend girlfriend relationship","tearjerker","tragedy","terminal illness","grief"],
     b:["love","romantic comedy","crush","dating","marriage","wedding","true love","soulmates","teen romance","school romance","sadness","bittersweet","loss of loved one","coming of age"]},
   sport:{use:"all",film:true,
-    p:["sport","sports","boxing","basketball","baseball","soccer","football","volleyball","tennis","swimming","rugby","cycling"],
-    b:["athlete","coach","competition","team sport","training","underdog","rivalry","olympic games"]},
+    p:["sport","sports","boxing","basketball","baseball","soccer","volleyball","rugby","wrestling","marathon","olympic games","formula 1","golf","skateboarding","surfing","football","tennis"],   // Sport: serve almeno UNA di queste parole chiave (non per forza "sport"); tolte solo quelle ambigue (swimming, cycling, running...)
+    b:[],
+    x:[]},
   scare:{use:"all",
     p:["horror","gore","curse","splatter","slasher","psychological horror","supernatural horror","haunted house","survival horror","body horror"],
     b:["ghost","zombie","vampire","demon","monster","supernatural","paranormal","murder","serial killer","urban legend","possession","witch","werewolf","yokai"]},
@@ -1178,12 +1179,7 @@ async function tmDiscover(kind,a,anim,ja){
   // umore Sport: la parola chiave sportiva è OBBLIGATORIA. Se le precise non si risolvono provo le larghe, poi "sport" da solo;
   // se non c'è nulla non ripiego mai su drammatici/commedie qualsiasi: meglio nessun risultato.
   const must=a.mood==="sport"&&useKw;
-  if(must&&!kw){
-    const bk0=(await Promise.all(KL.b.filter(x=>AV.k.indexOf(x)<0).map(tmKw))).filter(Boolean);
-    const fx=bk0.length?bk0:[await tmKw("sport")].filter(Boolean);
-    if(fx.length)kw=uniq(fx).join("|");
-  }
-  if(must&&!kw)throw new Error("EMPTY");
+  if(must&&!kw)throw new Error("EMPTY");   // nessuna parola chiave sportiva risolta su TMDB: nessun ripiego
   const akw=AV.k.length?uniq((await Promise.all(AV.k.map(tmKw))).filter(Boolean)):[];
   // genere di ripiego: usato quando la parola chiave non c'è o viene tolta (mai un titolo "a caso")
   const gFall=anim?"16,"+pick(mood.split("|")):mood;
@@ -1210,8 +1206,12 @@ async function tmDiscover(kind,a,anim,ja){
     if(er[0])p[k+".gte"]=er[0]+"-01-01";
     if(er[1]<9999)p[k+".lte"]=er[1]+"-12-31";
   }
-  const pages=uniq([1+rand(maxPage),1+rand(maxPage)]);
   const path="/3/discover/"+(film?"movie":"tv");
+  if(must){   // Sport: scelgo le pagine a caso su TUTTO l'elenco disponibile (total_pages), così i titoli variano e non si ripetono
+    const probe=await tm(path,Object.assign({page:1},p)).catch(()=>null);
+    if(probe&&probe.total_pages)maxPage=Math.min(probe.total_pages,20);
+  }
+  const pages=uniq([1+rand(maxPage),1+rand(maxPage)]);
   let lists=await Promise.all(pages.map(pg=>tm(path,Object.assign({page:pg},p)).then(x=>x.results||[]).catch(()=>null)));
   if(lists.every(x=>x===null))throw new Error("TMDB non raggiungibile"+(LASTERR?" ("+LASTERR+")":""));
   let raw=[].concat(...lists.map(x=>x||[]));
@@ -1225,13 +1225,14 @@ async function tmDiscover(kind,a,anim,ja){
     const looser=Object.assign({},keepKw);delete looser.with_keywords;looser.with_genres=gFall;
     const widest=Object.assign({},looser,{"vote_count.gte":5});if(AV.g.length)widest.without_genres=AV.g.join("|");else delete widest.without_genres;widest.sort_by="popularity.desc";
     // con Sport le varianti che tolgono la parola chiave (looser/widest) sono escluse: lo sport resta sempre vincolante
-    for(const q of (must?[p,loose,keepKw,broadKw]:useKw&&kw?[p,loose,keepKw,broadKw,looser,widest]:[p,loose,keepKw,looser,widest])){const x=await tm(path,Object.assign({page:1},q));raw=x.results||[];if(raw.length){if(!q.with_keywords)kwUsed=false;break;}}
+    for(const q of (must?[p,loose,keepKw]:useKw&&kw?[p,loose,keepKw,broadKw,looser,widest]:[p,loose,keepKw,looser,widest])){const x=await tm(path,Object.assign({page:1},q));raw=x.results||[];if(raw.length){if(!q.with_keywords)kwUsed=false;break;}}
   }
   // pochi risultati (es. anime sportivi): allargo fascia di voti e parole chiave, mantenendo epoca, durata e cose da evitare
-  if(raw.length<8){
+  if(raw.length<(must?24:8)){
     try{
       const wide=Object.assign({},p,{"vote_count.gte":Math.min(band[0]||20,20),"vote_average.gte":5.5,sort_by:"popularity.desc"});delete wide["vote_count.lte"];
-      if(useKw&&kw){const bk=(await Promise.all(KL.b.filter(x=>AV.k.indexOf(x)<0).map(tmKw))).filter(Boolean);wide.with_keywords=uniq(kwl.concat(bk)).join("|");}
+      if(must){const xk=(await Promise.all(KL.x.filter(x=>AV.k.indexOf(x)<0).map(tmKw))).filter(Boolean);wide.with_keywords=uniq(kwl.concat(xk)).join("|");}
+      else if(useKw&&kw){const bk=(await Promise.all(KL.b.filter(x=>AV.k.indexOf(x)<0).map(tmKw))).filter(Boolean);wide.with_keywords=uniq(kwl.concat(bk)).join("|");}
       const ex=await Promise.all([1,2,3].map(pg=>tm(path,Object.assign({page:pg},wide)).then(x=>x.results||[]).catch(()=>[])));
       const have={};raw.forEach(m=>{have[m.id]=1;});
       [].concat(...ex).forEach(m=>{if(!have[m.id]){have[m.id]=1;raw.push(m);}});
