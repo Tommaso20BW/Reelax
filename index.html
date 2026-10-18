@@ -2444,5 +2444,32 @@ addEventListener("keydown",function(e){
   if(sel){var b=document.querySelector(sel);if(b){e.preventDefault();b.click();}}
 });
 </script>
+<script>
+/* aggiornamento automatico: confronta la pagina in uso con quella appena pubblicata e, se è cambiata, si ricarica da sola (senza cache) */
+(function(){
+  var HREF=location.pathname+location.search,G="rx_upd_g",busy=false;
+  try{if(/[?&]v=/.test(location.search))history.replaceState(history.state,"",location.pathname+location.hash);}catch(e){}   // tolgo il parametro dall'indirizzo
+  function h(t){var x=2166136261;for(var i=0;i<t.length;i++){x^=t.charCodeAt(i);x=Math.imul(x,16777619);}return (x>>>0).toString(36)+"-"+t.length;}
+  function get(url,opt){return fetch(url,opt).then(function(r){if(!r.ok)throw 0;return r.text();}).then(function(t){if(t.indexOf("<html")<0)throw 0;return t;});}
+  function check(){
+    if(busy||navigator.onLine===false)return;busy=true;
+    Promise.all([
+      get(HREF,{cache:"force-cache"}).then(h).catch(function(){return null;}),     // la pagina che sto usando (copia in cache)
+      get(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(t){return h(t);})   // quella appena pubblicata
+    ]).then(function(r){
+      var own=r[0],fresh=r[1];
+      if(!own||own===fresh)return;
+      try{if(sessionStorage.getItem(G)===fresh)return;}catch(e){}   // già provato: niente cicli
+      var a=document.activeElement;if(a&&/INPUT|TEXTAREA/.test(a.tagName))return;   // non interrompo chi sta scrivendo
+      try{sessionStorage.setItem(G,fresh);}catch(e){}
+      location.replace(location.pathname+"?v="+fresh+location.hash);
+    }).catch(function(){}).then(function(){busy=false;});
+  }
+  check();
+  document.addEventListener("visibilitychange",function(){if(!document.hidden)check();});
+  addEventListener("online",check);addEventListener("focus",check);
+  setInterval(check,180000);
+})();
+</script>
 </body>
 </html>
