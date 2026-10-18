@@ -748,6 +748,21 @@ const bkPreload=async list=>{   // max ~1,4 s: la griglia compare già completa
   return ok;
 };
 const bkReveal=(box,delay)=>{if(RM())return;box.querySelectorAll(".bk").forEach((el,i)=>{if(el.animate)el.animate([{opacity:0,transform:"translate3d(0,8px,0)"},{opacity:1,transform:"none"}],{duration:800,delay:(delay||0)+Math.min(i,11)*45,easing:"cubic-bezier(.2,.85,.25,1)",fill:"backwards"});});};
+/* Più in voga ora: uso discover (già consentito dal proxy), ordinato per popolarità, film e serie mescolati */
+const ago=d=>new Date(Date.now()-d*864e5).toISOString().slice(0,10);
+async function trendTitles(){
+  try{   // classifica "trending" di TMDB (serve la riga in più nel worker); se il worker non è aggiornato ripiego su discover
+    const t=await tm("/3/trending/all/week",{page:1});
+    const l=(t.results||[]).filter(x=>x.media_type==="movie"||x.media_type==="tv");
+    if(l.length)return l;
+  }catch(e){}
+  const base={sort_by:"popularity.desc","vote_count.gte":"50",include_adult:"false",page:1};
+  const r=await Promise.all([
+    tm("/3/discover/movie",Object.assign({"primary_release_date.gte":ago(120)},base)).then(x=>(x.results||[]).map(m=>Object.assign(m,{media_type:"movie"}))).catch(()=>null),
+    tm("/3/discover/tv",Object.assign({"first_air_date.gte":ago(240)},base)).then(x=>(x.results||[]).map(m=>Object.assign(m,{media_type:"tv"}))).catch(()=>null)]);
+  if(!r[0]&&!r[1])throw new Error("ricerca non disponibile");
+  return (r[0]||[]).concat(r[1]||[]).sort((a,b)=>(b.popularity||0)-(a.popularity||0));
+}
 async function doSearch(q){
   const my=++SRUN,box=$("sres");
   if(!box)return;
@@ -756,7 +771,7 @@ async function doSearch(q){
   else box.innerHTML='<p class="smsg">'+(trend?"Carico i più in voga...":"Cerco...")+'</p>';
   try{
     const [list0,al]=await Promise.all([
-      (trend?tm("/3/trending/all/week",{page:1}).then(r=>(r.results||[]).filter(x=>x.media_type==="movie"||x.media_type==="tv")):searchTitles(q)).catch(()=>null),
+      (trend?trendTitles():searchTitles(q)).catch(()=>null),
       trend?Promise.resolve([]):searchAniList(q).catch(()=>[])]);
     if(my!==SRUN||!$("sres"))return;
     if(list0===null&&!al.length)throw new Error("ricerca non disponibile");
