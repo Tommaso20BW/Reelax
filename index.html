@@ -251,7 +251,6 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .page .pfi h1{margin:0;font-size:clamp(1.55rem,6.6vw,2.1rem);overflow-wrap:anywhere}
 .pdep{display:inline-block;padding:3px 10px;border-radius:99px;background:rgba(143,98,248,.18);border:1px solid rgba(143,98,248,.35);font:700 .7rem var(--fb);letter-spacing:.1em;text-transform:uppercase}
 .pdep:empty{display:none}
-.ph{visibility:hidden}
 .pmeta{font-size:.84rem;line-height:1.35;color:var(--mut)}
 .pmeta:empty{display:none}
 .pbio{flex:none;padding:16px 18px;border-radius:var(--r2);border:1px solid var(--line);background:var(--s1);font-size:.92rem;line-height:1.55;color:var(--fg)}
@@ -784,63 +783,72 @@ function castPage(d,snap){
   $("cres").onclick=e=>{const b=e.target.closest&&e.target.closest("[data-i]");if(!b)return;tap();personPage(list[+b.dataset.i],()=>castPage(d,snap));};
 }
 const fade=(el,d,t)=>{if(RM()||!el||!el.animate)return;el.animate([{opacity:0},{opacity:1}],{duration:d||700,delay:t||0,easing:"ease-out",fill:"backwards"});};
+const DEPT={Acting:"Recitazione",Directing:"Regia",Writing:"Sceneggiatura",Production:"Produzione"};
+function personInfo(d){
+  const dep=DEPT[d.known_for_department]||d.known_for_department||"";
+  const dt=v=>{if(!v)return"";const x=new Date(v+"T00:00:00");return isNaN(x)?"":x.toLocaleDateString("it-IT",{day:"numeric",month:"long",year:"numeric"});};
+  const age=(b,e)=>{if(!b)return"";const x=new Date(b+"T00:00:00"),y=e?new Date(e+"T00:00:00"):new Date();if(isNaN(x)||isNaN(y))return"";let n=y.getFullYear()-x.getFullYear();if(y.getMonth()<x.getMonth()||(y.getMonth()===x.getMonth()&&y.getDate()<x.getDate()))n--;return n>=0&&n<130?n:"";};
+  const mt=[];
+  if(d.birthday){const a=age(d.birthday,d.deathday);mt.push("Nato/a il "+dt(d.birthday)+(a!==""&&!d.deathday?" ("+a+" anni)":""));}
+  if(d.deathday)mt.push("Morto/a il "+dt(d.deathday)+(age(d.birthday,d.deathday)!==""?" ("+age(d.birthday,d.deathday)+" anni)":""));
+  if(d.place_of_birth)mt.push(esc(d.place_of_birth));
+  return {dep:dep,meta:mt.map(x=>"<div>"+x+"</div>").join(""),bio:(d.biography||"").trim()};
+}
+function bioSetup(pb){   // come la trama: 4 righe, tutta la scheda è toccabile; apertura/chiusura lenta e morbida
+  const bw=pb.firstChild,bp=bw&&bw.firstChild;if(!bp)return;
+  const cs=getComputedStyle(bp),lh=parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.5,CH=Math.round(lh*4);
+  if(bp.scrollHeight<=CH+2)return;
+  const bt=document.createElement("span");bt.className="more";bt.textContent="Leggi tutto";pb.appendChild(bt);
+  pb.classList.add("tap","clamped");pb.setAttribute("role","button");pb.tabIndex=0;pb.setAttribute("aria-expanded","false");
+  bw.style.height=CH+"px";
+  let anim=null,open=false;
+  const toggle=()=>{
+    if(window.getSelection&&String(window.getSelection()).length>0)return;
+    const from=bw.getBoundingClientRect().height;
+    if(anim){anim.cancel();anim=null;}
+    open=!open;
+    const to=open?bp.scrollHeight:CH;
+    bw.style.height=to+"px";
+    pb.classList.toggle("clamped",!open);pb.setAttribute("aria-expanded",open);bt.textContent=open?"Riduci":"Leggi tutto";
+    if(!RM()&&bw.animate){
+      const dur=Math.round(Math.min(1300,Math.max(650,500+Math.abs(to-from)*1.6)));
+      anim=bw.animate([{height:from+"px"},{height:to+"px"}],{duration:dur,easing:"cubic-bezier(.32,.72,0,1)"});
+      anim.onfinish=anim.oncancel=()=>{anim=null;};
+    }
+    if(open)bw.style.height="auto";
+  };
+  pb.onclick=()=>{tap();toggle();};
+  pb.onkeydown=e=>{if(e.target===pb&&(e.key==="Enter"||e.key===" ")){e.preventDefault();toggle();}};
+}
 async function personPage(p,backFn){
   if(!p)return;
   setBd(p.img?"https://image.tmdb.org/t/p/w342"+p.img:null);
   const my=++RUN;
-  swap('<div class="page"><div class="pf"><span class="pfp">'+(p.img?'<img src="https://image.tmdb.org/t/p/w342'+esc(p.img)+'" alt="" referrerpolicy="no-referrer">':'👤')+'</span><div class="pfi"><h1>'+esc(p.name)+'</h1><span class="pdep ph" id="pdep">Recitazione</span><span class="pmeta ph" id="pmeta"><div>&nbsp;</div><div>&nbsp;</div></span></div></div><div class="pbio" id="pbio"></div><div class="plab" id="plab"></div><div class="sres lib" id="pres"><p class="smsg">Carico...</p></div></div>',true);
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>{RUN++;backFn();}}});
-  {   // entrata: solo dissolvenza, nessun movimento
-    fade(stage.querySelector(".pf"),800);
-    fade(stage.querySelector(".pfp"),900,150);
-    fade(stage.querySelector(".pfi h1"),800,250);
-  }
+  // prima i dati (max ~0,5 s): la scheda in alto compare già completa e nella misura giusta, così non si allarga a scatti
+  let d=null,err=null;
+  const fp=tm("/3/person/"+p.id,{append_to_response:"combined_credits"}).then(x=>{d=x;}).catch(e=>{err=e;});
+  await Promise.race([fp,new Promise(r=>setTimeout(r,500))]);
+  if(my!==RUN)return;
+  const inf=d?personInfo(d):null;
+  const photo='<span class="pfp">'+(p.img?'<img src="https://image.tmdb.org/t/p/w342'+esc(p.img)+'" alt="" referrerpolicy="no-referrer">':'👤')+'</span>';
+  swap('<div class="page"><div class="pf">'+photo+'<div class="pfi"><h1>'+esc(p.name)+'</h1><span class="pdep" id="pdep">'+esc(inf?inf.dep:"")+'</span><span class="pmeta" id="pmeta">'+(inf?inf.meta:"")+'</span></div></div><div class="pbio" id="pbio">'+(inf&&inf.bio?'<div class="bw"><p>'+esc(inf.bio)+'</p></div>':"")+'</div><div class="plab" id="plab"></div><div class="sres lib" id="pres">'+(err?"":'<p class="smsg">Carico...</p>')+'</div></div>',true);
+  fade(stage.querySelector(".pf"),900);
+  const pb=$("pbio");if(inf&&inf.bio){bioSetup(pb);fade(pb,900,100);}
   const box=$("pres");
   box.onclick=e=>{const b=e.target.closest&&e.target.closest("[data-i]");if(!b)return;tap();openSearched(PLIST[+b.dataset.i],()=>personPage(p,backFn));};
   try{
-    const d=await tm("/3/person/"+p.id,{append_to_response:"combined_credits"});
-    if(my!==RUN||!$("pres"))return;
-    const dep={Acting:"Recitazione",Directing:"Regia",Writing:"Sceneggiatura",Production:"Produzione"}[d.known_for_department]||d.known_for_department||"";
-    const pd=$("pdep");if(pd){pd.textContent=dep;pd.classList.remove("ph");}
-    // data/luogo di nascita (e di morte), età
-    const dt=v=>{if(!v)return"";const x=new Date(v+"T00:00:00");return isNaN(x)?"":x.toLocaleDateString("it-IT",{day:"numeric",month:"long",year:"numeric"});};
-    const age=(b,e)=>{if(!b)return"";const x=new Date(b+"T00:00:00"),y=e?new Date(e+"T00:00:00"):new Date();if(isNaN(x)||isNaN(y))return"";let n=y.getFullYear()-x.getFullYear();if(y.getMonth()<x.getMonth()||(y.getMonth()===x.getMonth()&&y.getDate()<x.getDate()))n--;return n>=0&&n<130?n:"";};
-    const mt=[];
-    if(d.birthday){const a=age(d.birthday,d.deathday);mt.push("Nato/a il "+dt(d.birthday)+(a!==""&&!d.deathday?" ("+a+" anni)":""));}
-    if(d.deathday)mt.push("Morto/a il "+dt(d.deathday)+(age(d.birthday,d.deathday)!==""?" ("+age(d.birthday,d.deathday)+" anni)":""));
-    if(d.place_of_birth)mt.push(esc(d.place_of_birth));
-    const pm=$("pmeta");if(pm){pm.innerHTML=mt.map(x=>"<div>"+x+"</div>").join("");pm.classList.remove("ph");}
-    const pb=$("pbio"),bio=(d.biography||"").trim();
-    if(pm&&mt.length)fade(pm,700,100);
-    if(pd&&dep)fade(pd,600,50);
-    if(pb&&bio){
-      pb.innerHTML='<div class="bw"><p>'+esc(bio)+'</p></div>';
-      const bw=pb.firstChild,bp=bw.firstChild,cs=getComputedStyle(bp),lh=parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.5,CH=Math.round(lh*4);
-      if(bp.scrollHeight>CH+2){   // come la trama: tutta la scheda è toccabile; apertura/chiusura lenta e morbida
-        const bt=document.createElement("span");bt.className="more";bt.textContent="Leggi tutto";pb.appendChild(bt);
-        pb.classList.add("tap","clamped");pb.setAttribute("role","button");pb.tabIndex=0;pb.setAttribute("aria-expanded","false");
-        bw.style.height=CH+"px";
-        let anim=null,open=false;
-        const toggle=()=>{
-          if(window.getSelection&&String(window.getSelection()).length>0)return;
-          const from=bw.getBoundingClientRect().height;
-          if(anim){anim.cancel();anim=null;}
-          open=!open;
-          const to=open?bp.scrollHeight:CH;
-          bw.style.height=to+"px";
-          pb.classList.toggle("clamped",!open);pb.setAttribute("aria-expanded",open);bt.textContent=open?"Riduci":"Leggi tutto";
-          if(!RM()&&bw.animate){
-            const dur=Math.round(Math.min(1300,Math.max(650,500+Math.abs(to-from)*1.6)));
-            anim=bw.animate([{height:from+"px"},{height:to+"px"}],{duration:dur,easing:"cubic-bezier(.32,.72,0,1)"});
-            anim.onfinish=anim.oncancel=()=>{anim=null;};
-          }
-          if(open)bw.style.height="auto";
-        };
-        pb.onclick=()=>{tap();toggle();};
-        pb.onkeydown=e=>{if(e.target===pb&&(e.key==="Enter"||e.key===" ")){e.preventDefault();toggle();}};
+    if(!d&&!err){   // dati lenti: la scheda è già su con foto e nome, il resto sfuma dentro appena arriva
+      await fp;
+      if(my!==RUN||!$("pres"))return;
+      if(d){
+        const i2=personInfo(d);
+        $("pdep").textContent=i2.dep;$("pmeta").innerHTML=i2.meta;
+        if(i2.bio){pb.innerHTML='<div class="bw"><p>'+esc(i2.bio)+'</p></div>';bioSetup(pb);fade(pb,800);}
+        fade($("pmeta"),700);fade($("pdep"),600);
       }
-      fade(pb,800,100);
     }
+    if(err||!d)throw err||new Error("nessun dato");
     const cc=d.combined_credits||{},seen={},items=[];
     const bad=x=>(x.genre_ids||[]).some(g=>g===10767||g===10763||g===10764)||/\b(self|himself|herself)\b/i.test(x.character||"");
     (cc.cast||[]).filter(x=>!bad(x)).concat((cc.crew||[]).filter(x=>x.job==="Director"&&!bad(x))).forEach(x=>{
