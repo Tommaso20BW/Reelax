@@ -316,6 +316,7 @@ body.pre #app{opacity:0}
 @keyframes sel{0%{box-shadow:0 0 0 0 rgba(255,61,82,.55)}100%{box-shadow:0 0 0 16px rgba(255,61,82,0)}}
 .opt.hit{animation:sel .5s ease-out}
 .in .res>*{animation:chipIn .8s var(--ease) backwards;animation-delay:calc(var(--k,0)*70ms + 40ms)}
+.in .tag{animation:chipIn .8s var(--ease) backwards;animation-delay:.22s}
 .in .chip{animation:chipIn .8s var(--ease) backwards;animation-delay:calc(.3s + var(--c,0)*60ms)}
 .in .why li{animation:chipIn .8s var(--ease) backwards;animation-delay:calc(.4s + var(--c,0)*90ms)}
 .in .pv{animation:chipIn .8s var(--ease) backwards;animation-delay:calc(.3s + var(--c,0)*45ms)}
@@ -1510,6 +1511,25 @@ function polish(p,r){
     }
   }
 }
+/* secondo disegno della scheda (arrivano i dettagli): ciò che esisteva già resta fermo o scivola al nuovo posto,
+   ciò che è nuovo (trailer, chip, piattaforme, cast...) entra con la stessa dissolvenza morbida di tutto il resto */
+const EZ="cubic-bezier(.2,.85,.25,1)";
+const keyOf=el=>el.tagName+"|"+(el.querySelector&&el.querySelector("h3")?el.querySelector("h3").textContent:el.className);
+const smallKey=el=>el.className+"|"+(el.title||el.textContent);
+const softIn=(el,delay)=>{if(el.animate)el.animate([{opacity:0,transform:"translate3d(0,8px,0)"},{opacity:1,transform:"none"}],{duration:800,delay:delay||0,easing:EZ,fill:"backwards"});};
+function settle(snap){
+  const fresh=new Set();
+  stage.querySelectorAll('.res>*').forEach(el=>{
+    const t=snap.top[keyOf(el)];
+    if(t===undefined){fresh.add(el);softIn(el,80);}
+    else{const dy=t-el.getBoundingClientRect().top;if(Math.abs(dy)>1&&el.animate)el.animate([{transform:"translate3d(0,"+dy+"px,0)"},{transform:"none"}],{duration:700,easing:EZ});}
+  });
+  stage.querySelectorAll('.chip,.tag,.pv').forEach((el,i)=>{
+    if(snap.small.has(smallKey(el)))return;
+    const host=el.closest('.res>*');if(host&&fresh.has(host))return;
+    softIn(el,el.classList.contains('tag')?100:140+i*50);
+  });
+}
 function show(r,sur,man,quiet){
   S.cur=r;S.curSur=sur;S.curMan=man;const d=r.d;let p=pct(r.s);if(sur)p=Math.max(60,p-6);
   const poster=d.poster
@@ -1535,6 +1555,8 @@ function show(r,sur,man,quiet){
     '<p class="attr">'+attrTxt(d).split('\n').map(l=>'<span>'+esc(l)+'</span>').join('')+'</p>'+
   '</div>';
   const sy=stage.scrollTop;
+  let snap=null;
+  if(quiet===true&&!RM()){snap={top:{},small:new Set()};stage.querySelectorAll('.res>*').forEach(el=>{snap.top[keyOf(el)]=el.getBoundingClientRect().top;});stage.querySelectorAll('.chip,.tag,.pv').forEach(el=>snap.small.add(smallKey(el)));}
   stage.classList.toggle('q',!!quiet);
   if(quiet===true)stage.classList.remove('in');   // niente animazioni di ingresso al secondo disegno
   swap(h,quiet===true?false:undefined);
@@ -1546,6 +1568,7 @@ function show(r,sur,man,quiet){
   if(man)stage.querySelectorAll('.card').forEach(c=>{const h3=c.querySelector('h3');if(c.classList.contains('compat')||(h3&&h3.textContent==='Perché fa per te'))c.remove();});
   const rs=stage.querySelectorAll('.res>*');rs.forEach((el,i)=>el.style.setProperty('--k',i));
   polish(p,r);
+  if(snap)settle(snap);
   setBd(d.poster);
   if(man){
     ui({
