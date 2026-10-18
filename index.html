@@ -1190,6 +1190,16 @@ async function tmDiscover(kind,a,anim,ja){
     const widest=Object.assign({},looser,{"vote_count.gte":5});if(AV.g.length)widest.without_genres=AV.g.join("|");else delete widest.without_genres;widest.sort_by="popularity.desc";
     for(const q of (useKw&&kw?[p,loose,keepKw,broadKw,looser,widest]:[p,loose,keepKw,looser,widest])){const x=await tm(path,Object.assign({page:1},q));raw=x.results||[];if(raw.length){if(!q.with_keywords)kwUsed=false;break;}}
   }
+  // pochi risultati (es. anime sportivi): allargo fascia di voti e parole chiave, mantenendo epoca, durata e cose da evitare
+  if(raw.length<8){
+    try{
+      const wide=Object.assign({},p,{"vote_count.gte":Math.min(band[0]||20,20),"vote_average.gte":5.5,sort_by:"popularity.desc"});delete wide["vote_count.lte"];
+      if(useKw&&kw){const bk=(await Promise.all(KL.b.filter(x=>AV.k.indexOf(x)<0).map(tmKw))).filter(Boolean);wide.with_keywords=uniq(kwl.concat(bk)).join("|");}
+      const ex=await Promise.all([1,2,3].map(pg=>tm(path,Object.assign({page:pg},wide)).then(x=>x.results||[]).catch(()=>[])));
+      const have={};raw.forEach(m=>{have[m.id]=1;});
+      [].concat(...ex).forEach(m=>{if(!have[m.id]){have[m.id]=1;raw.push(m);}});
+    }catch(e){}
+  }
   const gen=ids=>ja?[].concat(...(ids||[]).map(i=>TM_ANIME[i]||[])):film?(ids||[]).map(i=>TM_FILM[i]).filter(Boolean):[].concat(...(ids||[]).map(i=>TM_TV[i]||[]));
   let base=raw.filter(m=>m.overview&&m.overview.length>25&&(!anim||ja||m.original_language!=="ja"));
   const okEx=base.filter(m=>!(m.genre_ids||[]).some(g=>exAll.indexOf(g)>=0));if(okEx.length>=3)base=okEx;
