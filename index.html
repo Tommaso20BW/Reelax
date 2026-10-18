@@ -1318,7 +1318,19 @@ const pfOn=()=>{try{return localStorage.getItem(PFKEY)==="1";}catch(e){return fa
 const pfSet=v=>{try{localStorage.setItem(PFKEY,v?"1":"0");}catch(e){}};
 const pfSel=()=>L.platforms.filter(x=>x&&typeof x==="object"&&Array.isArray(x.ids));
 const pfIds=()=>pfOn()?[].concat(...pfSel().map(x=>x.ids)):[];
+function pfNorm(){   // selezioni salvate con nomi doppi (es. Amazon Video + Amazon Prime Video): le unisco
+  const m=new Map();let ch=false;
+  L.platforms.forEach(x=>{
+    if(!x||typeof x!=="object"||!Array.isArray(x.ids)){m.set(Math.random(),x);return;}
+    const k=PV_AL[x.k]||x.k,o=m.get(k);
+    if(x.k!==k)ch=true;
+    if(!o)m.set(k,{k:k,n:PV_NM[k]||x.n,l:x.l,ids:x.ids.slice()});
+    else{ch=true;x.ids.forEach(i=>{if(o.ids.indexOf(i)<0)o.ids.push(i);});if(x.k===k&&x.l)o.l=x.l;}
+  });
+  if(ch){L.platforms=[...m.values()];lsave();}
+}
 function pfGroup(){
+  pfNorm();
   const on=pfOn(),n=pfSel().length;
   return '<button type="button" class="srow" data-act="pfsw" role="switch" aria-checked="'+on+'">'+IC.tv+'<span class="sl">Filtra per piattaforme</span><span class="sw'+(on?' on':'')+'"><i></i></span></button>'+
     (on?'<button type="button" class="srow" data-act="pfpick">'+IC.grid+'<span class="sl">Le mie piattaforme</span><span class="sn">'+(n?n:'Scegli')+'</span>'+IC.chev+'</button>':'');
@@ -1383,16 +1395,17 @@ async function pfLoad(){
     const k=provKey(raw);if(!k)return;
     const nm=provBase(raw).replace(/\s+(con pubblicit[aà]|with ads)$/i,"").trim();
     const pr=(p.display_priorities&&p.display_priorities.IT!=null)?p.display_priorities.IT:(p.display_priority!=null?p.display_priority:999);
-    const o=m.get(k);
-    if(!o)m.set(k,{k:k,n:nm,l:p.logo_path||"",ids:[p.provider_id],pr:pr});
-    else{if(o.ids.indexOf(p.provider_id)<0)o.ids.push(p.provider_id);o.pr=Math.min(o.pr,pr);if(!o.l&&p.logo_path)o.l=p.logo_path;if(nm.length<o.n.length)o.n=nm;}
+    const o=m.get(k),main=provKey0(raw)===k&&p.logo_path;
+    if(!o)m.set(k,{k:k,n:nm,l:p.logo_path||"",ids:[p.provider_id],pr:pr,m:!!main});
+    else{if(o.ids.indexOf(p.provider_id)<0)o.ids.push(p.provider_id);o.pr=Math.min(o.pr,pr);if(main&&!o.m){o.l=p.logo_path;o.m=true;}else if(!o.l&&p.logo_path)o.l=p.logo_path;if(nm.length<o.n.length)o.n=nm;}
   }));
+  m.forEach(o=>{if(PV_NM[o.k])o.n=PV_NM[o.k];});
   const l=[...m.values()].sort((a,b)=>a.pr-b.pr).slice(0,60);
   if(l.length)PFLIST=l;
   return l;
 }
 async function pfPage(){
-  RUN++;SRUN++;setBd(null);
+  RUN++;SRUN++;setBd(null);pfNorm();
   swap('<div class="page"><h1>Le mie piattaforme</h1><p class="sub">Scegli i servizi che hai: ti propongo solo titoli disponibili lì, in abbonamento o gratis.</p><div class="pfg" id="pfg"><div class="lemp">'+IC.tv+'<span>Carico…</span></div></div></div>',true);
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>settingsPage()}});
   const box=$("pfg");
@@ -1752,7 +1765,11 @@ function why(r,sur){
 // stesso servizio venduto anche come "canale" dentro Prime Video / Apple TV (es. Paramount+, Paramount+ Amazon Channel, Paramount Plus Apple TV Channel): un solo logo
 const CH_RE=/\s+(Apple\s*TV|Amazon|Prime\s*Video)(\s+Amazon)?\s+Channel$/i;
 const provBase=n=>String(n||"").replace(CH_RE,"").trim();
-const provKey=n=>{let k=provBase(n).toLowerCase().replace(/\+/g,"plus").replace(/with ads|con pubblicit[aà]/g,"").replace(/[^a-z0-9]+/g,"");if(/^(amazon)?primevideo$/.test(k))k="primevideo";return k;};
+const provKey0=n=>{let k=provBase(n).toLowerCase().replace(/\+/g,"plus").replace(/with ads|con pubblicit[aà]/g,"").replace(/[^a-z0-9]+/g,"");if(/^(amazon)?primevideo$/.test(k))k="primevideo";return k;};
+/* stesso servizio con piu' nomi su TMDB: li unisco (nome e logo del servizio principale) */
+const PV_AL={amazonvideo:"primevideo",appletvstore:"appletv",appletvplus:"appletv",infinityplus:"mediasetinfinity",infinity:"mediasetinfinity"};
+const PV_NM={primevideo:"Amazon Prime Video",appletv:"Apple TV",mediasetinfinity:"Mediaset Infinity"};
+const provKey=n=>{const k=provKey0(n);return PV_AL[k]||k;};
 function dedupeProv(arr){const m=new Map();arr.forEach(p=>{const k=provKey(p.provider_name),ch=CH_RE.test(p.provider_name||"")||/with ads|con pubblicit/i.test(p.provider_name||"");const o=m.get(k);if(!o)m.set(k,{p,ch});else if(o.ch&&!ch)m.set(k,{p,ch});});return Array.from(m.values()).map(x=>x.p);}
 function provHtml(d){
   if(d.rl!=="TMDB"||!d.provKnown)return "";
