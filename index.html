@@ -535,6 +535,16 @@ body.pre #app{opacity:0}
 .segw.show .seg button{animation:segIn .55s var(--ease) backwards;animation-delay:calc(.16s + var(--n,0)*70ms)}
 .segw.show .segq{animation:segIn .5s var(--ease) .1s backwards}
 @media (min-width:900px) and (min-height:560px){.segi{align-items:center}}
+
+/* ===== TEMA CHIARO: ritocchi di dettaglio ===== */
+:root[data-theme="light"]{--gold:#a9710a}
+:root[data-theme="light"] .ringw .bgc{stroke:rgba(30,20,60,.12)}
+:root[data-theme="light"] .poster{box-shadow:0 24px 50px rgba(60,30,110,.28),0 0 40px rgba(143,98,248,.16)}
+:root[data-theme="light"] .bk .cv{box-shadow:0 8px 20px rgba(60,30,110,.2),0 0 0 1px var(--line) inset}
+:root[data-theme="light"] .chip.r{border-color:rgba(169,113,10,.4)}
+:root[data-theme="light"] .why li b{background:rgba(169,113,10,.14)}
+:root[data-theme="light"] .btn.tg.on{background:rgba(169,113,10,.12)}
+@media (hover:hover){:root[data-theme="light"] .bk:hover .cv{box-shadow:0 12px 28px rgba(60,30,110,.28),0 0 0 1px var(--line2) inset}}
 </style>
 </head>
 <body class="pre">
@@ -2104,7 +2114,7 @@ async function share(){
 /* ---------- Locandina grande (lightbox con animazione di ingrandimento) ---------- */
 let LB=null,PEND=null,OA=null;
 const EASE="cubic-bezier(.25,.8,.25,1)";
-const SH1="0 24px 50px rgba(0,0,0,.6),0 0 40px rgba(143,98,248,.25)",SH0="0 24px 50px rgba(0,0,0,0),0 0 40px rgba(143,98,248,0)";
+const rxLight=()=>document.documentElement.getAttribute("data-theme")==="light";const SHC1=()=>rxLight()?"0 24px 50px rgba(60,30,110,.28),0 0 40px rgba(143,98,248,.16)":"0 24px 50px rgba(0,0,0,.6),0 0 40px rgba(143,98,248,.25)";const SHC0=()=>rxLight()?"0 24px 50px rgba(60,30,110,0),0 0 40px rgba(143,98,248,0)":"0 24px 50px rgba(0,0,0,0),0 0 40px rgba(143,98,248,0)";
 const bigUrl=u=>String(u||"").replace("/t/p/w500/","/t/p/w780/").replace(/\?width=\d+$/,"?width=900");
 function rad(el){const r=parseFloat(getComputedStyle(el).borderTopLeftRadius);return isNaN(r)?16:r;}
 // misura la locandina "a riposo" (ignora l'effetto di pressione scale(.97))
@@ -2132,7 +2142,7 @@ function openLb(el){
   const R=rad(el),k=sr.width/T.w,ik=1/k;
   card.getAnimations().forEach(x=>x.cancel());
   // ombra "in scala inversa": all'inizio, ridotta dalla transform, è IDENTICA a quella della locandina piccola
-  const sh="0 "+(24*ik)+"px "+(50*ik)+"px rgba(0,0,0,.6),0 0 "+(40*ik)+"px rgba(143,98,248,.25)";
+  const sh="0 "+(24*ik)+"px "+(50*ik)+"px "+(rxLight()?"rgba(60,30,110,.28)":"rgba(0,0,0,.6)")+",0 0 "+(40*ik)+"px "+(rxLight()?"rgba(143,98,248,.16)":"rgba(143,98,248,.25)");
   card.style.cssText="left:"+T.x+"px;top:"+T.y+"px;width:"+T.w+"px;height:"+T.h+"px;border-radius:"+R+"px;box-shadow:"+sh;
   const im=el.querySelector("img");
   if(im)card.style.cssText+=";box-sizing:border-box;padding:1px;background:var(--s2)";
@@ -2157,7 +2167,7 @@ function openLb(el){
   lb.classList.add("on");void lb.offsetWidth;lb.classList.add("show");
   el.classList.add("lbhide");     // nasconde solo immagine/bordo: l'ombra resta sulla locandina, SOTTO il titolo
   el.getAnimations().forEach(x=>x.cancel());
-  el.animate([{boxShadow:SH1},{boxShadow:SH0}],{duration:RM()?1:560,easing:"ease-out",fill:"forwards"});
+  el.animate([{boxShadow:SHC1()},{boxShadow:SHC0()}],{duration:RM()?1:560,easing:"ease-out",fill:"forwards"});
   const D=RM()?1:780;
   const F0={x:sr.left-T.x,y:sr.top-T.y,s:k},F1={x:0,y:0,s:1};
   const VC=visClip(el,sr);
@@ -2187,7 +2197,7 @@ function doCloseLb(){
     L.lb.classList.remove("on");L.card.innerHTML="";L.card.style.transform="";};
   const D=RM()?1:640;
   L.el.getAnimations().forEach(x=>x.cancel());
-  L.el.animate([{boxShadow:SH0},{boxShadow:SH0,offset:.3},{boxShadow:SH1}],{duration:D,easing:"ease-in-out"});
+  L.el.animate([{boxShadow:SHC0()},{boxShadow:SHC0(),offset:.3},{boxShadow:SHC1()}],{duration:D,easing:"ease-in-out"});
   let m0;try{m0=new DOMMatrix(cur&&cur!=="none"?cur:"none");}catch(e){m0=new DOMMatrix();}
   const C0={x:m0.e,y:m0.f,s:m0.a||1},C1={x:sr.left-L.T.x,y:sr.top-L.T.y,s:k};
   const VC=visClip(L.el,sr);
@@ -2469,6 +2479,7 @@ addEventListener("keydown",function(e){
   document.addEventListener("visibilitychange",function(){if(!document.hidden)check();});
   addEventListener("online",check);addEventListener("focus",check);
   setInterval(check,180000);
+  if("serviceWorker" in navigator&&location.protocol==="https:")addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){});});   // avvio rapido e uso offline
 })();
 </script>
 </body>
