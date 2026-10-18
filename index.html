@@ -244,9 +244,10 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
   @media (hover:hover){.bk:hover .cv{box-shadow:0 12px 28px rgba(0,0,0,.55),0 0 0 1px var(--line2) inset}.bk:hover{transform:translateY(-3px)}}}
 .smsg{margin:10px 0;text-align:center;color:var(--mut);font-size:.9rem}
 .sr .th.p{width:52px;aspect-ratio:1;border-radius:50%;font-size:1.4rem}
-.pf{flex:none;display:flex;align-items:center;gap:18px;padding:18px;border-radius:var(--r3);border:1px solid var(--line);background:radial-gradient(120% 140% at 0 0,rgba(143,98,248,.22),transparent 60%),linear-gradient(160deg,var(--s2),var(--s1))}
+.pf{flex:none;min-height:182px;display:flex;align-items:center;gap:18px;padding:18px;border-radius:var(--r3);border:1px solid var(--line);background:radial-gradient(120% 140% at 0 0,rgba(143,98,248,.22),transparent 60%),linear-gradient(160deg,var(--s2),var(--s1))}
 .pfp{flex:none;width:96px;aspect-ratio:1;border-radius:50%;overflow:hidden;display:grid;place-items:center;font-size:2.4rem;background:var(--s3);box-shadow:0 0 0 3px var(--bg),0 0 0 5px rgba(143,98,248,.55),0 12px 30px rgba(0,0,0,.5)}
-.pfp img{width:100%;height:100%;object-fit:cover}
+.pfp img{width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .6s ease}
+.pfp img.ld{opacity:1}
 .pfi{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:6px}
 .page .pfi h1{margin:0;font-size:clamp(1.55rem,6.6vw,2.1rem);overflow-wrap:anywhere}
 .pdep{display:inline-block;padding:3px 10px;border-radius:99px;background:rgba(143,98,248,.18);border:1px solid rgba(143,98,248,.35);font:700 .7rem var(--fb);letter-spacing:.1em;text-transform:uppercase}
@@ -373,7 +374,7 @@ body.pre #app{opacity:0}
   .page:not(:has(.opts)) h1{text-align:left}
   .page:has(.lib){max-width:1040px}
   .page:has(.pf){max-width:1040px}
-  .pf{gap:30px;padding:28px 32px}
+  .pf{gap:30px;padding:28px 32px;min-height:210px}
   .pfp{width:150px;font-size:3.4rem}
   .page .pfi h1{font-size:clamp(2.2rem,3.6vw,3rem)}
   .pmeta{font-size:.95rem}
@@ -615,7 +616,13 @@ document.addEventListener("click",e=>{
   const f=ACT[b.dataset.act];if(f){tap();try{f();}catch(x){}}
 });
 const tap=()=>{try{navigator.vibrate&&navigator.vibrate(8);}catch(e){}};
-function setBd(u){const b=$("bd");if(u){b.firstElementChild.style.backgroundImage='url("'+u.replace(/"/g,"%22")+'")';b.classList.add("on");}else b.classList.remove("on");}
+function setBd(u){   // cambio sfondo morbido: se ce n'è già uno si dissolve prima di mostrare il nuovo (niente scatto)
+  const b=$("bd"),i=b.firstElementChild;clearTimeout(b._t);
+  const put=()=>{i.style.backgroundImage='url("'+u.replace(/"/g,"%22")+'")';i._u=u;b.classList.add("on");};
+  if(!u){b.classList.remove("on");return;}
+  if(b.classList.contains("on")&&i._u&&i._u!==u){b.classList.remove("on");b._t=setTimeout(put,320);}
+  else put();
+}
 
 /* ---------- Scelta a pagine ---------- */
 const STEPS=[
@@ -825,28 +832,22 @@ async function personPage(p,backFn){
   setBd(p.img?"https://image.tmdb.org/t/p/w342"+p.img:null);
   const my=++RUN;
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>{RUN++;backFn();}}});
-  // prima i dati (max ~0,5 s): la scheda in alto compare già completa e nella misura giusta, così non si allarga a scatti
+  // la scheda compare subito, con l'altezza già riservata (niente allargamenti): ruolo, dati e biografia sfumano dentro all'arrivo
   let d=null,err=null;
   const fp=tm("/3/person/"+p.id,{append_to_response:"combined_credits"}).then(x=>{d=x;}).catch(e=>{err=e;});
-  await Promise.race([fp,new Promise(r=>setTimeout(r,500))]);
-  if(my!==RUN)return;
-  const inf=d?personInfo(d):null;
-  const photo='<span class="pfp">'+(p.img?'<img src="https://image.tmdb.org/t/p/w342'+esc(p.img)+'" alt="" referrerpolicy="no-referrer">':'👤')+'</span>';
-  swap('<div class="page"><div class="pf">'+photo+'<div class="pfi"><h1>'+esc(p.name)+'</h1><span class="pdep" id="pdep">'+esc(inf?inf.dep:"")+'</span><span class="pmeta" id="pmeta">'+(inf?inf.meta:"")+'</span></div></div><div class="pbio" id="pbio">'+(inf&&inf.bio?'<div class="bw"><p>'+esc(inf.bio)+'</p></div>':"")+'</div><div class="plab" id="plab"></div><div class="sres lib" id="pres">'+(err?"":'<p class="smsg">Carico...</p>')+'</div></div>',true);
-  fade(stage.querySelector(".pf"),900);
-  const pb=$("pbio");if(inf&&inf.bio){bioSetup(pb);fade(pb,900,100);}
-  const box=$("pres");
+  const photo='<span class="pfp">'+(p.img?'<img src="https://image.tmdb.org/t/p/w342'+esc(p.img)+'" alt="" referrerpolicy="no-referrer" onload="this.classList.add(\'ld\')">':'👤')+'</span>';
+  swap('<div class="page"><div class="pf">'+photo+'<div class="pfi"><h1>'+esc(p.name)+'</h1><span class="pdep" id="pdep"></span><span class="pmeta" id="pmeta"></span></div></div><div class="pbio" id="pbio"></div><div class="plab" id="plab"></div><div class="sres lib" id="pres"></div></div>',true);
+  {const im=stage.querySelector(".pfp img");if(im&&im.complete)im.classList.add("ld");}
+  const pb=$("pbio"),box=$("pres");
   box.onclick=e=>{const b=e.target.closest&&e.target.closest("[data-i]");if(!b)return;tap();openSearched(PLIST[+b.dataset.i],()=>personPage(p,backFn));};
   try{
-    if(!d&&!err){   // dati lenti: la scheda è già su con foto e nome, il resto sfuma dentro appena arriva
-      await fp;
-      if(my!==RUN||!$("pres"))return;
-      if(d){
-        const i2=personInfo(d);
-        $("pdep").textContent=i2.dep;$("pmeta").innerHTML=i2.meta;
-        if(i2.bio){pb.innerHTML='<div class="bw"><p>'+esc(i2.bio)+'</p></div>';bioSetup(pb);fade(pb,800);}
-        fade($("pmeta"),700);fade($("pdep"),600);
-      }
+    await fp;
+    if(my!==RUN||!$("pres"))return;
+    if(d){
+      const i2=personInfo(d);
+      $("pdep").textContent=i2.dep;$("pmeta").innerHTML=i2.meta;
+      fade($("pmeta"),800);fade($("pdep"),700);
+      if(i2.bio){pb.innerHTML='<div class="bw"><p>'+esc(i2.bio)+'</p></div>';bioSetup(pb);fade(pb,900,80);}
     }
     if(err||!d)throw err||new Error("nessun dato");
     const cc=d.combined_credits||{},seen={},items=[];
