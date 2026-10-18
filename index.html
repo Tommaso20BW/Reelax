@@ -769,7 +769,7 @@ async function doSearch(q){
   if(!box)return;
   const trend=q.length<2;   // campo vuoto: mostro i titoli più in voga del momento
   if(box.querySelector(".bk"))box.classList.add("busy");   // risultati precedenti restano, attenuati: niente sfarfallio a ogni lettera
-  else box.innerHTML='<p class="smsg">'+(trend?"Carico i più in voga...":"Cerco...")+'</p>';
+  else box.innerHTML='<p class="smsg">'+(trend?"Carico le tendenze...":"Cerco...")+'</p>';
   try{
     const [list0,al]=await Promise.all([
       (trend?trendTitles():searchTitles(q)).catch(()=>null),
@@ -782,7 +782,7 @@ async function doSearch(q){
     if(my!==SRUN||!$("sres"))return;
     box.classList.remove("busy");
     $("sres").classList.remove("busy");
-    $("sres").innerHTML=SLIST.length?(trend?'<p class="trl">I più in voga ora</p>':"")+SLIST.map((x,i)=>bkCard(x,i,ok)).join(""):'<p class="smsg">Nessun risultato.</p>';
+    $("sres").innerHTML=SLIST.length?(trend?'<p class="trl">Di tendenza ora</p>':"")+SLIST.map((x,i)=>bkCard(x,i,ok)).join(""):'<p class="smsg">Nessun risultato.</p>';
     if(SLIST.length)bkReveal($("sres"));
   }catch(e){
     if(my!==SRUN||!$("sres"))return;
