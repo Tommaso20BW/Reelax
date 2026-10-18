@@ -755,9 +755,10 @@ async function doSearch(q){
   if(box.querySelector(".bk"))box.classList.add("busy");   // risultati precedenti restano, attenuati: niente sfarfallio a ogni lettera
   else box.innerHTML='<p class="smsg">Cerco...</p>';
   try{
-    const [list0,al]=await Promise.all([searchTitles(q),searchAniList(q).catch(()=>[])]);
+    const [list0,al]=await Promise.all([searchTitles(q).catch(()=>null),searchAniList(q).catch(()=>[])]);
     if(my!==SRUN||!$("sres"))return;
-    const list=mergeAl(list0,al);
+    if(list0===null&&!al.length)throw new Error("ricerca non disponibile");
+    const list=mergeAl(list0||[],al);
     SLIST=list.slice(0,22);
     const ok=await bkPreload(SLIST);
     if(my!==SRUN||!$("sres"))return;
@@ -1314,7 +1315,7 @@ async function animeViaTmdb(c){
     const r=await tm("/3/search/"+(mv?"movie":"tv"),{query:c.title,page:1});
     const ok=(r.results||[]).filter(x=>x.original_language==="ja"||(x.genre_ids||[]).indexOf(16)>=0);
     const near=x=>!y||!yr(x)||Math.abs(yr(x)-y)<=1;
-    const best=ok.find(x=>(sameTitle(ti(x),c.title)||sameTitle(oti(x),c.title))&&near(x))||(y?ok.find(x=>yr(x)&&Math.abs(yr(x)-y)<=1):null);
+    const best=ok.find(x=>(sameTitle(ti(x),c.title)||sameTitle(oti(x),c.title)||(c.alt||[]).some(t=>sameTitle(ti(x),t)||sameTitle(oti(x),t)))&&near(x))||(y?ok.find(x=>yr(x)&&Math.abs(yr(x)-y)<=1):null);
     if(!best)return null;
     const d=await tmdbDetails({movie:mv,tid:best.id,title:ti(best)||c.title,year:String(yr(best)||c.year||""),image:best.poster_path?TMDB_IMG+best.poster_path:c.image,summary:best.overview||c.summary,rating:best.vote_average||c.rating,vc:best.vote_count||0});
     d.cast="";d.castList=[];   // per gli anime da AniList il cast non si mostra
