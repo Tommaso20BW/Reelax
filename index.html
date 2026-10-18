@@ -515,6 +515,16 @@ body.pre #app{opacity:0}
 @media (hover:hover){.srow:hover{border-color:var(--line2)}}
 .lemp{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;gap:10px;padding:46px 0;color:var(--mut);font-weight:600;font-size:.95rem}
 .lemp svg{width:34px;height:34px;opacity:.55}
+
+/* ===== TEMA CHIARO: caricamento e sfondo del risultato ===== */
+/* caricamento: niente alone scuro sul testo e macchia chiara molto più leggera dietro la scritta */
+:root[data-theme="light"] .load p{text-shadow:none}
+:root[data-theme="light"] .ldw::after{background:radial-gradient(50% 15% at 50% 50%,rgba(var(--bgrgb),.5) 0,rgba(var(--bgrgb),.22) 60%,transparent 100%),linear-gradient(to bottom,rgba(var(--shade),.88) 0,rgba(var(--shade),.7) calc(var(--sat) + 90px),rgba(var(--shade),.3) calc(var(--sat) + 170px),transparent 33%,transparent 66%,rgba(var(--shade),.3) 77%,rgba(var(--shade),.62) 89%,rgba(var(--shade),.86) 100%)}
+/* risultato: sfondo sfocato più tenue e dissolvenza lunga e morbida verso il colore del tema (niente fascia grigia) */
+:root[data-theme="light"] #bd.on{opacity:.6}
+:root[data-theme="light"] #bd{-webkit-mask-image:linear-gradient(#000 20%,rgba(0,0,0,.6) 50%,rgba(0,0,0,.2) 78%,transparent);mask-image:linear-gradient(#000 20%,rgba(0,0,0,.6) 50%,rgba(0,0,0,.2) 78%,transparent)}
+:root[data-theme="light"] #bd i{filter:blur(26px) brightness(1.12) saturate(1.1)}
+:root[data-theme="light"] #bd::after{height:calc(190px + var(--sat));background:linear-gradient(to bottom,rgba(var(--shade),1) 0%,rgba(var(--shade),.92) 18%,rgba(var(--shade),.72) 38%,rgba(var(--shade),.42) 58%,rgba(var(--shade),.16) 80%,rgba(var(--shade),0) 100%)}
 </style>
 </head>
 <body class="pre">
