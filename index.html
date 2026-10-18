@@ -742,19 +742,20 @@ async function openSearched(x,back){
     year:((film?x.release_date:x.first_air_date)||"").slice(0,4),genres:[],rating:x.vote_average||0,vc:x.vote_count||0,
     image:x.poster_path?TMDB_IMG+x.poster_path:null,summary:x.overview||""};
   const my=++RUN;
-  // scheda subito, con i dati già noti dalla ricerca (nessuna schermata di caricamento)
-  show({d:{movie:film,isTv:!film,tid:c.tid,title:c.title,year:c.year,runtime:null,overview:c.summary||"Trama non disponibile.",it:true,
+  // la scheda entra UNA volta sola, già completa (trailer, chip, piattaforme, cast...): prima si carica tutto, poi si mostra
+  const quick={d:{movie:film,isTv:!film,tid:c.tid,title:c.title,year:c.year,runtime:null,overview:c.summary||"Trama non disponibile.",it:true,
     poster:c.image,rl:"TMDB",rv:c.rating,vc:c.vc,glist:[],gt:"",provKnown:false,
-    tmdbUrl:"https://www.themoviedb.org/"+(film?"movie":"tv")+"/"+c.tid},m:c,s:0},false,true,false);
-  const t0=Date.now();
-  // dettagli completi (trailer, piattaforme, cast...) in background: la scheda entra con la sua animazione,
-  // e i dettagli la completano senza animazioni solo a entrata finita (altrimenti la interromperebbero a metà)
+    tmdbUrl:"https://www.themoviedb.org/"+(film?"movie":"tv")+"/"+c.tid},m:c,s:0};
+  stage.style.pointerEvents="none";stage.style.cursor="progress";
+  let full=null;
   try{
     const d=await tmdbDetails(c);
-    const w=1100-(Date.now()-t0);if(w>0)await new Promise(r=>setTimeout(r,w));
-    if(my!==RUN||LB)return;
-    show({d:d,m:c,s:0},false,true,true);
+    await preImg(d.poster||c.image,2800);   // locandina già pronta: niente pop-in
+    full={d:d,m:c,s:0};
   }catch(e){}
+  stage.style.pointerEvents="";stage.style.cursor="";
+  if(my!==RUN||LB)return;
+  show(full||quick,false,true,false);
 }
 
 /* ---------- Cast e persone ---------- */
