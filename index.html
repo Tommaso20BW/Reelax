@@ -255,12 +255,14 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .pmeta:empty{display:none}
 .pbio{flex:none;padding:16px 18px;border-radius:var(--r2);border:1px solid var(--line);background:var(--s1);font-size:.92rem;line-height:1.55;color:var(--fg)}
 .pbio:empty{display:none}
-.pbio p{margin:0;white-space:pre-line;overflow:hidden;--f:0px;transition:height .6s cubic-bezier(.25,.8,.25,1),--f .6s ease;
-  -webkit-mask-image:linear-gradient(#000 calc(100% - var(--f)),transparent);mask-image:linear-gradient(#000 calc(100% - var(--f)),transparent)}
-.pbio p.clamp{--f:1.6em}
+.pbio{position:relative}
+.pbio .bw{position:relative;overflow:hidden}
+.pbio .bw p{margin:0;white-space:pre-line}
+.pbio .bw::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2.6em;background:linear-gradient(transparent,var(--s1));pointer-events:none;opacity:0;transition:opacity .5s ease}
+.pbio.clamped .bw::after{opacity:1}
 .pbio.tap{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .pbio.tap:active{filter:brightness(1.08)}
-.pbio button{margin-top:10px;color:var(--gold);font-weight:700;font-size:.84rem}
+.pbio .more{display:block;margin-top:10px;color:var(--gold);font-weight:700;font-size:.84rem}
 .plab{flex:none;margin:6px 2px -6px;font:700 .72rem var(--fb);letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
 .plab:empty{display:none}
 .castbtn{display:block;width:100%;text-align:left;cursor:pointer;color:var(--fg)}
@@ -371,16 +373,15 @@ body.pre #app{opacity:0}
   .page:not(:has(.opts)){max-width:760px;justify-content:flex-start}
   .page:not(:has(.opts)) h1{text-align:left}
   .page:has(.lib){max-width:1040px}
-  .page:has(.pf){max-width:980px}
+  .page:has(.pf){max-width:1040px}
   .pf{gap:30px;padding:28px 32px}
   .pfp{width:150px;font-size:3.4rem}
   .page .pfi h1{font-size:clamp(2.2rem,3.6vw,3rem)}
   .pmeta{font-size:.95rem}
   .pbio{padding:20px 24px;font-size:.98rem}
-  .page:has(.pf) .sres,.page:has(#cres) .sres{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .page:has(#cres) .sres{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
   .page:has(#cres){max-width:980px}
   .page:has(#cres) h1{text-align:left}
-  .page:has(.pf) .sres .smsg{grid-column:1/-1}
 
   /* risultato: locandina a sinistra (fissa), schede a destra */
   .res{display:grid;grid-template-columns:340px minmax(0,1fr);grid-template-rows:repeat(12,auto) 1fr;column-gap:48px;row-gap:0;align-items:start;max-width:1040px;margin:0 auto;padding-top:6px}
@@ -709,6 +710,21 @@ async function searchTitles(q){
   }catch(e){}
   throw err||new Error("ricerca TMDB non disponibile");
 }
+/* Libreria di locandine (ricerca e filmografia): HTML, precarico e comparsa a cascata */
+const bkCard=(x,i,ok)=>{
+  const film=x.media_type==="movie",title=film?x.title:x.name,year=((film?x.release_date:x.first_air_date)||"").slice(0,4);
+  const th=x.poster_path?'<img src="https://image.tmdb.org/t/p/w342'+esc(x.poster_path)+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" class="'+(ok[x.poster_path]?"ld":"")+'" onload="this.classList.add(\'ld\')">':'<span class="nop">'+esc((title||"?").trim().charAt(0).toUpperCase())+'</span>';
+  return '<button type="button" class="bk" data-i="'+i+'"><span class="cv">'+th+'</span><span class="t">'+esc(title||"Senza titolo")+'</span><span class="s">'+(year?year+" · ":"")+(film?"Film":"Serie TV")+'</span></button>';
+};
+const bkPreload=async list=>{   // max ~1,4 s: la griglia compare già completa
+  const ok={};
+  await Promise.race([
+    Promise.all(list.slice(0,12).filter(x=>x.poster_path).map(x=>new Promise(r=>{const im=new Image();im.referrerPolicy="no-referrer";im.onload=()=>{ok[x.poster_path]=1;r();};im.onerror=r;im.src="https://image.tmdb.org/t/p/w342"+x.poster_path;}))),
+    new Promise(r=>setTimeout(r,1400))
+  ]);
+  return ok;
+};
+const bkReveal=(box,delay)=>{if(RM())return;box.querySelectorAll(".bk").forEach((el,i)=>{if(el.animate)el.animate([{opacity:0,transform:"translate3d(0,34px,0) scale(.82)"},{opacity:1,transform:"none"}],{duration:650,delay:(delay||0)+Math.min(i,11)*55,easing:"cubic-bezier(.22,1.25,.36,1)",fill:"backwards"});});};
 async function doSearch(q){
   const my=++SRUN,box=$("sres");
   if(!box)return;
@@ -719,23 +735,12 @@ async function doSearch(q){
     const list=await searchTitles(q);
     if(my!==SRUN||!$("sres"))return;
     SLIST=list.slice(0,20);
-    // precarica le locandine (max ~1,4 s): la griglia compare già completa, senza riquadri vuoti che si riempiono a caso
-    const ok={};
-    await Promise.race([
-      Promise.all(SLIST.slice(0,12).filter(x=>x.poster_path).map(x=>new Promise(r=>{const im=new Image(),u="https://image.tmdb.org/t/p/w342"+x.poster_path;im.referrerPolicy="no-referrer";im.onload=()=>{ok[x.poster_path]=1;r();};im.onerror=r;im.src=u;}))),
-      new Promise(r=>setTimeout(r,1400))
-    ]);
+    const ok=await bkPreload(SLIST);
     if(my!==SRUN||!$("sres"))return;
     box.classList.remove("busy");
-    const row=(x,i)=>{
-      const film=x.media_type==="movie",title=film?x.title:x.name,year=((film?x.release_date:x.first_air_date)||"").slice(0,4);
-      const th=x.poster_path?'<img src="https://image.tmdb.org/t/p/w342'+esc(x.poster_path)+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" class="'+(ok[x.poster_path]?"ld":"")+'" onload="this.classList.add(\'ld\')">':'<span class="nop">'+esc((title||"?").trim().charAt(0).toUpperCase())+'</span>';
-      return '<button type="button" class="bk" data-i="'+i+'" style="--i:'+Math.min(i,11)+'"><span class="cv">'+th+'</span><span class="t">'+esc(title||"Senza titolo")+'</span><span class="s">'+(year?year+" · ":"")+(film?"Film":"Serie TV")+'</span></button>';
-    };
     $("sres").classList.remove("busy");
-    $("sres").innerHTML=SLIST.length?SLIST.map(row).join(""):'<p class="smsg">Nessun risultato.</p>';
-    // comparsa a cascata (Web Animations, come le altre pagine): ogni locandina sale e si ingrandisce con un piccolo rimbalzo
-    if(!RM()&&SLIST.length)$("sres").querySelectorAll(".bk").forEach((el,i)=>{if(el.animate)el.animate([{opacity:0,transform:"translate3d(0,34px,0) scale(.82)"},{opacity:1,transform:"none"}],{duration:650,delay:Math.min(i,11)*55,easing:"cubic-bezier(.22,1.25,.36,1)",fill:"backwards"});});
+    $("sres").innerHTML=SLIST.length?SLIST.map((x,i)=>bkCard(x,i,ok)).join(""):'<p class="smsg">Nessun risultato.</p>';
+    if(SLIST.length)bkReveal($("sres"));
   }catch(e){
     if(my!==SRUN||!$("sres"))return;
     $("sres").classList.remove("busy");
@@ -778,12 +783,19 @@ function castPage(d,snap){
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>{show(snap.r,snap.sur,snap.man,"fade");}}});
   $("cres").onclick=e=>{const b=e.target.closest&&e.target.closest("[data-i]");if(!b)return;tap();personPage(list[+b.dataset.i],()=>castPage(d,snap));};
 }
+const EASE_O="cubic-bezier(.22,1,.36,1)";
+const rise=(el,o)=>{if(RM()||!el||!el.animate)return;o=o||{};el.animate([{opacity:0,transform:"translate3d("+(o.x||0)+"px,"+(o.y===undefined?22:o.y)+"px,0) scale("+(o.s||1)+")"},{opacity:1,transform:"none"}],{duration:o.d||800,delay:o.t||0,easing:o.e||EASE_O,fill:"backwards"});};
 async function personPage(p,backFn){
   if(!p)return;
-  setBd(null);
+  setBd(p.img?"https://image.tmdb.org/t/p/w342"+p.img:null);
   const my=++RUN;
-  swap('<div class="page"><div class="pf"><span class="pfp">'+(p.img?'<img src="https://image.tmdb.org/t/p/w342'+esc(p.img)+'" alt="" referrerpolicy="no-referrer">':'👤')+'</span><div class="pfi"><h1>'+esc(p.name)+'</h1><span class="pdep" id="pdep"></span><span class="pmeta" id="pmeta"></span></div></div><div class="pbio" id="pbio"></div><div class="plab" id="plab"></div><div class="sres" id="pres"><p class="smsg">Carico...</p></div></div>',true);
+  swap('<div class="page"><div class="pf"><span class="pfp">'+(p.img?'<img src="https://image.tmdb.org/t/p/w342'+esc(p.img)+'" alt="" referrerpolicy="no-referrer">':'👤')+'</span><div class="pfi"><h1>'+esc(p.name)+'</h1><span class="pdep" id="pdep"></span><span class="pmeta" id="pmeta"></span></div></div><div class="pbio" id="pbio"></div><div class="plab" id="plab"></div><div class="sres lib" id="pres"><p class="smsg">Carico...</p></div></div>',true);
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>{RUN++;backFn();}}});
+  {   // entrata: la scheda sale, la foto "scatta" in posizione con un piccolo rimbalzo, poi nome e dati a cascata
+    const pf=stage.querySelector(".pf");rise(pf,{y:26,d:850});
+    rise(stage.querySelector(".pfp"),{y:0,s:.5,d:1000,t:160,e:"cubic-bezier(.3,1.5,.5,1)"});
+    stage.querySelectorAll(".pfi>*").forEach((el,i)=>rise(el,{x:22,y:0,d:750,t:300+i*110}));
+  }
   const box=$("pres");
   box.onclick=e=>{const b=e.target.closest&&e.target.closest("[data-i]");if(!b)return;tap();openSearched(PLIST[+b.dataset.i],()=>personPage(p,backFn));};
   try{
@@ -800,25 +812,36 @@ async function personPage(p,backFn){
     if(d.place_of_birth)mt.push(esc(d.place_of_birth));
     const pm=$("pmeta");if(pm)pm.innerHTML=mt.map(x=>"<div>"+x+"</div>").join("");
     const pb=$("pbio"),bio=(d.biography||"").trim();
+    if(pm&&mt.length)rise(pm,{x:0,y:8,d:600});
+    if(pd&&dep)rise(pd,{x:0,y:6,d:500});
     if(pb&&bio){
-      pb.innerHTML='<p class="clamp">'+esc(bio)+'</p>';
-      const bp=pb.firstChild,cs=getComputedStyle(bp),lh=parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.5,CH=Math.round(lh*4);
-      if(bp.scrollHeight>CH+2){   // come la trama: tutta la scheda è toccabile e si apre/chiude con animazione
-        const bt=document.createElement("button");bt.type="button";bt.textContent="Leggi tutto";pb.appendChild(bt);
-        pb.classList.add("tap");pb.setAttribute("role","button");pb.tabIndex=0;pb.setAttribute("aria-expanded","false");
-        bp.style.height=CH+"px";
-        bp.addEventListener("transitionend",e=>{if(e.target===bp&&e.propertyName==="height"&&!bp.classList.contains("clamp"))bp.style.height="auto";});
+      pb.innerHTML='<div class="bw"><p>'+esc(bio)+'</p></div>';
+      const bw=pb.firstChild,bp=bw.firstChild,cs=getComputedStyle(bp),lh=parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.5,CH=Math.round(lh*4);
+      if(bp.scrollHeight>CH+2){   // come la trama: tutta la scheda è toccabile; apertura/chiusura lenta e morbida
+        const bt=document.createElement("span");bt.className="more";bt.textContent="Leggi tutto";pb.appendChild(bt);
+        pb.classList.add("tap","clamped");pb.setAttribute("role","button");pb.tabIndex=0;pb.setAttribute("aria-expanded","false");
+        bw.style.height=CH+"px";
+        let anim=null,open=false;
         const toggle=()=>{
           if(window.getSelection&&String(window.getSelection()).length>0)return;
-          const opening=bp.classList.contains("clamp");
-          bp.style.height=bp.getBoundingClientRect().height+"px";void bp.offsetHeight;
-          bp.classList.toggle("clamp",!opening);
-          bp.style.height=(opening?bp.scrollHeight:CH)+"px";
-          bt.textContent=opening?"Riduci":"Leggi tutto";pb.setAttribute("aria-expanded",opening);
+          const from=bw.getBoundingClientRect().height;
+          if(anim){anim.cancel();anim=null;}
+          open=!open;
+          const to=open?bp.scrollHeight:CH;
+          bw.style.height=to+"px";
+          pb.classList.toggle("clamped",!open);pb.setAttribute("aria-expanded",open);bt.textContent=open?"Riduci":"Leggi tutto";
+          if(!RM()&&bw.animate){
+            const dur=Math.round(Math.min(1300,Math.max(650,500+Math.abs(to-from)*1.6)));
+            anim=bw.animate([{height:from+"px"},{height:to+"px"}],{duration:dur,easing:"cubic-bezier(.32,.72,0,1)"});
+            anim.onfinish=anim.oncancel=()=>{anim=null;};
+          }
+          if(open)bw.style.height="auto";   // dopo l'apertura segue il contenuto (rotazione, font)
+          else if(anim==null)bw.style.height=CH+"px";
         };
         pb.onclick=()=>{tap();toggle();};
         pb.onkeydown=e=>{if(e.target===pb&&(e.key==="Enter"||e.key===" ")){e.preventDefault();toggle();}};
-      }else bp.classList.remove("clamp");
+      }
+      rise(pb,{y:18,d:700,t:120});
     }
     const cc=d.combined_credits||{},seen={},items=[];
     const bad=x=>(x.genre_ids||[]).some(g=>g===10767||g===10763||g===10764)||/\b(self|himself|herself)\b/i.test(x.character||"");
@@ -828,13 +851,12 @@ async function personPage(p,backFn){
     });
     items.sort((a,b)=>(b.popularity||0)-(a.popularity||0));
     PLIST=items.slice(0,60);
-    const row=(x,i)=>{
-      const film=x.media_type==="movie",year=((film?x.release_date:x.first_air_date)||"").slice(0,4);
-      const th=x.poster_path?'<img src="https://image.tmdb.org/t/p/w154'+esc(x.poster_path)+'" alt="" loading="lazy" referrerpolicy="no-referrer">':'';
-      return '<button type="button" class="sr" data-i="'+i+'"><span class="th">'+th+'</span><span class="tx"><span class="t">'+esc(film?x.title:x.name)+'</span><span class="s">'+(year?year+" · ":"")+(film?"Film":"Serie TV")+(x.character?" · "+esc(x.character):"")+'</span></span></button>';
-    };
-    const pl=$("plab");if(pl&&PLIST.length)pl.textContent="Filmografia · "+PLIST.length+(PLIST.length===1?" titolo":" titoli");
-    box.innerHTML=PLIST.length?PLIST.map(row).join(""):'<p class="smsg">Nessun titolo trovato.</p>';
+    const pl=$("plab");
+    const ok=await bkPreload(PLIST);
+    if(my!==RUN||!$("pres"))return;
+    box.innerHTML=PLIST.length?PLIST.map((x,i)=>bkCard(x,i,ok)).join(""):'<p class="smsg">Nessun titolo trovato.</p>';
+    if(pl&&PLIST.length){pl.textContent="Filmografia · "+PLIST.length+(PLIST.length===1?" titolo":" titoli");rise(pl,{x:0,y:8,d:600});}
+    if(PLIST.length)bkReveal(box,150);
   }catch(e){
     if(my!==RUN||!$("pres"))return;
     box.innerHTML='<p class="smsg">Non riesco a caricare i titoli'+(navigator.onLine===false?': sei offline':'')+'. Riprova tra poco.</p>';
