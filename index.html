@@ -615,6 +615,7 @@ const IC={
   tv:sv('<rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8M12 17v4"/>'),
   grid:sv('<rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/>'),
   clock:sv('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
+  globe:sv('<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.8 3.9 5.8 3.9 9s-1.3 6.2-3.9 9c-2.6-2.8-3.9-5.8-3.9-9S9.4 5.8 12 3z"/>'),
   check:sv('<path d="M5 12.5l4.5 4.5L19 7.5"/>')
 };
 
@@ -1338,6 +1339,13 @@ function recentPage(){
 /* ---------- Impostazioni ---------- */
 /* ---------- Filtro per piattaforme ---------- */
 /* L.platforms (sincronizzato col Worker) contiene oggetti {k,n,l,ids:[provider_id...]}; l'interruttore e' solo su questo dispositivo */
+/* Regione: dove controllo piattaforme, classificazione per età e date. Resta su questo dispositivo (non sincronizzata). */
+const RGKEY="reelax_region";
+const REGIONS="AE AL AR AT AU BA BE BG BR CA CH CL CO CZ DE DK EC EE EG ES FI FR GB GR HK HR HU ID IE IN IS IT JP KR LT LV MX MY NL NO NZ PE PH PL PT RO RS RU SA SE SG SI SK TH TR TW UA US VE ZA".split(" ");
+const REG=()=>{try{const v=localStorage.getItem(RGKEY);if(v&&REGIONS.indexOf(v)>=0)return v;}catch(e){}return "IT";};
+let RGN=null;
+const regName=c=>{try{if(!RGN)RGN=new Intl.DisplayNames(["it"],{type:"region"});return RGN.of(c)||c;}catch(e){return c;}};
+function setRegion(c){if(REGIONS.indexOf(c)<0||c===REG())return;try{localStorage.setItem(RGKEY,c);}catch(e){}S.seen=[];S.cands=[];}
 const PFKEY="reelax_pf_on";
 const pfOn=()=>{if(typeof L.pf==="boolean")return L.pf;try{return localStorage.getItem(PFKEY)==="1";}catch(e){return false;}};   // sincronizzato col Worker; se manca, valore vecchio di questo dispositivo
 const pfSet=v=>{L.pf=!!v;try{localStorage.setItem(PFKEY,v?"1":"0");}catch(e){}lsave();};
@@ -1357,7 +1365,7 @@ function pfNorm(){   // selezioni salvate con nomi doppi (es. Amazon Video + Ama
 function pfGroup(){
   pfNorm();
   const on=pfOn(),n=pfSel().length;
-  return '<button type="button" class="srow" data-act="pfsw" role="switch" aria-checked="'+on+'">'+IC.tv+'<span class="sl">Filtra per piattaforme</span><span class="sw'+(on?' on':'')+'"><i></i></span></button>'+
+  return '<button type="button" class="srow" data-act="reg">'+IC.globe+'<span class="sl">Regione</span><span class="sn">'+esc(regName(REG()))+'</span>'+IC.chev+'</button>'+'<button type="button" class="srow" data-act="pfsw" role="switch" aria-checked="'+on+'">'+IC.tv+'<span class="sl">Filtra per piattaforme</span><span class="sw'+(on?' on':'')+'"><i></i></span></button>'+
     (on?'<button type="button" class="srow" data-act="pfpick">'+IC.grid+'<span class="sl">Le mie piattaforme</span><span class="sn">'+(n?n:'Scegli')+'</span>'+IC.chev+'</button>':'');
 }
 let allT=null;
@@ -1386,10 +1394,21 @@ function settingsPage(){
     '<button type="button" class="srow out" data-act="logout">'+IC.out+'<span class="sl">Esci</span></button></div>',true);
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>home(),recent:()=>recentPage(),logout:confirmLogout,acall:revokeAll,
     pfsw:()=>{const v=!pfOn();pfSet(v);const box=$("sg_pf");if(box)box.innerHTML=pfGroup();if(v&&!pfSel().length)pfPage();},
-    pfpick:()=>pfPage(),acuser:()=>accountPage("user"),acpass:()=>accountPage("pass")}});
+    pfpick:()=>pfPage(),reg:()=>regionPage(),acuser:()=>accountPage("user"),acpass:()=>accountPage("pass")}});
   const th=$("thseg"),pr=window.themePref();
   th.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.t===pr));
   th.onclick=e=>{const b=e.target.closest&&e.target.closest("button[data-t]");if(!b)return;tap();window.setTheme(b.dataset.t);th.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));};
+}
+/* ---------- Regione ---------- */
+function regionPage(){
+  RUN++;SRUN++;setBd(null);
+  const cur=REG(),list=REGIONS.slice().sort((a,b)=>regName(a).localeCompare(regName(b),"it",{sensitivity:"base"}));
+  list.sort((a,b)=>(b===cur?1:0)-(a===cur?1:0));   // quella scelta sta in cima
+  swap('<div class="page"><h1>Regione</h1><p class="sub">Serve per mostrarti dove guardare i titoli e l\'età consigliata del tuo paese.</p><div class="sgrp" id="rgl" role="radiogroup" aria-label="Regione">'+
+    list.map(c=>'<button type="button" class="srow sm" role="radio" aria-checked="'+(c===cur)+'" data-r="'+c+'"><span class="sl">'+esc(regName(c))+'</span>'+(c===cur?IC.check:'')+'</button>').join('')+'</div></div>',true);
+  ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>settingsPage()}});
+  const box=$("rgl");
+  if(box)box.onclick=e=>{const b=e.target.closest&&e.target.closest("[data-r]");if(!b)return;tap();setRegion(b.dataset.r);settingsPage();};
 }
 /* ---------- Cambio username / password ---------- */
 function accountPage(mode){
@@ -1426,24 +1445,25 @@ function accountPage(mode){
 }
 /* servizi piu' diffusi in Italia: in cima all'elenco; gli altri stanno sotto "Mostra altre" */
 const PF_TOP=new Set("netflix primevideo disneyplus nowtv skygo mediasetinfinity raiplay paramountplus appletv discoveryplus timvision hbomax mubi crunchyroll chili rakutentv plutotv plex youtubepremium mymoviesone".split(" "));
-let PFLIST=null;
+let PFLIST=null,PFREG="";
 async function pfLoad(){
-  if(PFLIST)return PFLIST;
-  const rs=await Promise.all(["movie","tv"].map(k=>tm("/3/watch/providers/"+k,{language:"it-IT",watch_region:"IT"})));
+  const rg=REG();
+  if(PFLIST&&PFREG===rg)return PFLIST;
+  const rs=await Promise.all(["movie","tv"].map(k=>tm("/3/watch/providers/"+k,{language:"it-IT",watch_region:rg})));
   const m=new Map();
   rs.forEach(r=>(r.results||[]).forEach(p=>{
     const raw=String(p.provider_name||"").replace(/\s+Standard with Ads/i," with Ads");
     if(CH_RE.test(raw))return;                       // i "canali" (es. Paramount+ su Prime) sono abbonamenti a parte: li lascio fuori
     const k=provKey(raw);if(!k)return;
     const nm=provBase(raw).replace(/\s+(con pubblicit[aà]|with ads)$/i,"").trim();
-    const pr=(p.display_priorities&&p.display_priorities.IT!=null)?p.display_priorities.IT:(p.display_priority!=null?p.display_priority:999);
+    const pr=(p.display_priorities&&p.display_priorities[rg]!=null)?p.display_priorities[rg]:(p.display_priority!=null?p.display_priority:999);
     const o=m.get(k),main=provKey0(raw)===k&&p.logo_path;
     if(!o)m.set(k,{k:k,n:nm,l:p.logo_path||"",ids:[p.provider_id],pr:pr,m:!!main});
     else{if(o.ids.indexOf(p.provider_id)<0)o.ids.push(p.provider_id);o.pr=Math.min(o.pr,pr);if(main&&!o.m){o.l=p.logo_path;o.m=true;}else if(!o.l&&p.logo_path)o.l=p.logo_path;if(nm.length<o.n.length)o.n=nm;}
   }));
   m.forEach(o=>{if(PV_NM[o.k])o.n=PV_NM[o.k];});
   const l=[...m.values()].sort((a,b)=>a.pr-b.pr).slice(0,60);
-  if(l.length)PFLIST=l;
+  if(l.length){PFLIST=l;PFREG=rg;}
   return l;
 }
 async function pfPage(){
@@ -1452,13 +1472,13 @@ async function pfPage(){
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>settingsPage()}});
   const box=$("pfg");
   let list=[];
-  try{list=(await pfLoad()).slice().sort((x,y)=>x.n.localeCompare(y.n,"it",{sensitivity:"base"}));}catch(e){}
+  let topSet=PF_TOP;try{const raw=await pfLoad();if(REG()!=="IT")topSet=new Set(raw.slice(0,14).map(x=>x.k));list=raw.slice().sort((x,y)=>x.n.localeCompare(y.n,"it",{sensitivity:"base"}));}catch(e){}
   if(!box||!box.isConnected)return;
   if(!list.length){box.innerHTML='<div class="lemp">'+IC.tv+'<span>Non riesco a caricare l\'elenco</span></div>';return;}
   const isOn=k=>pfSel().some(x=>x.k===k);
   list.sort((x,y)=>(isOn(y.k)?1:0)-(isOn(x.k)?1:0));   // le già selezionate stanno in cima (all'apertura; poi non si spostano mentre tocchi)
   const row=(x,i)=>'<button type="button" class="pfr'+(isOn(x.k)?' on':'')+'" data-i="'+i+'" aria-pressed="'+isOn(x.k)+'"><span class="pfi">'+(x.l?'<img src="https://image.tmdb.org/t/p/w92'+esc(x.l)+'" alt="" loading="lazy" referrerpolicy="no-referrer">':'<b>'+esc(x.n.slice(0,2))+'</b>')+'</span><span class="pfn">'+esc(x.n)+'</span><span class="pfk">'+IC.check+'</span></button>';
-  const top=[],rest=[];list.forEach((x,i)=>(PF_TOP.has(x.k)||isOn(x.k)?top:rest).push(row(x,i)));
+  const top=[],rest=[];list.forEach((x,i)=>(topSet.has(x.k)||isOn(x.k)?top:rest).push(row(x,i)));
   box.innerHTML=top.join('')+(rest.length?'<button type="button" class="pfm" data-more="1">Mostra altre ('+rest.length+')</button>':'');
   box.onclick=e=>{
     const mb=e.target.closest&&e.target.closest("[data-more]");
@@ -1542,7 +1562,8 @@ async function tmDiscover(kind,a,anim,ja){
   if(narrow)maxPage=Math.min(maxPage,5);
   const p={sort_by:tier===2?"vote_average.desc":"popularity.desc",include_adult:"false","vote_count.gte":band[0],"vote_average.gte":tier===2?6.4:6};
   if(band[1])p["vote_count.lte"]=band[1];
-  {const pf=pfIds();if(pf.length){p.watch_region="IT";p.with_watch_providers=pf.join("|");p.with_watch_monetization_types="flatrate|free|ads";}}   // solo titoli disponibili sulle mie piattaforme
+  {let pf=pfIds();if(pf.length){try{const al=await pfLoad();if(al.length){const ok=new Set([].concat(...al.map(x=>x.ids)));pf=pf.filter(i=>ok.has(i));}}catch(e){}}   // tengo solo le piattaforme che esistono nella regione scelta (se nessuna, niente filtro)
+    if(pf.length){p.watch_region=REG();p.with_watch_providers=pf.join("|");p.with_watch_monetization_types="flatrate|free|ads";}}   // solo titoli disponibili sulle mie piattaforme
   let mood=(film?TM_MOOD_FILM:TM_MOOD_TV)[a.mood]||"18";
   {const mg=mood.split("|").filter(x=>AV.g.indexOf(+x)<0);if(mg.length)mood=mg.join("|");}
   // TMDB per le serie non ha il genere "Romance" (e l'horror è debole): per amore/paura uso la parola chiave
@@ -1646,7 +1667,7 @@ async function tmdbDetails(c){
   catch(e){try{d=await tm(base);}catch(x){}}
   const rt=c.movie?(d.runtime||null):((d.episode_run_time&&d.episode_run_time[0])||(d.last_episode_to_air&&d.last_episode_to_air.runtime)||null);
   const gl=itg((d.genres||[]).map(g=>g.name)).slice(0,4);
-  const wpAll=d["watch/providers"],wp=wpAll&&wpAll.results&&wpAll.results.IT;
+  const wpAll=d["watch/providers"],wp=wpAll&&wpAll.results&&wpAll.results[REG()];
   const prov=wp?{link:wp.link||"",flat:wp.flatrate||[],ads:wp.ads||[],rent:wp.rent||[],buy:wp.buy||[]}:null;
   if(prov&&["flat","ads","rent","buy"].some(g=>prov[g].some(p=>CH_RE.test(p.provider_name||"")))){
     const L=await provLogos();
@@ -1654,8 +1675,8 @@ async function tmdbDetails(c){
   }
   let cert="";
   try{
-    if(c.movie){const x=((d.release_dates&&d.release_dates.results)||[]).find(r=>r.iso_3166_1==="IT");const y=x&&(x.release_dates||[]).find(z=>z.certification);cert=y?y.certification:"";}
-    else{const x=((d.content_ratings&&d.content_ratings.results)||[]).find(r=>r.iso_3166_1==="IT");cert=x?x.rating:"";}
+    if(c.movie){const x=((d.release_dates&&d.release_dates.results)||[]).find(r=>r.iso_3166_1===REG());const y=x&&(x.release_dates||[]).find(z=>z.certification);cert=y?y.certification:"";}
+    else{const x=((d.content_ratings&&d.content_ratings.results)||[]).find(r=>r.iso_3166_1===REG());cert=x?x.rating:"";}
   }catch(e){}
   const crew=(d.credits&&d.credits.crew)||[],cast=(d.credits&&d.credits.cast)||[];
   const dir=c.movie?crew.filter(x=>x.job==="Director").map(x=>x.name).slice(0,2):(d.created_by||[]).map(x=>x.name).slice(0,2);
@@ -1829,8 +1850,9 @@ function provHtml(d){
       return '<span class="pv'+(p.logo_path?'':' t')+'" title="'+nm+'" role="img" aria-label="'+nm+'">'+(p.logo_path?'<img src="https://image.tmdb.org/t/p/w92'+esc(p.logo_path)+'" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.classList.add(\'t\');this.parentNode.textContent=this.parentNode.title.slice(0,2);">':nm.slice(0,2))+'</span>';
     }).join('')+'</div></div>';
   });
-  if(!h)h='<p>Al momento non risulta disponibile in Italia su piattaforme di streaming, noleggio o acquisto.</p>';
-  return '<section class="card"><h3>Dove guardarlo in Italia</h3>'+h+'</section>';
+  const it=REG()==="IT";
+  if(!h)h='<p>Al momento non risulta disponibile '+(it?'in Italia':'in questa regione ('+esc(regName(REG()))+')')+' su piattaforme di streaming, noleggio o acquisto.</p>';
+  return '<section class="card"><h3>Dove guardarlo'+(it?' in Italia':' · '+esc(regName(REG())))+'</h3>'+h+'</section>';
 }
 function infoHtml(d){
   const eps=(d.seasons?d.seasons+(d.seasons>1?' stagioni':' stagione'):'')+(d.episodes?(d.seasons?' · ':'')+d.episodes+' episodi':'');
