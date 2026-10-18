@@ -525,6 +525,16 @@ body.pre #app{opacity:0}
 :root[data-theme="light"] #bd{-webkit-mask-image:linear-gradient(#000 20%,rgba(0,0,0,.6) 50%,rgba(0,0,0,.2) 78%,transparent);mask-image:linear-gradient(#000 20%,rgba(0,0,0,.6) 50%,rgba(0,0,0,.2) 78%,transparent)}
 :root[data-theme="light"] #bd i{filter:blur(26px) brightness(1.12) saturate(1.1)}
 :root[data-theme="light"] #bd::after{height:calc(190px + var(--sat));background:linear-gradient(to bottom,rgba(var(--shade),1) 0%,rgba(var(--shade),.92) 18%,rgba(var(--shade),.72) 38%,rgba(var(--shade),.42) 58%,rgba(var(--shade),.16) 80%,rgba(var(--shade),0) 100%)}
+
+/* ===== "Film o serie?": non occupa spazio finché non serve; compare con una transizione fluida ===== */
+.segw{display:grid;grid-template-rows:0fr;gap:0;margin-top:calc(var(--pg)*-1);opacity:0;transform:translate3d(0,16px,0) scale(.98);visibility:hidden;pointer-events:none;
+  transition:grid-template-rows .45s cubic-bezier(.4,0,.2,1),margin-top .45s cubic-bezier(.4,0,.2,1),opacity .22s ease,transform .4s cubic-bezier(.4,0,.2,1),visibility 0s .45s}
+.segw.show{grid-template-rows:1fr;margin-top:0;opacity:1;transform:none;visibility:visible;pointer-events:auto;
+  transition:grid-template-rows .6s var(--ease),margin-top .6s var(--ease),opacity .45s ease .1s,transform .65s var(--ease) .05s,visibility 0s}
+.segi{min-height:0;overflow:hidden;display:flex;flex-direction:column;gap:8px;padding:2px 0}
+.segw.show .seg button{animation:segIn .55s var(--ease) backwards;animation-delay:calc(.16s + var(--n,0)*70ms)}
+.segw.show .segq{animation:segIn .5s var(--ease) .1s backwards}
+@media (min-width:900px) and (min-height:560px){.segi{align-items:center}}
 </style>
 </head>
 <body class="pre">
@@ -832,7 +842,7 @@ function home(anim){
   setRoute(S.step>0?"/domanda/"+S.step:"/");
   try{sessionStorage.setItem("reelax_s",JSON.stringify({cat:S.cat,fmt:S.fmt,mood:S.mood,time:S.time,era:S.era,style:S.style,step:S.step,avoid:S.avoid}));}catch(e){}
   const st=ST[S.step],items=st.get(),n=items.length,q=typeof st.q==="function"?st.q():st.q;
-  const seg=st.k==="cat"?'<div class="segw'+(isAnim()?' show':'')+'" id="segw"><span class="segq">Film o serie?</span><div class="seg">'+FMT.map(f=>'<button type="button" class="'+(S.fmt===f[0]?'on':'')+'" data-f="'+f[0]+'">'+({movie:"Film",tv:"Serie",any:"Indifferente"})[f[0]]+'</button>').join('')+'</div></div>':'';
+  const seg=st.k==="cat"?'<div class="segw'+(isAnim()?' show':'')+'" id="segw"><div class="segi"><span class="segq">Film o serie?</span><div class="seg">'+FMT.map(f=>'<button type="button" class="'+(S.fmt===f[0]?'on':'')+'" data-f="'+f[0]+'">'+({movie:"Film",tv:"Serie",any:"Indifferente"})[f[0]]+'</button>').join('')+'</div></div></div>':'';
   TDX=(stage.querySelector(".opts")&&LASTSTEP>=0&&S.step!==LASTSTEP)?(S.step>LASTSTEP?1:-1):0;LASTSTEP=S.step;
   swap('<div class="page"><h1>'+esc(q)+'</h1>'+(st.multi?'<p class="sub">Puoi sceglierne più di una</p>':'')+'<div class="opts g2 n'+n+(st.multi?' av':'')+'" role="group" aria-label="'+esc(q)+'">'+items.map((o,i)=>opt(st.k,o,st.multi?S.avoid.indexOf(o[0])>=0:S[st.k]===o[0],i)).join('')+'</div>'+seg+'</div>',anim);
   const acts={back:()=>{if(S.step>0){S.step--;home();}},sur:surpriseAll,logout:doLogout,search:searchPage,settings:()=>settingsPage(),go:()=>{S.seen=[];S.cands=[];run(false,true);}};
@@ -868,7 +878,7 @@ function home(anim){
       return;
     }
     const sw2=$("segw"),wasShown=!!(sw2&&sw2.classList.contains("show"));if(sw2)sw2.classList.remove("show");
-    go(wasShown?300:230);
+    go(wasShown?480:230);
   };});
   const sw=$("segw");
   if(sw)sw.onclick=e=>{const b=e.target.closest&&e.target.closest("button[data-f]");if(!b||lock)return;tap();S.fmt=b.dataset.f;S.time="";sw.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));go();};
