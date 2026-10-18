@@ -312,13 +312,13 @@ body.pre #app{opacity:0}
 
 /* animazioni */
 @keyframes up{from{opacity:0;transform:translateY(18px) scale(.98)}}
-@keyframes chipIn{from{opacity:0;transform:translateY(6px) scale(.6)}}
+@keyframes chipIn{from{opacity:0;transform:translate3d(0,8px,0)}}
 @keyframes sel{0%{box-shadow:0 0 0 0 rgba(255,61,82,.55)}100%{box-shadow:0 0 0 16px rgba(255,61,82,0)}}
 .opt.hit{animation:sel .5s ease-out}
 .in .res>*{animation:up .6s var(--ease) backwards;animation-delay:calc(var(--k,0)*70ms + 40ms)}
-.in .chip{animation:chipIn .45s cubic-bezier(.3,1.5,.5,1) backwards;animation-delay:calc(.3s + var(--c,0)*60ms)}
+.in .chip{animation:chipIn .8s var(--ease) backwards;animation-delay:calc(.3s + var(--c,0)*60ms)}
 .in .why li{animation:up .5s var(--ease) backwards;animation-delay:calc(.45s + var(--c,0)*100ms)}
-.in .pv{animation:chipIn .45s cubic-bezier(.3,1.5,.5,1) backwards;animation-delay:calc(.5s + var(--c,0)*45ms)}
+.in .pv{animation:chipIn .8s var(--ease) backwards;animation-delay:calc(.3s + var(--c,0)*45ms)}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-delay:0s!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
 
 /* ================= VERSIONE DESKTOP ================= */
@@ -389,6 +389,7 @@ body.pre #app{opacity:0}
 .res .sres.lib{margin-bottom:6px}
 .bk .s{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
 @media (min-width:900px) and (min-height:560px){.res .sres.lib{grid-template-columns:repeat(4,minmax(0,1fr));gap:22px 16px}}
+.in .res>a.btn{animation:chipIn .85s var(--ease) backwards;animation-delay:.42s}
 </style>
 </head>
 <body class="pre">
@@ -1526,10 +1527,10 @@ function show(r,sur,man,quiet){
     (d.ytKey?'<a class="btn" href="https://www.youtube.com/watch?v='+esc(d.ytKey)+'" data-yt="'+esc(d.ytKey)+'" target="_blank" rel="noopener" style="flex:none;color:var(--fg)"><span style="color:var(--red);display:grid">'+IC.play+'</span>Guarda il trailer</a>':'')+
     '<section class="card compat"><div class="ringw"><svg viewBox="0 0 64 64"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6c653"/><stop offset="1" stop-color="#ff3d52"/></linearGradient></defs><circle class="bgc" cx="32" cy="32" r="27"/><circle class="fgc" cx="32" cy="32" r="27"/></svg><div class="pn"><span><span id="pn">0</span>%</span></div></div><div><b>Compatibilità</b><span class="sub">Quanto combacia con le tue risposte</span></div></section>'+
     (man?'':'<section class="card"><h3>Perché fa per te</h3><ul class="why">'+why(r,sur).map(x=>'<li><b>✓</b><span>'+esc(x)+'</span></li>').join('')+'</ul></section>')+
-    provHtml(d)+
     '<section class="card'+(long?' tap':'')+'" id="plotcard"'+(long?' role="button" tabindex="0" aria-expanded="false"':'')+'><h3>Trama</h3><p class="'+(long?'clamp':'')+'" id="plot">'+esc(d.overview||'Trama non disponibile.')+'</p>'+(long?'<button type="button" class="lnk-btn" id="pmore">Leggi tutto</button>':'')+'</section>'+
     (d.castList&&d.castList.length?'<button type="button" class="card castbtn" data-act="cast"><h3>Cast</h3><span class="cav">'+d.castList.slice(0,5).map(x=>x.img?'<img src="'+PIMG+esc(x.img)+'" alt="" loading="lazy" referrerpolicy="no-referrer">':'<i>👤</i>').join('')+'</span><span class="cgo">Vedi tutto il cast →</span></button>':'')+
     infoHtml(d)+
+    provHtml(d)+
     '<p class="attr">'+attrTxt(d).split('\n').map(l=>'<span>'+esc(l)+'</span>').join('')+'</p>'+
   '</div>';
   const sy=stage.scrollTop;
