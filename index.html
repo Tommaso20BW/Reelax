@@ -650,12 +650,13 @@ const stage=$("stage");
 
 /* ---------- UI: stage, barra alta, dock ---------- */
 /* regole: tra due domande scorrimento (avanti e indietro, come in origine). Ovunque altrove dissolvenza, sia in apertura che tornando indietro */
-let TDX=0,LASTSTEP=-1;
+let TDX=0,LASTSTEP=-1,NAV=0,NAVT=0;
+const FWD={search:1,settings:1,recent:1,acuser:1,acpass:1,pfpick:1,srch:1,cast:1};
 function swap(h,anim){
   if(h.indexOf('class="load"')<0)killWall();
   const old=stage.innerHTML,app=$("app");
   document.querySelectorAll(".ghost").forEach(g=>g.remove());
-  const dxs=(anim===false)?0:TDX;TDX=0;
+  const dxs=(anim===false)?0:(TDX||NAV);TDX=0;NAV=0;
   let ghost=null;
   if(dxs&&old.trim()){
     const ar=app.getBoundingClientRect(),sr=stage.getBoundingClientRect();
@@ -683,10 +684,11 @@ function swap(h,anim){
   if(!RM()&&stage.animate){
     if(dxs){   // tra due domande: la vecchia sfuma e scivola un poco via, la nuova arriva dalla parte giusta (avanti da destra, indietro da sinistra)
       const D=22,mv=x=>"translate3d("+x+"px,0,0)";
-      const h1=stage.querySelector("h1");
-      if(h1)h1.animate([{opacity:0,transform:mv(dxs*D)},{opacity:1,transform:"none"}],{duration:320,easing:E,fill:"backwards"});
+      const h1=stage.querySelector("h1"),isOpts=!!stage.querySelector(".opts");
+      if(!isOpts){const pg=stage.querySelector(".page")||stage;pg.animate([{opacity:0,transform:mv(dxs*D*1.6)},{opacity:1,transform:"none"}],{duration:380,delay:70,easing:E,fill:"backwards"});}
+      else if(h1)h1.animate([{opacity:0,transform:mv(dxs*D)},{opacity:1,transform:"none"}],{duration:320,easing:E,fill:"backwards"});
       stage.querySelectorAll(".opt").forEach((el,i)=>el.animate([{opacity:0,transform:mv(dxs*D)},{opacity:1,transform:"none"}],{duration:340,delay:30+i*28,easing:E,fill:"backwards"}));
-      if(ghost){const g=ghost;g.animate([{opacity:1,transform:"none"},{opacity:0,transform:mv(-dxs*D)}],{duration:170,easing:"cubic-bezier(.4,0,1,1)",fill:"forwards"}).onfinish=()=>g.remove();setTimeout(()=>g.remove(),600);}
+      if(ghost){const g=ghost;g.animate([{opacity:1,transform:"none"},{opacity:0,transform:mv(-dxs*D)}],{duration:isOpts?170:220,easing:"cubic-bezier(.4,0,1,1)",fill:"forwards"}).onfinish=()=>g.remove();setTimeout(()=>g.remove(),600);}
     }else stage.animate([{opacity:0,transform:"translate3d(0,10px,0) scale(.99)"},{opacity:1,transform:"none"}],{duration:340,easing:E});
   }else if(ghost)ghost.remove();
 }
@@ -707,7 +709,9 @@ function ui(o){
       c.animate([{opacity:1,transform:"none"},{opacity:0,transform:"translateY(5px)"}],{duration:170,easing:"cubic-bezier(.4,0,1,1)",fill:"forwards"}).onfinish=rm;
       setTimeout(rm,700);
     }
+    const dkw=$("dock"),hh0=dkw?dkw.offsetHeight:0;
     dk.innerHTML=o.d||"";dk._h=o.d;
+    if(dkw&&dkw.animate&&!RM()){const hh1=dkw.offsetHeight;if(hh0&&hh1&&Math.abs(hh0-hh1)>2)dkw.animate([{height:hh0+"px"},{height:hh1+"px"}],{duration:320,easing:"cubic-bezier(.22,1,.36,1)"});}
   }
   if(o.p){
     let nb=false;
@@ -725,7 +729,7 @@ document.addEventListener("click",e=>{
   if(y){openYt(e,y.dataset.yt);return;}
   const b=e.target.closest&&e.target.closest("[data-act]");
   if(!b||b.disabled)return;
-  const f=ACT[b.dataset.act];if(f){tap();try{f();}catch(x){}}
+  const f=ACT[b.dataset.act];if(f){tap();const an=b.dataset.act;NAV=an==="back"?-1:(FWD[an]?1:0);clearTimeout(NAVT);NAVT=setTimeout(()=>{NAV=0;},700);try{f();}catch(x){}}
 });
 const tap=()=>{try{navigator.vibrate&&navigator.vibrate(8);}catch(e){}};
 function setBd(u){   // cambio sfondo morbido: se ce n'è già uno si dissolve prima di mostrare il nuovo (niente scatto)
@@ -2141,7 +2145,7 @@ $("lgf").addEventListener("submit",async e=>{
   c.classList.remove("busy");btn.disabled=false;er.textContent=fail||"Nome utente o password non corretti.";
   void c.offsetWidth;c.classList.add("bad");$("lgp").value="";try{$("lgp").focus();}catch(x){}
 });
-/* avvio: la schermata #sp resta finche' font e pagina sono pronti (solo da app installata: minimo 3 s; nel browser nessuna schermata), poi la scritta si dissolve e compare login o app */
+/* avvio: la schermata #sp resta finche' font e pagina sono pronti (solo da app installata: minimo 1,5 s; nel browser nessuna schermata), poi la scritta si dissolve e compare login o app */
 function hideSplash(){
   const sp=$("sp");if(!sp||sp.hidden)return;
   if(RM()||!sp.animate){sp.hidden=true;return;}
@@ -2155,7 +2159,7 @@ function hideSplash(){
 const boot=()=>{document.body.classList.remove("pre");if(isAuthed()){home();syncPull();}else lockApp();hideSplash();};
 const fontsOk=(document.fonts&&document.fonts.ready)?Promise.race([document.fonts.ready,sleep(1200)]):Promise.resolve();
 const pageOk=document.readyState==="complete"?Promise.resolve():new Promise(r=>{addEventListener("load",r,{once:true});setTimeout(r,3000);});
-Promise.all([fontsOk,pageOk,sleep(IS_APP?Math.max(0,3000-performance.now()):0)]).then(()=>requestAnimationFrame(()=>requestAnimationFrame(boot)));
+Promise.all([fontsOk,pageOk,sleep(IS_APP?Math.max(0,1500-performance.now()):0)]).then(()=>requestAnimationFrame(()=>requestAnimationFrame(boot)));
 let dp=null;const ib=$("ib");
 addEventListener("beforeinstallprompt",e=>{e.preventDefault();dp=e;try{if(!localStorage.getItem("stasera_ix"))ib.hidden=false;}catch(x){ib.hidden=false;}});
 $("ibtn").onclick=()=>{ib.hidden=true;if(dp){dp.prompt();dp=null;}};
