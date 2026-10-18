@@ -1421,6 +1421,7 @@ async function pfPage(){
   if(!box||!box.isConnected)return;
   if(!list.length){box.innerHTML='<div class="lemp">'+IC.tv+'<span>Non riesco a caricare l\'elenco</span></div>';return;}
   const isOn=k=>pfSel().some(x=>x.k===k);
+  list.sort((x,y)=>(isOn(y.k)?1:0)-(isOn(x.k)?1:0));   // le già selezionate stanno in cima (all'apertura; poi non si spostano mentre tocchi)
   const row=(x,i)=>'<button type="button" class="pfr'+(isOn(x.k)?' on':'')+'" data-i="'+i+'" aria-pressed="'+isOn(x.k)+'"><span class="pfi">'+(x.l?'<img src="https://image.tmdb.org/t/p/w92'+esc(x.l)+'" alt="" loading="lazy" referrerpolicy="no-referrer">':'<b>'+esc(x.n.slice(0,2))+'</b>')+'</span><span class="pfn">'+esc(x.n)+'</span><span class="pfk">'+IC.check+'</span></button>';
   const top=[],rest=[];list.forEach((x,i)=>(PF_TOP.has(x.k)||isOn(x.k)?top:rest).push(row(x,i)));
   box.innerHTML=top.join('')+(rest.length?'<button type="button" class="pfm" data-more="1">Mostra altre ('+rest.length+')</button>':'');
