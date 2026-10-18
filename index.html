@@ -448,6 +448,24 @@ body.pre #app{opacity:0}
 .srow:active{transform:scale(.985)}
 .srow svg{width:20px;height:20px;flex:none;color:var(--mut)}
 .srow .sl{flex:1;min-width:0}
+.sw{position:relative;flex:none;width:46px;height:28px;border-radius:999px;background:var(--s3);border:1px solid var(--line2);transition:background .2s,border-color .2s}
+.sw i{position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;background:var(--fg);transition:transform .2s var(--ease),background .2s}
+.sw.on{background:var(--grad);border-color:transparent}
+.sw.on i{transform:translateX(18px);background:#fff}
+.pfg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px 10px;align-items:start}
+.pfg .lemp{grid-column:1/-1}
+.pft{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;transition:transform .1s}
+.pft:active{transform:scale(.94)}
+.pfl{position:relative;display:grid;place-items:center;width:100%;aspect-ratio:1;border-radius:16px;overflow:hidden;border:2px solid var(--line);background:var(--s3);transition:border-color .15s,box-shadow .15s}
+.pfl img{width:100%;height:100%;object-fit:cover}
+.pfl b{font:800 1.1rem var(--fd);color:var(--mut)}
+.pft.on .pfl{border-color:var(--red);box-shadow:0 0 0 1px var(--red)}
+.pfc{position:absolute;right:4px;top:4px;width:22px;height:22px;border-radius:50%;background:var(--red);color:#fff;display:none;place-items:center}
+.pfc svg{width:14px;height:14px;stroke-width:3}
+.pft.on .pfc{display:grid}
+.pfn{font-size:.72rem;font-weight:600;color:var(--mut);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pft.on .pfn{color:var(--fg)}
+@media (min-width:560px){.pfg{grid-template-columns:repeat(6,minmax(0,1fr))}}
 .srow.out{margin-top:auto;color:var(--red)}
 .srow.out svg{color:var(--red)}
 .srow.out.ask{border-color:var(--red)}
@@ -549,6 +567,8 @@ const IC={
   plus:sv('<path d="M12 5v14M5 12h14"/>'),
   gear:sv('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/>'),
   chev:sv('<path d="M9 5l7 7-7 7"/>'),
+  tv:sv('<rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8M12 17v4"/>'),
+  grid:sv('<rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/>'),
   clock:sv('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
   check:sv('<path d="M5 12.5l4.5 4.5L19 7.5"/>')
 };
@@ -1080,7 +1100,7 @@ function loading(){
 function showError(e){
   setBd(null);
   const off=navigator.onLine===false, empty=e&&e.message==="EMPTY";
-  const msg=off?"Sembra che il telefono sia offline: controlla la connessione e riprova.":empty?"Nessun titolo trovato con queste regole. Prova ad allargare qualche filtro (epoca, durata o cose da evitare).":"Non riesco a trovare un risultato adesso.";
+  const msg=off?"Sembra che il telefono sia offline: controlla la connessione e riprova.":empty?"Nessun titolo trovato con queste regole. Prova ad allargare qualche filtro (epoca, durata o cose da evitare)"+(pfIds().length?" oppure a togliere il filtro per piattaforme nelle Impostazioni.":"."):"Non riesco a trovare un risultato adesso.";
   swap('<div class="err"><h2>Qualcosa non va</h2><p>'+esc(msg)+'</p>'+(empty||off?'':'<small style="word-break:break-all">Dettaglio: '+esc(e&&e.message||'errore')+'</small>')+'</div>');
   const back=()=>home();
   ui({l:tbtn('back','back','Modifica'),r:'',d:bb('back','Modifica')+bb('retry','Riprova','primary'),a:{back,retry:()=>{S.seen=[];S.cands=[];run(false,true);}}});
@@ -1255,19 +1275,69 @@ function recentPage(){
 }
 
 /* ---------- Impostazioni ---------- */
+/* ---------- Filtro per piattaforme ---------- */
+/* L.platforms (sincronizzato col Worker) contiene oggetti {k,n,l,ids:[provider_id...]}; l'interruttore e' solo su questo dispositivo */
+const PFKEY="reelax_pf_on";
+const pfOn=()=>{try{return localStorage.getItem(PFKEY)==="1";}catch(e){return false;}};
+const pfSet=v=>{try{localStorage.setItem(PFKEY,v?"1":"0");}catch(e){}};
+const pfSel=()=>L.platforms.filter(x=>x&&typeof x==="object"&&Array.isArray(x.ids));
+const pfIds=()=>pfOn()?[].concat(...pfSel().map(x=>x.ids)):[];
+function settingsRows(){
+  const on=pfOn(),n=pfSel().length;
+  return '<button type="button" class="srow" data-act="recent">'+IC.clock+'<span class="sl">Trovati di recente</span><span class="sn">'+RECENT.length+'</span>'+IC.chev+'</button>'+
+    '<button type="button" class="srow" data-act="pfsw" role="switch" aria-checked="'+on+'">'+IC.tv+'<span class="sl">Filtra per piattaforme</span><span class="sw'+(on?' on':'')+'"><i></i></span></button>'+
+    (on?'<button type="button" class="srow" data-act="pfpick">'+IC.grid+'<span class="sl">Le mie piattaforme</span><span class="sn">'+(n?n:'Scegli')+'</span>'+IC.chev+'</button>':'');
+}
 function settingsPage(){
   RUN++;SRUN++;setBd(null);
-  swap('<div class="page"><h1>Impostazioni</h1><div class="srows">'+
-    '<button type="button" class="srow" data-act="recent">'+IC.clock+'<span class="sl">Trovati di recente</span><span class="sn">'+RECENT.length+'</span>'+IC.chev+'</button>'+
-  '</div>'+
+  swap('<div class="page"><h1>Impostazioni</h1><div class="srows" id="srows">'+settingsRows()+'</div>'+
     '<div class="sblock"><div class="sh">Tema</div><div class="seg" id="thseg">'+
       [["auto","Auto"],["light","Chiaro"],["dark","Scuro"]].map(x=>'<button type="button" data-t="'+x[0]+'">'+x[1]+'</button>').join('')+
     '</div></div>'+
     '<button type="button" class="srow out" data-act="logout">'+IC.out+'<span class="sl">Esci</span></button></div>',true);
-  ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>home(),recent:()=>recentPage(),logout:confirmLogout}});
+  ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>home(),recent:()=>recentPage(),logout:confirmLogout,
+    pfsw:()=>{const v=!pfOn();pfSet(v);const box=$("srows");if(box)box.innerHTML=settingsRows();if(v&&!pfSel().length)pfPage();},
+    pfpick:()=>pfPage()}});
   const th=$("thseg"),pr=window.themePref();
   th.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.t===pr));
   th.onclick=e=>{const b=e.target.closest&&e.target.closest("button[data-t]");if(!b)return;tap();window.setTheme(b.dataset.t);th.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));};
+}
+let PFLIST=null;
+async function pfLoad(){
+  if(PFLIST)return PFLIST;
+  const rs=await Promise.all(["movie","tv"].map(k=>tm("/3/watch/providers/"+k,{language:"it-IT",watch_region:"IT"})));
+  const m=new Map();
+  rs.forEach(r=>(r.results||[]).forEach(p=>{
+    const raw=String(p.provider_name||"").replace(/\s+Standard with Ads/i," with Ads");
+    if(CH_RE.test(raw))return;                       // i "canali" (es. Paramount+ su Prime) sono abbonamenti a parte: li lascio fuori
+    const k=provKey(raw);if(!k)return;
+    const nm=provBase(raw).replace(/\s+(con pubblicit[aà]|with ads)$/i,"").trim();
+    const pr=(p.display_priorities&&p.display_priorities.IT!=null)?p.display_priorities.IT:(p.display_priority!=null?p.display_priority:999);
+    const o=m.get(k);
+    if(!o)m.set(k,{k:k,n:nm,l:p.logo_path||"",ids:[p.provider_id],pr:pr});
+    else{if(o.ids.indexOf(p.provider_id)<0)o.ids.push(p.provider_id);o.pr=Math.min(o.pr,pr);if(!o.l&&p.logo_path)o.l=p.logo_path;if(nm.length<o.n.length)o.n=nm;}
+  }));
+  const l=[...m.values()].sort((a,b)=>a.pr-b.pr).slice(0,60);
+  if(l.length)PFLIST=l;
+  return l;
+}
+async function pfPage(){
+  RUN++;SRUN++;setBd(null);
+  swap('<div class="page"><h1>Le mie piattaforme</h1><p class="sub">Scegli i servizi che hai: ti propongo solo titoli disponibili lì, in abbonamento o gratis.</p><div class="pfg" id="pfg"><div class="lemp">'+IC.tv+'<span>Carico…</span></div></div></div>',true);
+  ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>settingsPage()}});
+  const box=$("pfg");
+  let list=[];
+  try{list=await pfLoad();}catch(e){}
+  if(!box||!box.isConnected)return;
+  if(!list.length){box.innerHTML='<div class="lemp">'+IC.tv+'<span>Non riesco a caricare l\'elenco</span></div>';return;}
+  const isOn=k=>pfSel().some(x=>x.k===k);
+  box.innerHTML=list.map((x,i)=>'<button type="button" class="pft'+(isOn(x.k)?' on':'')+'" data-i="'+i+'" aria-pressed="'+isOn(x.k)+'"><span class="pfl">'+(x.l?'<img src="https://image.tmdb.org/t/p/w92'+esc(x.l)+'" alt="" loading="lazy" referrerpolicy="no-referrer">':'<b>'+esc(x.n.slice(0,2))+'</b>')+'<i class="pfc">'+IC.check+'</i></span><span class="pfn">'+esc(x.n)+'</span></button>').join('');
+  box.onclick=e=>{
+    const b=e.target.closest&&e.target.closest("[data-i]");if(!b)return;tap();
+    const x=list[+b.dataset.i],i=L.platforms.findIndex(y=>y&&y.k===x.k);
+    if(i>=0)L.platforms.splice(i,1);else L.platforms.push({k:x.k,n:x.n,l:x.l,ids:x.ids});
+    lsave();const on=i<0;b.classList.toggle("on",on);b.setAttribute("aria-pressed",on?"true":"false");
+  };
 }
 let outT=null;
 function confirmLogout(){   // primo tocco chiede conferma, secondo tocco esce
@@ -1342,6 +1412,7 @@ async function tmDiscover(kind,a,anim,ja){
   if(narrow)maxPage=Math.min(maxPage,5);
   const p={sort_by:tier===2?"vote_average.desc":"popularity.desc",include_adult:"false","vote_count.gte":band[0],"vote_average.gte":tier===2?6.4:6};
   if(band[1])p["vote_count.lte"]=band[1];
+  {const pf=pfIds();if(pf.length){p.watch_region="IT";p.with_watch_providers=pf.join("|");p.with_watch_monetization_types="flatrate|free|ads";}}   // solo titoli disponibili sulle mie piattaforme
   let mood=(film?TM_MOOD_FILM:TM_MOOD_TV)[a.mood]||"18";
   {const mg=mood.split("|").filter(x=>AV.g.indexOf(+x)<0);if(mg.length)mood=mg.join("|");}
   // TMDB per le serie non ha il genere "Romance" (e l'horror è debole): per amore/paura uso la parola chiave
@@ -1379,9 +1450,9 @@ async function tmDiscover(kind,a,anim,ja){
     if(er[1]<9999)p[k+".lte"]=er[1]+"-12-31";
   }
   const path="/3/discover/"+(film?"movie":"tv");
-  if(must){   // Sport: scelgo le pagine a caso su TUTTO l'elenco disponibile (total_pages), così i titoli variano e non si ripetono
+  if(must||p.with_watch_providers){   // Sport / filtro piattaforme: scelgo le pagine a caso su TUTTO l'elenco disponibile (total_pages), così i titoli variano e non si ripetono
     const probe=await tm(path,Object.assign({page:1},p)).catch(()=>null);
-    if(probe&&probe.total_pages)maxPage=Math.min(probe.total_pages,20);
+    if(probe&&probe.total_pages)maxPage=must?Math.min(probe.total_pages,20):Math.max(1,Math.min(probe.total_pages,maxPage));
   }
   const pages=uniq([1+rand(maxPage),1+rand(maxPage)]);
   let lists=await Promise.all(pages.map(pg=>tm(path,Object.assign({page:pg},p)).then(x=>x.results||[]).catch(()=>null)));
