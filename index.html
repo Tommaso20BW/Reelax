@@ -698,7 +698,7 @@ function searchPage(){
   box.onclick=e=>{const b=e.target.closest&&e.target.closest("[data-i]");if(!b)return;tap();openSearched(SLIST[+b.dataset.i]);};
   // scorrendo l'elenco la tastiera si chiude, così l'ultimo risultato resta raggiungibile senza spazio vuoto in fondo
   box.addEventListener("touchmove",()=>{if(document.activeElement===inp)inp.blur();},{passive:true});
-  if(SQ.length>=2)doSearch(SQ);
+  doSearch(SQ);   // vuoto = i più in voga del momento
   // niente focus durante lo scorrimento: farebbe saltare la pagina a metà animazione
   setTimeout(()=>{try{if($("sq")===inp)inp.focus({preventScroll:true});}catch(e){}},780);
 }
@@ -751,11 +751,13 @@ const bkReveal=(box,delay)=>{if(RM())return;box.querySelectorAll(".bk").forEach(
 async function doSearch(q){
   const my=++SRUN,box=$("sres");
   if(!box)return;
-  if(q.length<2){box.innerHTML="";SLIST=[];return;}
+  const trend=q.length<2;   // campo vuoto: mostro i titoli più in voga del momento
   if(box.querySelector(".bk"))box.classList.add("busy");   // risultati precedenti restano, attenuati: niente sfarfallio a ogni lettera
-  else box.innerHTML='<p class="smsg">Cerco...</p>';
+  else box.innerHTML='<p class="smsg">'+(trend?"Carico i più in voga...":"Cerco...")+'</p>';
   try{
-    const [list0,al]=await Promise.all([searchTitles(q).catch(()=>null),searchAniList(q).catch(()=>[])]);
+    const [list0,al]=await Promise.all([
+      (trend?tm("/3/trending/all/week",{page:1}).then(r=>(r.results||[]).filter(x=>x.media_type==="movie"||x.media_type==="tv")):searchTitles(q)).catch(()=>null),
+      trend?Promise.resolve([]):searchAniList(q).catch(()=>[])]);
     if(my!==SRUN||!$("sres"))return;
     if(list0===null&&!al.length)throw new Error("ricerca non disponibile");
     const list=mergeAl(list0||[],al);
