@@ -1212,7 +1212,7 @@ function killWall(now){
   const o=$("ldw");if(!o)return;
   o.removeAttribute("id");const w=o.querySelector("#wall");if(w)w.removeAttribute("id");
   if(now||RM()){o.remove();return;}
-  o.classList.remove("on");setTimeout(()=>o.remove(),900);
+  o.classList.remove("on");setTimeout(()=>o.remove(),1100);
 }
 function wallOn(){
   killWall(true);
@@ -1895,9 +1895,9 @@ function preImg(u,ms){
 }
 function leaveLoad(){   // testo di caricamento fuori + muro che si dissolve (~.45s) PRIMA che entri il risultato: niente sovrapposizioni
   const p=document.querySelector(".load p"),o=$("ldw");
-  if(o){o.style.transitionDuration=".45s";o.classList.remove("on");}
+  if(o){o.style.transitionDuration=".9s";o.classList.remove("on");}
   if(RM()||!p||!p.animate)return Promise.resolve();
-  return p.animate([{opacity:1,transform:"none"},{opacity:0,transform:"translateY(-8px)"}],{duration:240,easing:"ease-in",fill:"forwards"}).finished.catch(()=>{});
+  return p.animate([{opacity:1,transform:"none"},{opacity:0,transform:"translateY(-8px)"}],{duration:300,easing:"ease-in",fill:"forwards"}).finished.catch(()=>{});
 }
 let RUN=0;
 async function run(surprise,fresh){
@@ -2322,6 +2322,10 @@ function show(r,sur,man,quiet){
   if(man)stage.querySelectorAll('.card').forEach(c=>{const h3=c.querySelector('h3');if(c.classList.contains('compat')||(h3&&h3.textContent==='Perché fa per te'))c.remove();});
   const rs=stage.querySelectorAll('.res>*');rs.forEach((el,i)=>el.style.setProperty('--k',i));
   polish(p,r);
+  if(!quiet&&!RM()){   // ingresso morbido della locandina: sale dal basso ingrandendosi, mentre lo sfondo di caricamento si dissolve
+    const po=stage.querySelector('.hero .poster');
+    if(po&&po.animate)po.animate([{opacity:0,transform:'translate3d(0,46px,0) scale(.78)'},{opacity:1,transform:'none'}],{duration:1100,delay:40,easing:'cubic-bezier(.16,1,.3,1)',fill:'backwards'});
+  }
   if(snap)settle(snap);
   setBd(d.poster);
   setTimeout(()=>{try{prepShare(d);}catch(e){}},700);
