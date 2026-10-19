@@ -782,7 +782,7 @@ function swap(h,anim){
       if(ghost){const g=ghost;g.animate([{opacity:1,transform:"none"},{opacity:0,transform:mv(-dxs*D)}],{duration:isOpts?170:220,easing:"cubic-bezier(.4,0,1,1)",fill:"forwards"}).onfinish=()=>g.remove();setTimeout(()=>g.remove(),600);}
     }else{
       stage.animate([{opacity:0,transform:"translate3d(0,10px,0) scale(.99)"},{opacity:1,transform:"none"}],{duration:340,easing:E});
-      if(ghost){const g=ghost;g.animate([{opacity:1,transform:"none"},{opacity:0,transform:"translate3d(0,-8px,0) scale(.985)"}],{duration:260,easing:"cubic-bezier(.4,0,1,1)",fill:"forwards"}).onfinish=()=>g.remove();setTimeout(()=>g.remove(),700);}
+      if(ghost){const g=ghost;g.animate([{opacity:1,transform:"none"},{opacity:0,transform:"translate3d(0,-10px,0) scale(.96)"}],{duration:200,easing:"cubic-bezier(.4,0,1,1)",fill:"forwards"}).onfinish=()=>g.remove();setTimeout(()=>g.remove(),700);}
     }
   }else if(ghost)ghost.remove();
 }
@@ -1230,6 +1230,11 @@ function loading(){
   const cancel=()=>{RUN++;home();};
   ui({l:tbtn('cancel','x','Annulla'),r:'',d:bb('cancel','Annulla'),p:[1,1],a:{cancel,back:cancel}});
   swap('<div class="load"><p id="lt">'+esc(t[0])+'</p></div>');wallOn();
+  if(!RM()){   // la scheda precedente esce per prima: scritta e tasto Annulla entrano un attimo dopo, senza sovrapporsi
+    const E="cubic-bezier(.16,1,.3,1)",ent=(el,y,d)=>{if(!el||!el.animate)return;el.style.animation="none";el.style.opacity="0";const a=el.animate([{opacity:0,transform:"translate3d(0,"+y+"px,0)"},{opacity:1,transform:"none"}],{duration:480,delay:d,easing:E,fill:"both"});const dn=()=>{el.style.opacity="";try{a.cancel();}catch(e){}};a.finished.then(dn,dn);};
+    ent(document.querySelector(".load p"),10,200);
+    [...$("dockin").children].forEach(c=>ent(c,10,180));
+  }
   WLOAD=true;if(!WPOOL.length)wallWait().then(fillWall);
   let i=0;const iv=setInterval(()=>{i=(i+1)%t.length;const p=$('lt');if(p){p.textContent=t[i];if(p.animate)p.animate([{opacity:0,transform:'translateY(8px)'},{opacity:1,transform:'none'}],{duration:320,easing:'ease-out'});}},1300);
   return ()=>{clearInterval(iv);WLOAD=false;setTimeout(wallRelease,2500);};
