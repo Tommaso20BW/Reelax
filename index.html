@@ -551,7 +551,7 @@ html:has(#sp:not([hidden]):not(.fd)){background-color:#9d2fb0;background-image:l
 </head>
 <body class="pre">
 <div id="sp" class="wait" role="presentation"><svg viewBox="0 0 4727 702" aria-hidden="true"><path d="M358 702 212 437H171V702H0V0H287Q370 0 428.5 29Q487 58 516 108.5Q545 159 545 221Q545 291 505.5 346Q466 401 389 424L551 702ZM171 316H277Q324 316 347.5 293Q371 270 371 228Q371 188 347.5 165Q324 142 277 142H171Z"/><path d="M1053 137V279H1282V411H1053V565H1312V702H882V0H1312V137Z"/><path d="M1824 137V279H2053V411H1824V565H2083V702H1653V0H2083V137Z"/><path d="M2595 570H2819V702H2424V0H2595Z"/><path d="M3568 578H3306L3264 702H3085L3339 0H3537L3791 702H3610ZM3524 446 3437 189 3351 446Z"/><path d="M4528 702 4385 487 4259 702H4065L4290 345L4060 0H4259L4400 212L4524 0H4718L4495 354L4727 702Z"/></svg></div>
-<script>var IS_APP=!!(navigator.standalone||(window.matchMedia&&matchMedia("(display-mode: standalone)").matches));(function(){var s=document.getElementById("sp");if(s&&!IS_APP)s.hidden=true;setTimeout(function(){if(s)s.hidden=true;},10000);})();</script>
+<script>var IS_APP=!!(navigator.standalone||(window.matchMedia&&matchMedia("(display-mode: standalone)").matches));(function(){var s=document.getElementById("sp");if(s&&!IS_APP)s.hidden=true;if(s&&IS_APP){var tc=document.querySelector('meta[name="theme-color"]');if(tc)tc.setAttribute("content","#9d2fb0");}setTimeout(function(){if(s)s.hidden=true;},10000);})();</script>
 <div id="bd"><i></i></div>
 <div id="app">
   <header class="top">
@@ -2419,7 +2419,12 @@ function hideSplash(){
   const sp=$("sp");if(!sp||sp.hidden)return;
   if(RM()||!sp.animate){sp.hidden=true;return;}
   sp.classList.remove("wait");
-  setTimeout(function(){sp.classList.add("fd");},720);   // a metà dissolvenza lo sfondo della pagina torna quello del tema
+  setTimeout(function(){   // inizio dissolvenza: sfondo pagina e colore barra tornano quelli del tema, così iOS rilegge il bordo subito
+    sp.classList.add("fd");
+    var l=document.documentElement.getAttribute("data-theme")==="light",tc=document.querySelector('meta[name="theme-color"]');
+    if(tc)tc.setAttribute("content",l?"#f6f3fb":"#09070f");
+    document.documentElement.style.backgroundColor=l?"#f6f3fb":"#09070f";void document.documentElement.offsetWidth;document.documentElement.style.backgroundColor="";
+  },260);
   const sv=sp.querySelector("svg");
   [...sp.querySelectorAll("path")].forEach((p,i)=>p.animate([{opacity:1,transform:"none"},{opacity:0,transform:"translateY(-16px) scale(1.14)"}],{duration:520,delay:i*60,easing:"cubic-bezier(.4,0,.2,1)",fill:"forwards"}));
   if(sv)sv.animate([{filter:"blur(0)"},{filter:"blur(10px)"}],{duration:700,delay:120,easing:"ease-in",fill:"forwards"});
