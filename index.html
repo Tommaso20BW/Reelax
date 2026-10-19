@@ -614,6 +614,14 @@ body.pre #app{opacity:0}
 .btn.shr{flex:none;width:100%;height:50px;border-radius:16px;font-size:.92rem;gap:9px;font-weight:600;background:var(--soft2);border-color:var(--line);color:var(--mut)}
 .btn.shr svg{width:18px;height:18px}
 .res>.btn.shr{margin-top:4px}
+#shs{position:fixed;inset:0;z-index:150;display:none}
+#shs.on{display:block}
+#shs .bgx{position:absolute;inset:0;background:rgba(0,0,0,.5);opacity:0;transition:opacity .45s ease}
+#shs.show .bgx{opacity:1}
+#shs .pan{position:absolute;left:0;right:0;bottom:0;margin:0 auto;max-width:560px;padding:10px var(--gut) calc(var(--sab) + 18px);border-radius:26px 26px 0 0;background:var(--s1);border:1px solid var(--line);border-bottom:0;transform:translate3d(0,100%,0);transition:transform .6s var(--ease);box-shadow:0 -20px 50px rgba(0,0,0,.35)}
+#shs.show .pan{transform:none}
+#shs .grab{width:38px;height:4px;border-radius:4px;background:var(--line2);margin:0 auto 14px}
+#shs .sgrp{background:var(--s2)}
 /* ingresso più calmo */
 .poster::before{display:none}
 .in .res>*{animation-duration:1s;animation-delay:calc(var(--k,0)*45ms + 60ms)}
@@ -2280,8 +2288,57 @@ function prepShare(d){   // preparo l'immagine in anticipo: al tocco è già pro
   if(SHC.k!==k||!SHC.p){SHC.k=k;SHC.p=shBuild(d).catch(()=>null);}
   return SHC.p;
 }
+/* ---------- Pannello Condividi (nostro): salva, copia, altre app ---------- */
+const shIc={
+  dl:sv('<path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19h14"/>'),
+  cp:sv('<rect x="8.5" y="8.5" width="11" height="11" rx="2.2"/><path d="M15.5 8.5V6.2A2.2 2.2 0 0013.3 4H6.2A2.2 2.2 0 004 6.2v7.1a2.2 2.2 0 002.2 2.2h2.3"/>')
+};
+const shRow=(k,ic,t)=>'<button type="button" class="srow" data-sh="'+k+'">'+ic+'<span class="sl">'+t+'</span></button>';
+const shCan=()=>!!(window.ClipboardItem&&navigator.clipboard&&navigator.clipboard.write);
+function shEl(){
+  let e=$("shs");if(e)return e;
+  e=document.createElement("div");e.id="shs";e.setAttribute("role","dialog");e.setAttribute("aria-label","Condividi");
+  e.innerHTML='<div class="bgx"></div><div class="pan"><div class="grab"></div><div class="sgrp" id="shg"></div></div>';
+  document.body.appendChild(e);
+  e.querySelector(".bgx").onclick=shClose;
+  e.querySelector(".pan").onclick=ev=>{const b=ev.target.closest&&ev.target.closest("[data-sh]");if(b)shAct(b.dataset.sh,b);};
+  return e;
+}
+function share(){
+  const d=S.cur&&S.cur.d;if(!d)return;
+  prepShare(d);
+  const e=shEl();
+  $("shg").innerHTML=shRow("save",shIc.dl,"Salva immagine")+(shCan()?shRow("copy",shIc.cp,"Copia immagine"):"")+shRow("more",IC.share,"Altre app…");
+  e.classList.add("on");void e.offsetWidth;e.classList.add("show");
+}
+function shClose(){
+  const e=$("shs");if(!e)return;
+  e.classList.remove("show");setTimeout(()=>{if(!e.classList.contains("show"))e.classList.remove("on");},650);
+}
+const shToPng=bl=>createImageBitmap(bl).then(bm=>{const c=document.createElement("canvas");c.width=bm.width;c.height=bm.height;c.getContext("2d").drawImage(bm,0,0);return new Promise(r=>c.toBlob(r,"image/png"));});
+async function shAct(k,b){
+  const d=S.cur&&S.cur.d;if(!d)return;
+  const say=t=>{const l=b.querySelector(".sl");if(l)l.textContent=t;};
+  if(k==="more"){shClose();setTimeout(shareNative,250);return;}
+  if(k==="save"){
+    say("Preparo…");
+    const bl=await prepShare(d);
+    if(!bl){say("Non riesco a salvarla");return;}
+    const a=document.createElement("a");a.href=URL.createObjectURL(bl);a.download=shName(d);document.body.appendChild(a);a.click();setTimeout(()=>{a.remove();URL.revokeObjectURL(a.href);},4000);
+    say("Salvata");setTimeout(shClose,900);return;
+  }
+  if(k==="copy"){
+    say("Copio…");
+    try{
+      await navigator.clipboard.write([new ClipboardItem({"image/png":prepShare(d).then(bl=>{if(!bl)throw 0;return shToPng(bl);})})]);
+      say("Copiata");setTimeout(shClose,900);
+    }catch(x){say("Non riesco a copiarla");}
+  }
+}
+addEventListener("keydown",e=>{if(e.key==="Escape")shClose();});
+const shName=d=>(String(d.title||"Reelax").replace(/[\\/:*?"<>|]+/g," ").replace(/\s+/g," ").trim().slice(0,60)||"Reelax")+".jpg";
 let shBusy=false;
-async function share(){
+async function shareNative(){
   const d=S.cur&&S.cur.d;if(!d||shBusy)return;
   shBusy=true;
   const text=d.title+(d.year?" ("+d.year+")":"")+" — stasera guardo questo!";
