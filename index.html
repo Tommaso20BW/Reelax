@@ -306,11 +306,11 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 #lb .bg{position:absolute;inset:0;background:var(--bg);opacity:0;transition:opacity .6s ease;will-change:opacity;overflow:hidden}
 #lb.show .bg{opacity:1}
 /* sfondo: la locandina stessa, sfocata. Scuro nel tema scuro, chiaro nel tema chiaro; si ingrandisce piano mentre appare */
-#lb .bg i{position:absolute;inset:-14%;background-size:cover;background-position:center;filter:blur(36px) saturate(1.25) brightness(.62);transform:scale(1.32) translateZ(0);transition:transform 1.2s cubic-bezier(.2,.85,.25,1)}
-#lb.show .bg i{transform:scale(1.16) translateZ(0)}
-#lb .bg::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 90% at 50% 45%,rgba(5,3,10,.12),rgba(5,3,10,.55))}
-:root[data-theme="light"] #lb .bg i{filter:blur(36px) saturate(1.1) brightness(1.18)}
-:root[data-theme="light"] #lb .bg::after{background:radial-gradient(120% 90% at 50% 45%,rgba(246,243,251,.38),rgba(246,243,251,.72))}
+#lb .bg i{position:absolute;inset:-6%;transform:scale(1.22) translateZ(0);transition:transform 1.2s cubic-bezier(.2,.85,.25,1);will-change:transform;backface-visibility:hidden}
+#lb.show .bg i{transform:scale(1.08) translateZ(0)}
+#lb .bg i canvas{display:block;width:100%;height:100%;object-fit:cover}
+#lb .bg::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 90% at 50% 45%,rgba(5,3,10,.42),rgba(5,3,10,.74))}
+:root[data-theme="light"] #lb .bg::after{background:radial-gradient(120% 90% at 50% 45%,rgba(246,243,251,.5),rgba(246,243,251,.8))}
 @property --ms{syntax:'<length>';inherits:false;initial-value:0px}
 @property --ml{syntax:'<length>';inherits:false;initial-value:0px}
 @property --ma{syntax:'<number>';inherits:false;initial-value:1}
@@ -2158,6 +2158,19 @@ function visClip(el,sr){let t=sr.top,b=sr.bottom,l=sr.left,r=sr.right;
     if(/(hidden|auto|scroll|clip)/.test(cs.overflowY+cs.overflowX)){const q=n.getBoundingClientRect();t=Math.max(t,q.top);b=Math.min(b,q.bottom);l=Math.max(l,q.left);r=Math.min(r,q.right);}}
   const z=v=>Math.max(0,v);return{t:z(t-sr.top),b:z(sr.bottom-b),l:z(l-sr.left),r:z(sr.right-r)};}
 
+function bgBlur(im){   // locandina -> piccola tela già sfocata (niente filtri "live": l'animazione resta fluida)
+  try{
+    let w=im.naturalWidth||0,h=im.naturalHeight||0;if(!w||!h)return null;
+    let src=im;
+    while(w>40){
+      const nw=Math.max(28,Math.round(w/2)),nh=Math.max(42,Math.round(h*nw/w)),c=document.createElement("canvas");
+      c.width=nw;c.height=nh;const x=c.getContext("2d");x.imageSmoothingEnabled=true;x.imageSmoothingQuality="high";x.drawImage(src,0,0,nw,nh);
+      src=c;w=nw;h=nh;
+    }
+    const f=document.createElement("canvas");f.width=w;f.height=h;f.getContext("2d").drawImage(src,0,0);
+    return f;
+  }catch(e){return null;}
+}
 function openLb(el){
   if(LB)return;
   if(PEND)PEND();
@@ -2189,7 +2202,7 @@ function openLb(el){
     const cl=el.cloneNode(true);cl.style.fontSize=(16*T.w/Math.max(60,sr.width))+"px";
     card.innerHTML="";card.appendChild(cl);
   }
-  {const bi=lb.querySelector(".bg i");if(bi){if(im){bi.style.background="";bi.style.backgroundImage='url("'+String(im.currentSrc||im.src).replace(/"/g,"%22")+'")';}else bi.style.background=el.style.background||"";}}
+  {const bi=lb.querySelector(".bg i");if(bi){bi.innerHTML="";bi.style.background="";if(im){const c=bgBlur(im);if(c)bi.appendChild(c);}else bi.style.background=el.style.background||"";}}
   LB={el,T,card,lb,moved:false,R,ring,edge};
   lb.classList.add("on");void lb.offsetWidth;lb.classList.add("show");
   el.classList.add("lbhide");     // nasconde solo immagine/bordo: l'ombra resta sulla locandina, SOTTO il titolo
