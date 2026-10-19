@@ -306,9 +306,9 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .sgi{position:absolute;left:0;top:0;transform-origin:0 0;transition:transform 1.7s cubic-bezier(.45,.05,.2,1),opacity 1.4s ease;will-change:transform,opacity}
 .sgi img{display:block;width:100%;height:100%;object-fit:cover;border-radius:10px;background:var(--s3);box-shadow:0 3px 10px rgba(0,0,0,.35)}
 .sgd{position:absolute;top:50%;transform:translate3d(0,-50%,0);z-index:2;pointer-events:none}
-.sgd b{display:block;font-weight:800;font-size:1rem;line-height:1.2;letter-spacing:-.01em;overflow-wrap:anywhere}
-.sgd i{display:block;font-style:normal;font-size:.82rem;color:var(--mut);margin-top:4px}
-@media (min-width:900px){.sgd b{font-size:1.2rem}.sgd i{font-size:.9rem}}
+.sgd b{display:block;font-weight:800;font-size:.9rem;line-height:1.2;letter-spacing:-.01em;overflow-wrap:anywhere}
+.sgd i{display:block;font-style:normal;font-size:.76rem;color:var(--mut);margin-top:4px}
+@media (min-width:900px){.sgd b{font-size:1.05rem}.sgd i{font-size:.84rem}}
 .castbtn .cgo{display:block;margin-top:12px;font-size:.84rem;font-weight:700;color:var(--gold)}
 .q .res>*,.q .chip,.q .why li,.q .pv{animation:none!important}
 
@@ -622,7 +622,7 @@ body.pre #app{opacity:0}
 .poster.lbhide .rate{opacity:0;transition:opacity .25s ease}
 :root[data-theme="light"] .btn.tg.on{border-color:#7b4fe0;color:#6a3fd0;background:rgba(123,79,224,.10)}
 :root[data-theme="light"] .star.on{color:#7b4fe0}
-.btn.shr{flex:none;width:100%;height:50px;border-radius:16px;font-size:.92rem;gap:9px;font-weight:600;background:var(--soft2);border-color:var(--line);color:var(--mut)}
+.btn.shr{flex:none;width:100%;height:50px;border-radius:16px;font-size:.92rem;gap:9px;font-weight:700}
 .btn.shr svg{width:18px;height:18px}
 .res>.btn.shr{margin-top:4px}
 #shs{position:fixed;inset:0;z-index:150;display:none}
@@ -2296,11 +2296,11 @@ function startSaga(){
   let cur=Math.max(0,Math.min(n-1,+box.dataset.cur||0)),vis=true,W=0,cw=0,ch=0,sw=0,H=0,cL=0,pL=0,nL=0,tok=0;
   const layout=()=>{
     W=box.clientWidth||320;
-    cw=Math.max(96,Math.min(170,Math.round(W*.34)));ch=Math.round(cw*1.5);sw=cw*.52;H=ch+34;
+    cw=Math.max(78,Math.min(124,Math.round(W*.27)));ch=Math.round(cw*1.5);sw=cw*.52;H=ch+22;
     pL=-sw*.3;cL=Math.round(pL+sw+10);nL=W-sw*.7;
     let dL=cL+cw+14,dW=nL-8-dL;
     if(W>520){   // schermo largo: il gruppo non si allunga, resta compatto e centrato (il successivo si vede intero)
-      dW=Math.min(260,dW);nL=dL+dW+16;
+      dW=Math.min(220,dW);nL=dL+dW+16;
       const ox=Math.max(0,Math.round((W-(nL+sw))/2));
       pL+=ox;cL+=ox;nL+=ox;dL+=ox;
     }
@@ -2830,9 +2830,9 @@ function show(r,sur,man,quiet){
     (d.castList&&d.castList.length?'<button type="button" class="card castbtn" data-act="cast"><h3>Cast</h3><span class="cav">'+d.castList.slice(0,5).map(x=>x.img?'<img src="'+PIMG+esc(x.img)+'" alt="" loading="lazy" referrerpolicy="no-referrer">':'<i>👤</i>').join('')+'</span><span class="cgo">Vedi tutto il cast →</span></button>':'')+
     (d.seasonList&&d.seasonList.length?'<button type="button" class="card castbtn" data-act="seasons"><h3>Stagioni ed episodi</h3><span class="cs">'+d.seasonList.length+(d.seasonList.length>1?' stagioni':' stagione')+(d.episodes?' · '+d.episodes+' episodi':'')+'</span><span class="cgo">Vedi stagioni ed episodi →</span></button>':'')+
     infoHtml(d)+
-    sagaTile(d)+
     provHtml(d)+
     simHtml(d)+
+    sagaTile(d)+
     '<button type="button" class="btn shr" data-act="share">'+IC.share+'Condividi</button>'+
     '<p class="attr">'+attrTxt(d).split('\n').map(l=>'<span>'+esc(l)+'</span>').join('')+'</p>'+
   '</div>';
