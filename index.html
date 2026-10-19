@@ -268,6 +268,10 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 /* ricerca manuale */
 .sin{-webkit-user-select:text;user-select:text;-webkit-appearance:none;appearance:none;flex:none}
 .sres{display:flex;flex-direction:column;gap:10px}
+.page.lst{justify-content:flex-start}
+.eplist{min-height:40vh}
+.eplist>.card{background:var(--s2);content-visibility:auto;contain-intrinsic-size:auto 120px}
+.eplist>.card h3{margin:0 0 4px}
 .sr{display:flex;align-items:center;gap:14px;width:100%;padding:8px 14px 8px 8px;text-align:left;border-radius:var(--r2);border:1px solid var(--line);background:linear-gradient(160deg,var(--s2),var(--s1));transition:transform .1s}
 .sr:active{transform:scale(.98)}
 .sr .th{flex:none;width:46px;aspect-ratio:2/3;border-radius:10px;overflow:hidden;background:var(--s3);display:grid;place-items:center;font-size:1.3rem}
@@ -1165,7 +1169,7 @@ function seasonsPage(d,snap){
   const list=d.seasonList||[];
   const row=(x,i)=>{const nm=x.name||("Stagione "+x.n),sub=[x.date?String(x.date).slice(0,4):"",x.ep?x.ep+" ep.":""].filter(Boolean).join(" · ");
     return '<button type="button" class="sr" data-i="'+i+'"><span class="th">'+(x.img?'<img src="'+PIMG+esc(x.img)+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">':esc(String(x.n)))+'</span><span class="tx"><span class="t">'+esc(nm)+'</span>'+(sub?'<span class="s">'+esc(sub)+'</span>':'')+'</span></button>';};
-  swap('<div class="page"><h1>Stagioni</h1><div class="sres" id="sns">'+list.map(row).join('')+'</div></div>',true);
+  swap('<div class="page lst"><h1>Stagioni</h1><div class="sres" id="sns">'+list.map(row).join('')+'</div></div>',true);
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>{show(snap.r,snap.sur,snap.man,"fade");}}});
   $("sns").onclick=e=>{const b=e.target.closest&&e.target.closest("[data-i]");if(!b)return;tap();episodesPage(d,list[+b.dataset.i],snap);};
 }
@@ -1176,7 +1180,7 @@ async function episodesPage(d,se,snap){
   snap=snap||{r:S.cur,sur:S.curSur,man:S.curMan};
   {const k=snap.r&&snap.r.m&&snap.r.m.id!=null?String(snap.r.m.id):(S.cur&&S.cur.m?String(S.cur.m.id):"");if(k)setRoute("/t/"+enc(k)+"/stagioni/"+se.n);else ROUTED=false;}
   const nm=se.name||("Stagione "+se.n);
-  swap('<div class="page"><h1>'+esc(nm)+'</h1><div class="sres" id="eps"><p class="smsg">Carico gli episodi...</p></div></div>',true);
+  swap('<div class="page lst"><h1>'+esc(nm)+'</h1><div class="sres eplist" id="eps"><p class="smsg">Carico gli episodi...</p></div></div>',true);
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>{RUN++;seasonsPage(d,snap);}}});
   const ck=d.tid+"|"+se.n+"|"+LANG();
   let eps=EPC.get(ck);
@@ -1197,7 +1201,7 @@ async function episodesPage(d,se,snap){
 }
 function simHtml(d){
   if(!d.sim||!d.sim.length)return "";
-  if(d.collParts&&d.collParts.length)return '<div class="sech">Saga</div><p class="smsg" style="margin:0;text-align:left;font-size:.8rem">'+esc(d.coll)+' · gli altri film, in ordine di uscita.</p><div class="sres lib" id="simg">'+d.sim.map((x,i)=>bkCard(x,i,{})).join("")+'</div>';
+  if(d.collParts&&d.collParts.length)return '<div class="sech">Saga</div><div class="sres lib" id="simg">'+d.sim.map((x,i)=>bkCard(x,i,{})).join("")+'</div>';
   return "";
 }
 function personInfo(d){
@@ -1697,7 +1701,6 @@ Object.assign(I18N,{
 "Stagioni ed episodi":["Seasons and episodes","Temporadas y episodios","Saisons et épisodes","Staffeln und Folgen","Temporadas e episódios"],
 "Vedi stagioni ed episodi →":["See seasons and episodes →","Ver temporadas y episodios →","Voir saisons et épisodes →","Staffeln und Folgen ansehen →","Ver temporadas e episódios →"],
 "Saga":["Collection","Saga","Saga","Reihe","Coleção"],
-"gli altri film, in ordine di uscita":["the other films, in release order","las demás películas, por orden de estreno","les autres films, par ordre de sortie","die anderen Filme in Erscheinungsreihenfolge","os outros filmes, em ordem de lançamento"],
 "Titoli simili":["Similar titles","Títulos similares","Titres similaires","Ähnliche Titel","Títulos semelhantes"],
 "Suggeriti da TMDB in base ai gusti del pubblico: non sono necessariamente sequel, prequel o spin-off.":["Suggested by TMDB based on audience tastes: not necessarily sequels, prequels or spin-offs.","Sugeridos por TMDB según los gustos del público: no son necesariamente secuelas, precuelas o spin-offs.","Suggérés par TMDB selon les goûts du public : pas forcément des suites, préquelles ou spin-offs.","Von TMDB nach dem Publikumsgeschmack vorgeschlagen: nicht unbedingt Fortsetzungen, Prequels oder Spin-offs.","Sugeridos pelo TMDB com base no gosto do público: não são necessariamente sequências, prequelas ou spin-offs."],
 "Carico gli episodi...":["Loading episodes...","Cargando episodios...","Chargement des épisodes...","Lade Folgen...","Carregando episódios..."],
@@ -2262,7 +2265,7 @@ function provHtml(d){
 function infoHtml(d){
   const eps=(d.seasons?d.seasons+(d.seasons>1?' stagioni':' stagione'):'')+(d.episodes?(d.seasons?' · ':'')+d.episodes+' episodi':'');
   const rows=[
-    ["Generi",d.gt],["Titolo originale",d.orig],["Saga",d.coll],[d.isTv?"Ideata da":"Regia",d.dir],
+    ["Generi",d.gt],["Titolo originale",d.orig],[d.isTv?"Ideata da":"Regia",d.dir],
     ["Rete",d.nets],["Paese",d.countries],["Lingua originale",d.lang],[d.isTv?"Prima messa in onda":"Uscita",d.date],
     ["Episodi",eps],["Stato",d.status],["Classificazione",d.cert],
     ["Voto pubblico",d.rv?(+d.rv).toFixed(1)+' / 10'+(d.vc?' · '+d.vc.toLocaleString(LANG())+' voti':''):'']
