@@ -811,7 +811,7 @@ function setRoute(path,o){
 function goBack(fn){if(ROUTED&&!LB&&history.state&&history.state.d>0)history.back();else{REPL=true;fn();}}
 async function restoreTitle(k,sub,num){
   const cast=sub==="cast";
-  const sp=d=>{if(!d)return;if(sub==="cast")castPage(d);else if(sub==="stagioni"){const se=num&&(d.seasonList||[]).find(x=>String(x.n)===String(num));if(se)episodesPage(d,se);else if((d.seasonList||[]).length)seasonsPage(d);}};
+  const sp=d=>{if(!d)return;if(sub==="cast")castPage(d);else if(sub==="saga"){if((d.collParts||[]).length)sagaPage(d);}else if(sub==="stagioni"){const se=num&&(d.seasonList||[]).find(x=>String(x.n)===String(num));if(se)episodesPage(d,se);else if((d.seasonList||[]).length)seasonsPage(d);}};
   const c=RCACHE.get(k);
   PENDCAST=sub?k:"";   // sottopagina (cast, stagioni): la scheda sotto si disegna senza cambiare indirizzo, poi arriva la sottopagina
   if(c){show(c.r,c.sur,c.man,"fade");PENDCAST="";if(sub&&c.r&&c.r.d)sp(c.r.d);return;}
@@ -830,7 +830,7 @@ function routeFromHash(force){
     if(a==="impostazioni"){if(b==="piattaforme")return pfPage();if(b==="regione")return regionPage();if(b==="gia-visti")return seenPage();if(b==="username")return accountPage("user");if(b==="password")return accountPage("pass");return settingsPage();}
     if(a==="recenti")return recentPage();
     if(a==="cerca"){SQ=b;return searchPage();}
-    if(a==="t"||a==="r")return restoreTitle(b,seg[2]==="cast"?"cast":seg[2]==="stagioni"?"stagioni":"",seg[3]);
+    if(a==="t"||a==="r")return restoreTitle(b,seg[2]==="cast"?"cast":seg[2]==="saga"?"saga":seg[2]==="stagioni"?"stagioni":"",seg[3]);
     if(a==="p"&&/^\d+$/.test(b)){const c=PCACHE.get(+b);return personPage({id:+b,name:c?c.name:"",img:c&&c.profile_path||""},()=>{S.step=0;home();});}
     if(a==="domanda"&&S.cat){S.step=Math.max(0,parseInt(b,10)||0);return home();}
   }catch(e){}
@@ -1160,6 +1160,16 @@ function castPage(d,snap){
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>{show(snap.r,snap.sur,snap.man,"fade");}}});
   $("cres").onclick=e=>{const b=e.target.closest&&e.target.closest("[data-i]");if(!b)return;tap();personPage(list[+b.dataset.i],()=>castPage(d,snap));};
 }
+/* ---------- Saga (film della collezione TMDB, in ordine di uscita) ---------- */
+function sagaPage(d,snap){
+  setBd(null);
+  snap=snap||{r:S.cur,sur:S.curSur,man:S.curMan};
+  {const k=snap.r&&snap.r.m&&snap.r.m.id!=null?String(snap.r.m.id):"";if(k)setRoute("/t/"+enc(k)+"/saga");else ROUTED=false;}
+  const list=d.collParts||[];
+  swap('<div class="page lst"><h1>'+esc(d.coll||"Saga")+'</h1><div class="sres lib" id="sgres">'+list.map((x,i)=>bkCard(x,i,{})).join('')+'</div></div>',true);
+  ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>{show(snap.r,snap.sur,snap.man,"fade");}}});
+  $("sgres").onclick=e=>{const b=e.target.closest&&e.target.closest("[data-i]");if(!b)return;tap();openSearched(list[+b.dataset.i],()=>sagaPage(d,snap));};
+}
 /* ---------- Stagioni ed episodi (solo serie TMDB) ---------- */
 const EPC=new Map();
 function seasonsPage(d,snap){
@@ -1199,11 +1209,7 @@ async function episodesPage(d,se,snap){
     return '<section class="card"><h3>'+esc(meta)+'</h3><p style="font-weight:700">'+esc(ep.name||("Episodio "+ep.episode_number))+'</p>'+((ep.overview||"").trim()?'<p style="margin-top:8px;color:var(--mut);font-size:.9rem">'+esc(ep.overview.trim())+'</p>':'')+'</section>';
   }).join("");
 }
-function simHtml(d){
-  if(!d.sim||!d.sim.length)return "";
-  if(d.collParts&&d.collParts.length)return '<div class="sech">Saga</div><div class="sres lib" id="simg">'+d.sim.map((x,i)=>bkCard(x,i,{})).join("")+'</div>';
-  return "";
-}
+function simHtml(d){return "";}
 function personInfo(d){
   const dep=DEPT[d.known_for_department]||d.known_for_department||"";
   const dt=v=>{if(!v)return"";const x=new Date(v+"T00:00:00");return isNaN(x)?"":x.toLocaleDateString(LANG(),{day:"numeric",month:"long",year:"numeric"});};
@@ -2725,6 +2731,7 @@ function show(r,sur,man,quiet){
     '<section class="card'+(long?' tap':'')+'" id="plotcard"'+(long?' role="button" tabindex="0" aria-expanded="false"':'')+'><h3>Trama</h3><p class="'+(long?'clamp':'')+'" id="plot">'+esc(d.overview||'Trama non disponibile.')+'</p>'+(long?'<button type="button" class="lnk-btn" id="pmore">Leggi tutto</button>':'')+'</section>'+
     (d.castList&&d.castList.length?'<button type="button" class="card castbtn" data-act="cast"><h3>Cast</h3><span class="cav">'+d.castList.slice(0,5).map(x=>x.img?'<img src="'+PIMG+esc(x.img)+'" alt="" loading="lazy" referrerpolicy="no-referrer">':'<i>👤</i>').join('')+'</span><span class="cgo">Vedi tutto il cast →</span></button>':'')+
     (d.seasonList&&d.seasonList.length?'<button type="button" class="card castbtn" data-act="seasons"><h3>Stagioni ed episodi</h3><span class="cs">'+d.seasonList.length+(d.seasonList.length>1?' stagioni':' stagione')+(d.episodes?' · '+d.episodes+' episodi':'')+'</span><span class="cgo">Vedi stagioni ed episodi →</span></button>':'')+
+    (d.collParts&&d.collParts.length?'<button type="button" class="card castbtn" data-act="saga"><h3>Saga</h3><span class="cs">'+esc(d.coll)+'</span><span class="cgo">Vedi i film della saga →</span></button>':'')+
     infoHtml(d)+
     provHtml(d)+
     simHtml(d)+
@@ -2758,7 +2765,7 @@ function show(r,sur,man,quiet){
       l:tbtn('back','back','Torna alla ricerca'),
       r:trTb(d),
       d:bb('re',IC.restart+'Ricomincia','v')+bb('srch',IC.search+'Cerca ancora','v primary'),
-      a:{back:()=>{if(r.back)r.back();else searchPage();},share,seen:seenToggle,re:()=>{RUN++;restart();},srch:()=>searchPage(),cast:()=>castPage(d),seasons:()=>seasonsPage(d)}
+      a:{back:()=>{if(r.back)r.back();else searchPage();},share,seen:seenToggle,re:()=>{RUN++;restart();},srch:()=>searchPage(),cast:()=>castPage(d),seasons:()=>seasonsPage(d),saga:()=>sagaPage(d)}
     });
     return;
   }
@@ -2766,7 +2773,7 @@ function show(r,sur,man,quiet){
     l:tbtn('back','back','Modifica risposte'),
     r:trTb(d),
     d:bb('re',IC.restart+'Ricomincia','v')+bb('sur',IC.dice+'Sorprendimi','v')+bb('oth',IC.next+'Un altro','v primary'),
-    a:{back:home,share,seen:seenToggle,re:restart,sur:()=>run(true,false),oth:()=>run(false,false),cast:()=>castPage(d),seasons:()=>seasonsPage(d)}
+    a:{back:home,share,seen:seenToggle,re:restart,sur:()=>run(true,false),oth:()=>run(false,false),cast:()=>castPage(d),seasons:()=>seasonsPage(d),saga:()=>sagaPage(d)}
   });
 }
 
