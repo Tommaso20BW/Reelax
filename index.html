@@ -303,11 +303,12 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .castbtn .cav i{display:grid;place-items:center;font-style:normal;font-size:1.3rem}
 .sagabtn{overflow:hidden}
 .sgm{display:block;position:relative;height:200px;margin-top:6px;overflow:hidden}
-.sgi{position:absolute;left:0;top:0;transform-origin:0 0;transition:transform .9s cubic-bezier(.22,1,.36,1),opacity .9s ease;will-change:transform,opacity}
+.sgi{position:absolute;left:0;top:0;transform-origin:0 0;transition:transform 1.7s cubic-bezier(.45,.05,.2,1),opacity 1.4s ease;will-change:transform,opacity}
 .sgi img{display:block;width:100%;height:100%;object-fit:cover;border-radius:10px;background:var(--s3);box-shadow:0 3px 10px rgba(0,0,0,.35)}
-.sgd{position:absolute;top:50%;transform:translateY(-50%);z-index:6;transition:opacity .3s ease;pointer-events:none}
+.sgd{position:absolute;top:50%;transform:translate3d(0,-50%,0);z-index:6;pointer-events:none}
 .sgd b{display:block;font-weight:800;font-size:1rem;line-height:1.2;letter-spacing:-.01em;overflow-wrap:anywhere}
 .sgd i{display:block;font-style:normal;font-size:.82rem;color:var(--mut);margin-top:4px}
+@media (min-width:900px){.sgd b{font-size:1.2rem}.sgd i{font-size:.9rem}}
 .castbtn .cgo{display:block;margin-top:12px;font-size:.84rem;font-weight:700;color:var(--gold)}
 .q .res>*,.q .chip,.q .why li,.q .pv{animation:none!important}
 
@@ -2295,11 +2296,16 @@ function startSaga(){
   let cur=Math.max(0,Math.min(n-1,+box.dataset.cur||0)),vis=true,W=0,cw=0,ch=0,sw=0,H=0,cL=0,pL=0,nL=0,tok=0;
   const layout=()=>{
     W=box.clientWidth||320;
-    cw=Math.max(96,Math.min(150,Math.round(W*.34)));ch=Math.round(cw*1.5);sw=cw*.52;H=ch+34;
+    cw=Math.max(96,Math.min(170,Math.round(W*.34)));ch=Math.round(cw*1.5);sw=cw*.52;H=ch+34;
     pL=-sw*.3;cL=Math.round(pL+sw+10);nL=W-sw*.7;
-    const dL=cL+cw+14;
+    let dL=cL+cw+14,dW=nL-8-dL;
+    if(W>520){   // schermo largo: il gruppo non si allunga, resta compatto e centrato (il successivo si vede intero)
+      dW=Math.min(270,dW);nL=dL+dW+16;
+      const ox=Math.max(0,Math.round((W-(nL+sw))/2));
+      pL+=ox;cL+=ox;nL+=ox;dL+=ox;
+    }
     box.style.height=H+"px";
-    tt.style.left=dL+"px";tt.style.width=Math.max(60,nL-8-dL)+"px";
+    tt.style.left=dL+"px";tt.style.width=Math.max(60,dW)+"px";
     els.forEach(el=>{el.style.width=cw+"px";el.style.height=ch+"px";});
   };
   const pos=dd=>{
@@ -2326,14 +2332,23 @@ function startSaga(){
       const dd=dOf(i),od=el._d;
       if(od<0&&dd>0){   // esce a sinistra e poi rientra da destra
         el.style.transition="";apply(el,-2);
-        setTimeout(()=>{if(my!==tok||!box.isConnected)return;el.style.transition="none";apply(el,2);void el.offsetWidth;el.style.transition="";apply(el,dd);},950);
+        setTimeout(()=>{if(my!==tok||!box.isConnected)return;el.style.transition="none";apply(el,2);void el.offsetWidth;el.style.transition="";apply(el,dd);},1800);
       }else{
         el.style.transition=(Math.abs(od)>=2&&Math.abs(dd)>=2)?"none":"";
         apply(el,dd);
       }
     });
-    tt.style.opacity="0";
-    setTimeout(()=>{if(!box.isConnected)return;text();tt.style.opacity="1";},380);
+    // titolo: esce a sinistra mentre il film si rimpicciolisce, poi entra da destra insieme alla nuova locandina
+    tt.style.transition="opacity .5s ease,transform .6s cubic-bezier(.4,0,.6,1)";
+    tt.style.opacity="0";tt.style.transform="translate3d(-16px,-50%,0)";
+    setTimeout(()=>{
+      if(!box.isConnected)return;
+      text();
+      tt.style.transition="none";tt.style.transform="translate3d(28px,-50%,0)";
+      void tt.offsetWidth;
+      tt.style.transition="opacity .9s ease,transform 1.1s cubic-bezier(.22,1,.36,1)";
+      tt.style.opacity="1";tt.style.transform="translate3d(0,-50%,0)";
+    },620);
   };
   const id=setInterval(()=>{
     if(!box.isConnected){clearInterval(id);return;}
