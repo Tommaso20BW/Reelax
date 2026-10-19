@@ -1198,7 +1198,7 @@ async function episodesPage(d,se,snap){
 function simHtml(d){
   if(!d.sim||!d.sim.length)return "";
   if(d.collParts&&d.collParts.length)return '<div class="sech">Saga</div><p class="smsg" style="margin:0;text-align:left;font-size:.8rem">'+esc(d.coll)+' · gli altri film, in ordine di uscita.</p><div class="sres lib" id="simg">'+d.sim.map((x,i)=>bkCard(x,i,{})).join("")+'</div>';
-  return '<div class="sech">Titoli simili</div><p class="smsg" style="margin:0;text-align:left;font-size:.8rem">Suggeriti da TMDB in base ai gusti del pubblico: non sono necessariamente sequel, prequel o spin-off.</p><div class="sres lib" id="simg">'+d.sim.map((x,i)=>bkCard(x,i,{})).join("")+'</div>';
+  return "";
 }
 function personInfo(d){
   const dep=DEPT[d.known_for_department]||d.known_for_department||"";
@@ -2043,7 +2043,7 @@ async function provLogos(){
 async function tmdbDetails(c){
   const base="/3/"+(c.movie?"movie":"tv")+"/"+c.tid;
   let d={};
-  try{d=await tm(base,{append_to_response:c.movie?"watch/providers,credits,videos,release_dates,recommendations":"watch/providers,credits,videos,content_ratings,recommendations",include_video_language:LANG().slice(0,2)+",en,null"});}
+  try{d=await tm(base,{append_to_response:c.movie?"watch/providers,credits,videos,release_dates":"watch/providers,credits,videos,content_ratings",include_video_language:LANG().slice(0,2)+",en,null"});}
   catch(e){try{d=await tm(base);}catch(x){}}
   if((!c.title||c.title==="Senza titolo")&&(d.title||d.name))c=Object.assign({},c,{title:d.title||d.name});   // scheda aperta da un indirizzo: il titolo arriva dai dettagli
   const rt=c.movie?(d.runtime||null):((d.episode_run_time&&d.episode_run_time[0])||(d.last_episode_to_air&&d.last_episode_to_air.runtime)||null);
@@ -2080,7 +2080,7 @@ async function tmdbDetails(c){
     seasonList:c.movie?[]:(d.seasons||[]).filter(x=>x.season_number>0).map(x=>({n:x.season_number,name:x.name||"",ep:x.episode_count||0,date:x.air_date||"",img:x.poster_path||""})),
     coll:c.movie&&d.belongs_to_collection&&d.belongs_to_collection.name?d.belongs_to_collection.name:"",
     collParts:collParts,
-    sim:collParts.length?collParts:((d.recommendations&&d.recommendations.results)||[]).filter(x=>(x.title||x.name)&&x.poster_path).slice(0,12).map(x=>Object.assign({},x,{media_type:c.movie?"movie":"tv"})),
+    sim:collParts,
     gids:(d.genres||[]).map(g=>g.id),tagline:d.tagline||"",orig:(orig&&!sameTitle(orig,c.title))?orig:"",dir:dir.join(", "),cast:cast.slice(0,6).map(x=>x.name).join(", "),castList:cast.slice(0,40).map(x=>({id:x.id,name:x.name,ch:x.character||"",img:x.profile_path||""})),
     nets:c.movie?"":(d.networks||[]).map(x=>x.name).slice(0,2).join(", "),countries:countries.join(", "),lang:d.original_language?lname(d.original_language):"",
     date:fdate(c.movie?d.release_date:d.first_air_date),status:c.movie?"":(STAT[d.status]||d.status||""),cert:cert,
