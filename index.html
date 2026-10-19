@@ -581,6 +581,11 @@ body.pre #app{opacity:0}
 .stars.ro{justify-content:flex-start;gap:0;margin:2px 0 0 -2px;pointer-events:none}
 .stars.ro .star{width:19px;height:19px}
 .stars.ro .star svg{width:15px;height:15px}
+.chips.one{flex-wrap:nowrap;overflow:hidden;max-width:100%}
+.chips.one .chip{flex:none;white-space:nowrap}
+.chip.tr.ic{padding:6px 10px}
+.chip.tr.ic .tt{display:none}
+.chip.tr .tt{font-weight:600}
 .chip.tr{display:inline-flex;align-items:center;gap:6px;padding:6px 14px 6px 10px;text-decoration:none;transition:filter .15s}
 .chip.tr span{display:grid;color:var(--red)}
 .chip.tr svg{width:14px;height:14px}
@@ -2456,7 +2461,22 @@ function fitPoster(){   // PC: la locandina occupa tutta l'altezza che avanza (m
   }catch(e){}
 }
 addEventListener("resize",()=>fitPoster());
+function fitChips(){
+  const c=stage.querySelector(".chips.one");if(!c)return;
+  let parts=[];try{parts=JSON.parse(c.dataset.parts||"[]");}catch(e){}
+  const meta=c.querySelector(".chip.meta"),tr=c.querySelector(".chip.tr"),steps=[[parts.length,0]];
+  if(tr)steps.push([parts.length,1]);
+  for(let n=parts.length-1;n>=1;n--)steps.push([n,tr?1:0]);
+  for(const s of steps){
+    if(meta)meta.textContent=parts.slice(0,s[0]).join(" · ");
+    if(tr)tr.classList.toggle("ic",!!s[1]);
+    if(c.scrollWidth<=c.clientWidth+1)break;
+  }
+}
+addEventListener("resize",()=>fitChips());
+try{if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>fitChips());}catch(e){}
 function polish(p,r){
+  fitChips();
   fitPoster();
   const pn=$('pn');
   if(pn){
@@ -2516,17 +2536,17 @@ function show(r,sur,man,quiet){
   const poster=d.poster
     ?'<div class="poster" role="button" tabindex="0" aria-label="Ingrandisci la locandina"><img'+(quiet?' class="ld"':'')+' src="'+esc(d.poster)+'" alt="Locandina di '+esc(d.title)+'" referrerpolicy="no-referrer"></div>'
     :fbPoster(d.title,d.year);
+  /* una sola riga: anno, stagioni (o Film/Serie per anime e cartoni), durata e classificazione stanno in un unico chip;
+     se non c'è spazio, fitChips() toglie prima la classificazione, poi la durata, e riduce il trailer alla sola icona */
+  const kindTxt=(man?r.m.src==="anime":(S.cat==='anime'||S.cat==='cartoni'))?(d.movie?'Film':'Serie'):'';
+  const parts=[d.year?String(d.year):'',d.seasons?d.seasons+(d.seasons>1?' stagioni':' stagione'):kindTxt,d.runtime?d.runtime+' min'+(d.movie===false?'/ep.':''):'',d.cert?String(d.cert):''].filter(Boolean);
   const chips=[];
-  if(d.year)chips.push('<span class="chip">'+esc(d.year)+'</span>');
-  if(man?r.m.src==="anime":(S.cat==='anime'||S.cat==='cartoni'))chips.push('<span class="chip">'+(d.movie?'Film':'Serie')+'</span>');
-  if(d.seasons)chips.push('<span class="chip">'+d.seasons+(d.seasons>1?' stagioni':' stagione')+'</span>');
-  if(d.runtime)chips.push('<span class="chip">'+d.runtime+' min'+(d.movie===false?' / ep.':'')+'</span>');
-  if(d.cert)chips.push('<span class="chip">'+esc(d.cert)+'</span>');
+  if(parts.length)chips.push('<span class="chip meta">'+esc(parts.join(' · '))+'</span>');
   if(d.rv)chips.push('<span class="chip r">★ '+(+d.rv).toFixed(1)+'</span>');
-  if(d.ytKey)chips.push('<a class="chip tr" href="https://www.youtube.com/watch?v='+esc(d.ytKey)+'" data-yt="'+esc(d.ytKey)+'" target="_blank" rel="noopener"><span>'+IC.play+'</span>Trailer</a>');
+  if(d.ytKey)chips.push('<a class="chip tr" href="https://www.youtube.com/watch?v='+esc(d.ytKey)+'" data-yt="'+esc(d.ytKey)+'" target="_blank" rel="noopener" aria-label="Trailer"><span>'+IC.play+'</span><b class="tt">Trailer</b></a>');
   const long=(d.overview||'').length>220;
   const h='<div class="res">'+
-    '<div class="hero">'+poster+'<h2>'+esc(d.title)+'</h2>'+(d.tagline?'<p class="tag">'+esc(d.tagline)+'</p>':'')+'<div class="chips">'+chips.join('')+'</div></div>'+
+    '<div class="hero">'+poster+'<h2>'+esc(d.title)+'</h2>'+(d.tagline?'<p class="tag">'+esc(d.tagline)+'</p>':'')+'<div class="chips one" data-parts="'+esc(JSON.stringify(parts))+'">'+chips.join('')+'</div></div>'+
     '<div class="seenw" id="seenw">'+seenInner(String(r.m.id))+'</div>'+
     (rnd?'':'<section class="card compat"><div class="ringw"><svg viewBox="0 0 64 64"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6c653"/><stop offset="1" stop-color="#ff3d52"/></linearGradient></defs><circle class="bgc" cx="32" cy="32" r="27"/><circle class="fgc" cx="32" cy="32" r="27"/></svg><div class="pn"><span><span id="pn">0</span>%</span></div></div><div><b>Compatibilità</b><span class="sub">Risposte date e voto del pubblico</span></div></section>')+
     (man?'':'<section class="card"><h3>Perché fa per te</h3><ul class="why">'+why(r,sur).map(x=>'<li><b>✓</b><span>'+esc(x)+'</span></li>').join('')+'</ul></section>')+
