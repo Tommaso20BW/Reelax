@@ -577,11 +577,14 @@ body.pre #app{opacity:0}
 .stars.sm{justify-content:flex-start;gap:0}
 .stars.sm .star{width:30px;height:30px}
 .stars.sm .star svg{width:20px;height:20px}
-.vrow{cursor:default;padding:8px 14px 8px 8px}
-.vrow:active{transform:none}
-.vrow .th{border:0;padding:0}
-.vrow .t{text-align:left}
-.vrow .stars.sm{margin-left:-6px}
+.vrow{padding:8px 14px 8px 8px}
+.stars.ro{justify-content:flex-start;gap:0;margin:2px 0 0 -2px;pointer-events:none}
+.stars.ro .star{width:19px;height:19px}
+.stars.ro .star svg{width:15px;height:15px}
+.chip.tr{display:inline-flex;align-items:center;gap:6px;padding:6px 14px 6px 10px;text-decoration:none;transition:filter .15s}
+.chip.tr span{display:grid;color:var(--red)}
+.chip.tr svg{width:14px;height:14px}
+.chip.tr:active{filter:brightness(1.25)}
 </style>
 </head>
 <body class="pre">
@@ -1478,6 +1481,7 @@ function seenItemOf(r){const it=itemOf(r),g=canonG(r.d&&r.d.gids&&r.d.gids.lengt
 function tasteProfile(){const P={};let n=0;(L.seen||[]).forEach(x=>{if(!x||!x.r||!Array.isArray(x.g)||!x.g.length)return;const w=(x.r-3)/2;x.g.forEach(id=>{P[id]=(P[id]||0)+w;});n++;});
   return n?{P:P,c:Math.min(1,n/5),mx:Math.max(1,...Object.keys(P).map(k=>Math.abs(P[k])))}:null;}
 function tasteOf(m,tp){const g=genIds(m);if(!g.length||!tp)return 0;let s=0;g.forEach(id=>{s+=tp.P[id]||0;});return Math.max(-1,Math.min(1,s/g.length/tp.mx));}
+const starsRo=r=>[1,2,3,4,5].map(n=>'<span class="star'+(n<=r?' on':'')+'">'+IC.star+'</span>').join("");
 const starsInner=r=>[1,2,3,4,5].map(n=>'<button type="button" class="star'+(n<=r?' on':'')+'" data-star="'+n+'" aria-label="Voto '+n+'">'+IC.star+'</button>').join("");
 const seenInner=k=>{const it=seenGet(k);return '<div class="act2"><button type="button" class="btn tg'+(it?' on':'')+'" data-act="seen" aria-pressed="'+(!!it)+'">'+IC.eye+'Già visto</button></div>'+(it?'<div class="stars" data-sk="'+esc(String(k))+'" role="group" aria-label="Voto">'+starsInner(it.r||0)+'</div>':'');};
 function seenSave(){if(L.seen.length>SEEN_MAX)L.seen.length=SEEN_MAX;sbuild();lsave();}
@@ -1501,7 +1505,6 @@ function seenPage(){
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>settingsPage()}});
   const PG=50,inp=$("vq"),box=$("vres");let list=[],shown=PG;
   inp.value=VQ;
-  const stars=x=>'<div class="stars sm" data-sk="'+esc(String(x.k))+'" role="group" aria-label="Voto">'+starsInner(x.r||0)+'</div>';
   const paint=()=>{
     const q=normT(VQ);
     const all=(L.seen||[]).filter(x=>!q||normT(x.t).indexOf(q)>=0);
@@ -1510,7 +1513,7 @@ function seenPage(){
     if(!list.length){box.innerHTML='<div class="lemp">'+IC.eye+'<span>'+(L.seen.length?"Nessun titolo trovato.":"Ancora nessun titolo già visto")+'</span></div>';return;}
     box.innerHTML=list.map((x,i)=>{
       const u=pu(x);
-      return '<div class="sr vrow"><button type="button" class="th" data-i="'+i+'" aria-label="'+esc(x.t||"")+'">'+(u?'<img src="'+esc(u)+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">':esc((x.t||"?").trim().charAt(0).toUpperCase()))+'</button><div class="tx"><button type="button" class="t" data-i="'+i+'">'+esc(x.t||"Senza titolo")+'</button><span class="s">'+(x.y?x.y+" · ":"")+(x.mv?"Film":"Serie")+'</span>'+stars(x)+'</div></div>';
+      return '<button type="button" class="sr vrow" data-i="'+i+'"><span class="th">'+(u?'<img src="'+esc(u)+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">':esc((x.t||"?").trim().charAt(0).toUpperCase()))+'</span><span class="tx"><span class="t">'+esc(x.t||"Senza titolo")+'</span><span class="s">'+(x.y?x.y+" · ":"")+(x.mv?"Film":"Serie")+'</span>'+(x.r?'<span class="stars ro">'+starsRo(x.r)+'</span>':'')+'</span></button>';
     }).join("")+(more>0?'<button type="button" class="pfm" data-more="1">Mostra altri ('+Math.min(PG,more)+')</button>':"");
   };
   inp.addEventListener("input",()=>{VQ=inp.value.trim();paint();});
@@ -1521,7 +1524,7 @@ function seenPage(){
   box.addEventListener("touchmove",()=>{if(document.activeElement===inp)inp.blur();},{passive:true});
   paint();
 }
-function seenGroup(){const on=starsOn();return '<button type="button" class="srow" data-act="seenp">'+IC.eye+'<span class="sl">Già visti</span><span class="sn">'+(L.seen||[]).length+'</span>'+IC.chev+'</button><button type="button" class="srow" data-act="starsw" role="switch" aria-checked="'+on+'">'+IC.star+'<span class="sl">Personalizza con le stelle</span><span class="sw'+(on?' on':'')+'"><i></i></span></button>';}
+function seenGroup(){const on=starsOn();return '<button type="button" class="srow" data-act="seenp">'+IC.eye+'<span class="sl">Già visti</span><span class="sn">'+(L.seen||[]).length+'</span>'+IC.chev+'</button><button type="button" class="srow" data-act="starsw" role="switch" aria-checked="'+on+'">'+IC.star+'<span class="sl">Adatta ai miei gusti</span><span class="sw'+(on?' on':'')+'"><i></i></span></button>';}
 sbuild();
 /* ---------- Trovati di recente (solo su questo dispositivo) ---------- */
 const RKEY="reelax_recent",RCAP=60;
@@ -1579,7 +1582,8 @@ const I18N={"Cosa guardi stasera?":["What are you watching tonight?","¿Qué ves
 Object.assign(I18N,{
 "Già visti":["Watched","Vistos","Déjà vus","Schon gesehen","Já vistos"],
 "Già visto":["Watched","Visto","Déjà vu","Schon gesehen","Já visto"],
-"Personalizza con le stelle":["Personalize with stars","Personalizar con las estrellas","Personnaliser avec les étoiles","Mit Sternen personalisieren","Personalizar com as estrelas"],
+"Adatta ai miei gusti":["Adapt to my tastes","Adaptar a mis gustos","Adapter à mes goûts","An meinen Geschmack anpassen","Adaptar ao meu gosto"],
+"Trailer":["Trailer","Tráiler","Bande-annonce","Trailer","Trailer"],
 "Cerca tra i già visti":["Search watched titles","Buscar entre los vistos","Rechercher parmi les déjà vus","Unter gesehenen suchen","Buscar entre os já vistos"],
 "Mostra altri":["Show more","Mostrar más","Afficher plus","Mehr anzeigen","Mostrar mais"],
 "Griglia":["Grid","Cuadrícula","Grille","Raster","Grade"],
@@ -2519,11 +2523,11 @@ function show(r,sur,man,quiet){
   if(d.runtime)chips.push('<span class="chip">'+d.runtime+' min'+(d.movie===false?' / ep.':'')+'</span>');
   if(d.cert)chips.push('<span class="chip">'+esc(d.cert)+'</span>');
   if(d.rv)chips.push('<span class="chip r">★ '+(+d.rv).toFixed(1)+'</span>');
+  if(d.ytKey)chips.push('<a class="chip tr" href="https://www.youtube.com/watch?v='+esc(d.ytKey)+'" data-yt="'+esc(d.ytKey)+'" target="_blank" rel="noopener"><span>'+IC.play+'</span>Trailer</a>');
   const long=(d.overview||'').length>220;
   const h='<div class="res">'+
     '<div class="hero">'+poster+'<h2>'+esc(d.title)+'</h2>'+(d.tagline?'<p class="tag">'+esc(d.tagline)+'</p>':'')+'<div class="chips">'+chips.join('')+'</div></div>'+
     '<div class="seenw" id="seenw">'+seenInner(String(r.m.id))+'</div>'+
-    (d.ytKey?'<a class="btn" href="https://www.youtube.com/watch?v='+esc(d.ytKey)+'" data-yt="'+esc(d.ytKey)+'" target="_blank" rel="noopener" style="flex:none;color:var(--fg)"><span style="color:var(--red);display:grid">'+IC.play+'</span>Guarda il trailer</a>':'')+
     (rnd?'':'<section class="card compat"><div class="ringw"><svg viewBox="0 0 64 64"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6c653"/><stop offset="1" stop-color="#ff3d52"/></linearGradient></defs><circle class="bgc" cx="32" cy="32" r="27"/><circle class="fgc" cx="32" cy="32" r="27"/></svg><div class="pn"><span><span id="pn">0</span>%</span></div></div><div><b>Compatibilità</b><span class="sub">Risposte date e voto del pubblico</span></div></section>')+
     (man?'':'<section class="card"><h3>Perché fa per te</h3><ul class="why">'+why(r,sur).map(x=>'<li><b>✓</b><span>'+esc(x)+'</span></li>').join('')+'</ul></section>')+
     '<section class="card'+(long?' tap':'')+'" id="plotcard"'+(long?' role="button" tabindex="0" aria-expanded="false"':'')+'><h3>Trama</h3><p class="'+(long?'clamp':'')+'" id="plot">'+esc(d.overview||'Trama non disponibile.')+'</p>'+(long?'<button type="button" class="lnk-btn" id="pmore">Leggi tutto</button>':'')+'</section>'+
