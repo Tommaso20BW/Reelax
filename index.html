@@ -416,9 +416,16 @@ body.pre #app{opacity:0}
   .res>*{grid-column:2;margin-bottom:14px}
   .res>.hero{grid-column:1;grid-row:1/-1;position:sticky;top:6px;margin:0}
   /* la locandina si adatta all'altezza disponibile: locandina, titolo e chip restano sempre visibili senza scorrere (barra alta + dock + titolo + chip ≈ 450px, con margine per titoli lunghi) */
-  .poster{width:min(100%,320px,max(90px,calc((100vh - 400px)*2/3)))}
-  @supports (height:100dvh){.poster{width:min(100%,320px,max(90px,calc((100dvh - 400px)*2/3)))}}
-  .hero{gap:12px}
+  .poster{width:min(100%,320px,max(90px,calc((100vh - 260px)*2/3)))}
+  @supports (height:100dvh){.poster{width:min(100%,320px,max(90px,calc((100dvh - 260px)*2/3)))}}
+  /* titolo, tagline e chip a destra, in cima alla colonna delle schede; la locandina a sinistra usa tutta l'altezza */
+  .hero{display:contents}
+  .hero .poster{grid-column:1;grid-row:1/-1;position:sticky;top:6px;align-self:start;justify-self:center}
+  .hero h2,.hero .tag,.hero .chips{grid-column:2;text-align:left;justify-content:flex-start}
+  .hero h2{margin:0 0 12px;font-size:clamp(2rem,3.1vw,2.9rem);line-height:1.04}
+  .hero .tag{margin:-2px 0 14px}
+  .hero .chips{margin:0 0 18px}
+  .in .hero h2{animation:chipIn .8s var(--ease) backwards;animation-delay:.1s}
   @media (max-height:760px){.top-in{height:52px}#stage{padding:8px var(--gut) 14px}#dock{padding:10px var(--gut) 16px}.btn{height:54px}.res{padding-top:0}}
   .hero h2{font-size:clamp(1.9rem,2.6vw,2.4rem)}
   .res>.attr{font-size:.7rem;margin-bottom:0}
@@ -2257,7 +2264,7 @@ function fitPoster(){   // PC: la locandina occupa tutta l'altezza che avanza (m
     const run=()=>{
       const cs=getComputedStyle(stage),rs=stage.querySelector(".res"),rp=rs?parseFloat(getComputedStyle(rs).paddingTop)||0:0;
       const avail=stage.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)-rp-8;
-      const rest=hero.offsetHeight-po.offsetHeight;   // offset* ignora le trasformazioni delle animazioni
+      const rest=getComputedStyle(hero).display==='contents'?0:hero.offsetHeight-po.offsetHeight;   // offset* ignora le trasformazioni delle animazioni
       po.style.width=Math.max(90,Math.min(340,Math.floor((avail-rest)*2/3)))+"px";
     };
     run();
