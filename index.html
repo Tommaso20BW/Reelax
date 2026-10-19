@@ -1465,7 +1465,7 @@ async function openItem(it,back){
   }catch(e){}
 }
 /* ---------- Già visti (collegati all'username: stanno nel Worker insieme alle liste) + gusti dalle stelle ---------- */
-const SEEN_MAX=1500;
+const SEEN_MAX=5000;
 let SIX={k:new Set(),t:new Set()};
 const seenTk=(t,y)=>normT(t)?tkey(t,y):"";
 function sbuild(){const k=new Set(),t=new Set();(L.seen||[]).forEach(x=>{if(!x)return;k.add(String(x.k));const q=seenTk(x.t,x.y);if(q)t.add(q);});SIX={k:k,t:t};}
