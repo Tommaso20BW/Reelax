@@ -645,6 +645,12 @@ body.pre #app{opacity:0}
 /* ingresso più calmo */
 .poster::before{display:none}
 .in .res>*{animation-duration:1s;animation-delay:calc(var(--k,0)*45ms + 60ms)}
+
+/* tasti del dock: i vecchi sfumano via, i nuovi entrano un attimo dopo (niente sovrapposizione) */
+.dock-in.out .btn::after{display:none}
+.dock-in.xf:not(.out) .btn:nth-child(1){animation-delay:.2s}
+.dock-in.xf:not(.out) .btn:nth-child(2){animation-delay:.25s}
+.dock-in.xf:not(.out) .btn:nth-child(3){animation-delay:.3s}
 </style>
 </head>
 <body class="pre">
@@ -697,9 +703,10 @@ body.pre #app{opacity:0}
     document.addEventListener(t,function(e){e.preventDefault();},o);
   });
   // two-finger pinch on touch screens
-  document.addEventListener("touchmove",function(e){
-    if(e.touches&&e.touches.length>1)e.preventDefault();
-  },o);
+  var pinch=function(e){if(e.touches&&e.touches.length>1)e.preventDefault();},on=false;
+  document.addEventListener("touchstart",function(e){if(e.touches&&e.touches.length>1&&!on){on=true;document.addEventListener("touchmove",pinch,o);}},{passive:true});
+  var off=function(e){if(on&&(!e.touches||e.touches.length<2)){on=false;document.removeEventListener("touchmove",pinch,o);}};
+  document.addEventListener("touchend",off,{passive:true});document.addEventListener("touchcancel",off,{passive:true});
   // double-tap zoom (iOS)
   var last=0;
   document.addEventListener("touchend",function(e){
@@ -906,10 +913,12 @@ function ui(o){
     if(!RM()&&dk.firstChild&&dk.animate){   // i vecchi pulsanti sfumano via mentre arrivano i nuovi (dissolvenza incrociata)
       const c=dk.cloneNode(true);c.removeAttribute("id");c.classList.add("out");c.setAttribute("aria-hidden","true");
       c.style.cssText="position:absolute;left:"+dk.offsetLeft+"px;top:"+dk.offsetTop+"px;width:"+dk.offsetWidth+"px;";
+      c.querySelectorAll(".rpl").forEach(x=>x.remove());
       dk.parentNode.appendChild(c);
       const rm=()=>c.remove();
-      c.animate([{opacity:1,transform:"none"},{opacity:0,transform:"translateY(5px)"}],{duration:170,easing:"cubic-bezier(.4,0,1,1)",fill:"forwards"}).onfinish=rm;
+      c.animate([{opacity:1,transform:"none"},{opacity:0,transform:"scale(.97)"}],{duration:230,easing:"cubic-bezier(.3,0,.6,1)",fill:"forwards"}).onfinish=rm;
       setTimeout(rm,700);
+      dk.classList.add("xf");clearTimeout(dk._xf);dk._xf=setTimeout(()=>dk.classList.remove("xf"),900);   // i nuovi tasti entrano solo dopo che i vecchi sono quasi spariti
     }
     dk.innerHTML=o.d||"";dk._h=o.d;
   }
@@ -1771,7 +1780,7 @@ function trTree(r){if(r.nodeType===3){trText(r);return;}if(r.nodeType!==1||trSki
   els.forEach(e=>TA.forEach(a=>trAttr(e,a)));}
 let tro=null;
 function i18nRefresh(){try{document.documentElement.lang=UIL();}catch(e){}if(!document.body)return;
-  if(!tro)tro=new MutationObserver(ms=>{tro.disconnect();try{ms.forEach(m=>{if(m.type==="characterData")trText(m.target);else if(m.type==="attributes")trAttr(m.target,m.attributeName);else m.addedNodes.forEach(trTree);});}finally{tro.observe(document.body,TOPT);}});
+  if(!tro)tro=new MutationObserver(ms=>{if(UIL()==="it")return;tro.disconnect();try{ms.forEach(m=>{if(m.type==="characterData")trText(m.target);else if(m.type==="attributes")trAttr(m.target,m.attributeName);else m.addedNodes.forEach(trTree);});}finally{tro.observe(document.body,TOPT);}});
   tro.disconnect();try{trTree(document.body);}finally{tro.observe(document.body,TOPT);}}
 setTimeout(i18nRefresh,0);
 
@@ -2901,7 +2910,7 @@ function show(r,sur,man,quiet){
   {const sg=$("simg");if(sg)sg.onclick=e=>{const b=e.target.closest&&e.target.closest("[data-i]");if(!b)return;tap();TDX=1;openSearched(d.sim[+b.dataset.i],()=>show(r,sur,man,"fade"));};}
   if(snap)settle(snap);
   setBd(d.poster);
-  setTimeout(()=>{try{prepShare(d);}catch(e){}},700);
+  setTimeout(()=>{const f=()=>{try{prepShare(d);}catch(e){}};if(window.requestIdleCallback)requestIdleCallback(f,{timeout:6000});else f();},2500);
   if(man){
     ui({
       l:tbtn('back','back','Torna alla ricerca'),
