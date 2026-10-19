@@ -360,7 +360,7 @@ body.pre #app{opacity:0}
 /* schermata di avvio: stessa grafica dell'immagine di iOS (sfondo sfumato + sola scritta), poi sfuma verso login o app */
 #sp{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background-color:#b3306f;background-image:linear-gradient(135deg,#d8304a,#9d2fb0 62%,#6f4bd1)}
 /* finché c'è la schermata di avvio, anche lo sfondo della pagina (che iOS usa per la sfumatura sotto la barra di stato) ha i suoi colori: niente fascia bianca o nera */
-html:has(#sp:not([hidden])){background-color:#b3306f;background-image:linear-gradient(135deg,#d8304a,#9d2fb0 62%,#6f4bd1)}
+html:has(#sp:not([hidden])){background-color:#9d2fb0;background-image:linear-gradient(135deg,#d8304a,#9d2fb0 62%,#6f4bd1);background-repeat:no-repeat;background-size:100% 100%;background-attachment:fixed;min-height:100lvh}
 #sp[hidden]{display:none}
 #sp svg{display:block;width:min(56vw,320px);height:auto;overflow:visible;fill:#fff}
 #sp path{transform-box:fill-box;transform-origin:50% 50%}
