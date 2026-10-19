@@ -5,7 +5,7 @@
 <title>Reelax</title>
 <meta name="description" content="Scegli film, serie TV o anime da guardare stasera in 10 secondi.">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
-<link id="fav" rel="icon" type="image/png" href="img/logo-dark.png?v=4">
+<link id="fav" rel="icon" type="image/png" href="img/favicon.png?v=5">
 <link id="apple" rel="apple-touch-icon" href="img/apple-touch-icon.png?v=4">
 <link rel="apple-touch-startup-image" media="(device-width:402px) and (device-height:874px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)" href="img/splash-402x874@3x.jpg?v=1">
 <link rel="apple-touch-startup-image" media="(device-width:440px) and (device-height:956px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)" href="img/splash-440x956@3x.jpg?v=1">
@@ -37,7 +37,7 @@
 /* tema: auto (segue il dispositivo) | chiaro | scuro */
 (function(){
   /* loghi a tema (app + scheda browser): file su GitHub. Icona della Home (apple-touch-icon / manifest): fissa. Per aggiornare i file alza V. */
-  var V="4",ICO={dark:{fav:"img/logo-dark.png",logo:"img/logo-dark.png"},light:{fav:"img/logo-light.png",logo:"img/logo-light.png"}};
+  var V="5",ICO={dark:{fav:"img/favicon.png",logo:"img/logo-dark.png"},light:{fav:"img/favicon.png",logo:"img/logo-light.png"}};
   function abs(f){try{return new URL(f+"?v="+V,location.href).href;}catch(e){return f+"?v="+V;}}
   var K="reelax_theme",mq=window.matchMedia?matchMedia("(prefers-color-scheme: light)"):null;
   function pref(){try{var v=localStorage.getItem(K);return v==="light"||v==="dark"?v:"auto";}catch(e){return"auto";}}
