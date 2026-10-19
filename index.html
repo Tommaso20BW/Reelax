@@ -2167,8 +2167,12 @@ function bgBlur(im){   // locandina -> piccola tela già sfocata (niente filtri 
       c.width=nw;c.height=nh;const x=c.getContext("2d");x.imageSmoothingEnabled=true;x.imageSmoothingQuality="high";x.drawImage(src,0,0,nw,nh);
       src=c;w=nw;h=nh;
     }
-    const f=document.createElement("canvas");f.width=w;f.height=h;f.getContext("2d").drawImage(src,0,0);
-    return f;
+    while(w<300){   // si risale a passi di 2x: ogni passo ammorbidisce, così l'ingrandimento finale non mostra quadretti
+      const nw=w*2,nh=h*2,c=document.createElement("canvas");
+      c.width=nw;c.height=nh;const x=c.getContext("2d");x.imageSmoothingEnabled=true;x.imageSmoothingQuality="high";x.drawImage(src,0,0,nw,nh);
+      src=c;w=nw;h=nh;
+    }
+    return src;
   }catch(e){return null;}
 }
 function openLb(el){
