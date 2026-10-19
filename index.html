@@ -319,7 +319,8 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 #lb .card2 .poster{width:100%;height:100%;border-radius:0;box-shadow:none;cursor:default;border:0}
 .poster.lbhide{background:transparent!important;border-color:transparent!important}
 .poster.lbhide>*{visibility:hidden}
-.poster.lbhide::before{display:none}
+.poster.lbhide::before{visibility:hidden}   /* NON display:none: ritogliendola l'animazione "psweep" ripartiva e rifaceva passare la riga bianca */
+#lb .card2 .poster::before{display:none}
 #lb .x{position:absolute;top:calc(var(--sat) + 12px);right:14px;opacity:0;transition:opacity .5s .2s}
 #lb.show .x{opacity:1}
 #lb .hint{position:absolute;left:0;right:0;bottom:calc(var(--sab) + 22px);text-align:center;font-size:.8rem;color:var(--mut);opacity:0;transition:opacity .5s .3s}
@@ -2018,7 +2019,7 @@ function infoHtml(d){
     ["Generi",d.gt],["Titolo originale",d.orig],[d.isTv?"Ideata da":"Regia",d.dir],
     ["Rete",d.nets],["Paese",d.countries],["Lingua originale",d.lang],[d.isTv?"Prima messa in onda":"Uscita",d.date],
     ["Episodi",eps],["Stato",d.status],["Classificazione",d.cert],
-    ["Voto pubblico",d.rv?(+d.rv).toFixed(1)+' / 10'+(d.vc?' · '+d.vc.toLocaleString('it-IT')+' voti':''):'']
+    ["Voto pubblico",d.rv?(+d.rv).toFixed(1)+' / 10'+(d.vc?' · '+d.vc.toLocaleString(LANG())+' voti':''):'']
   ].filter(x=>x[1]);
   if(!rows.length)return "";
   return '<section class="card"><h3>Scheda</h3><dl class="info">'+rows.map(x=>'<dt>'+esc(x[0])+'</dt><dd>'+esc(x[1])+'</dd>').join('')+'</dl></section>';
@@ -2250,7 +2251,8 @@ function openLb(el){
   try{history.pushState({lb:1},"");}catch(e){}
 }
 function closeLb(){
-  if(!LB)return;
+  if(!LB||LB.closing)return;
+  LB.closing=true;   // Esc veniva gestito da due ascoltatori: history.back() partiva due volte e usciva dalla scheda
   try{if(history.state&&history.state.lb){history.back();return;}}catch(e){}
   doCloseLb();
 }
@@ -2285,7 +2287,8 @@ function doCloseLb(){
   card.addEventListener("pointermove",e=>{
     if(!drag||!LB)return;dy=e.clientY-y0;
     if(Math.abs(dy)>6){LB.moved=true;
-      card.style.transform="translateY("+dy+"px) scale("+(1-Math.min(.15,Math.abs(dy)/1600))+")";
+      {const sc=1-Math.min(.15,Math.abs(dy)/1600);   // origine 0 0: compenso per scalare dal centro, senza scivolare in alto a sinistra
+      card.style.transform="translate("+((1-sc)*LB.T.w/2)+"px,"+(dy+(1-sc)*LB.T.h/2)+"px) scale("+sc+")";}
       bg.style.opacity=String(Math.max(.1,1-Math.abs(dy)/380));}
   });
   const up=()=>{
@@ -2386,7 +2389,7 @@ function show(r,sur,man,quiet){
     :fbPoster(d.title,d.year);
   const chips=[];
   if(d.year)chips.push('<span class="chip">'+esc(d.year)+'</span>');
-  if(S.cat==='anime'||S.cat==='cartoni')chips.push('<span class="chip">'+(d.movie?'Film':'Serie')+'</span>');
+  if(man?r.m.src==="anime":(S.cat==='anime'||S.cat==='cartoni'))chips.push('<span class="chip">'+(d.movie?'Film':'Serie')+'</span>');
   if(d.seasons)chips.push('<span class="chip">'+d.seasons+(d.seasons>1?' stagioni':' stagione')+'</span>');
   if(d.runtime)chips.push('<span class="chip">'+d.runtime+' min'+(d.movie===false?' / ep.':'')+'</span>');
   if(d.cert)chips.push('<span class="chip">'+esc(d.cert)+'</span>');
