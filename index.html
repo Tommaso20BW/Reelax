@@ -104,7 +104,7 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 #app{position:fixed;left:0;right:0;top:0;bottom:0;z-index:1;display:flex;flex-direction:column;max-width:560px;margin:0 auto;overflow-x:clip}
 .top{flex:none;padding-top:calc(var(--sat) + 12px);position:relative;z-index:5}
 /* barra alta: trasparente, nessun riquadro, un'unica linea continua di progresso */
-.top-in{height:52px;display:grid;grid-template-columns:64px 1fr 64px;align-items:center;padding:0 6px}
+.top-in{height:52px;display:grid;grid-template-columns:108px 1fr 108px;align-items:center;padding:0 6px}
 .slot{display:flex;align-items:center;min-width:0}
 .slot.r{justify-content:flex-end;padding-right:12px}
 .tb{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:var(--fg);transition:transform .1s,background .2s}
@@ -390,7 +390,7 @@ body.pre #app{opacity:0}
 @media (min-width:900px) and (min-height:560px){
   :root{--gut:40px}
   #app{max-width:1180px}
-  .top-in{grid-template-columns:90px 1fr 90px;height:64px}
+  .top-in{grid-template-columns:108px 1fr 108px;height:64px}
   .brand{font-size:.95rem}
   .prog{margin:2px var(--gut) 10px;max-width:1100px;align-self:center;width:calc(100% - var(--gut)*2)}
   #stage{padding:18px var(--gut) 28px}
@@ -597,8 +597,8 @@ body.pre #app{opacity:0}
 .chip.cert{min-width:30px;text-align:center;font-weight:700}
 .poster .rate{position:absolute;top:10px;right:10px;z-index:3;padding:4px 10px;border-radius:999px;font:700 .8rem var(--fb);color:var(--gold);background:rgba(var(--shade),.62);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid rgba(246,198,83,.45);pointer-events:none}
 :root[data-theme="light"] .poster .rate{background:rgba(255,255,255,.78)}
-.btn.trl{flex:none;width:100%;height:50px;border-radius:16px;font-size:.92rem;gap:9px}
-.btn.trl svg{width:16px;height:16px;color:var(--red)}
+#tr .tb svg{width:22px;height:22px}
+#tr a.tb{color:var(--red)}
 </style>
 </head>
 <body class="pre">
@@ -843,6 +843,7 @@ function swap(h,anim){
   }else if(ghost)ghost.remove();
 }
 let ACT={};
+const trTb=d=>d&&d.ytKey?'<a class="tb" href="https://www.youtube.com/watch?v='+esc(d.ytKey)+'" data-yt="'+esc(d.ytKey)+'" target="_blank" rel="noopener" aria-label="Trailer">'+IC.play+'</a>':'';
 const tbtn=(act,ic,label)=>'<button type="button" class="tb" data-act="'+act+'" aria-label="'+label+'">'+IC[ic]+'</button>';
 const bb=(act,label,cls)=>'<button type="button" class="btn'+(cls?' '+cls:'')+'" data-act="'+act+'">'+label+'</button>';
 function ui(o){
@@ -2554,7 +2555,7 @@ function show(r,sur,man,quiet){
   const long=(d.overview||'').length>220;
   const h='<div class="res">'+
     '<div class="hero">'+posterR+'<h2>'+esc(d.title)+'</h2>'+(d.tagline?'<p class="tag">'+esc(d.tagline)+'</p>':'')+'<div class="chips one" data-parts="'+esc(JSON.stringify(parts))+'">'+chips.join('')+'</div></div>'+
-    '<div class="seenw" id="seenw">'+seenInner(String(r.m.id))+'</div>'+(d.ytKey?'<a class="btn trl" href="https://www.youtube.com/watch?v='+esc(d.ytKey)+'" data-yt="'+esc(d.ytKey)+'" target="_blank" rel="noopener">'+IC.play+'Trailer</a>':'')+
+    '<div class="seenw" id="seenw">'+seenInner(String(r.m.id))+'</div>'+
     (rnd?'':'<section class="card compat"><div class="ringw"><svg viewBox="0 0 64 64"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6c653"/><stop offset="1" stop-color="#ff3d52"/></linearGradient></defs><circle class="bgc" cx="32" cy="32" r="27"/><circle class="fgc" cx="32" cy="32" r="27"/></svg><div class="pn"><span><span id="pn">0</span>%</span></div></div><div><b>Compatibilità</b><span class="sub">Risposte date e voto del pubblico</span></div></section>')+
     (man?'':'<section class="card"><h3>Perché fa per te</h3><ul class="why">'+why(r,sur).map(x=>'<li><b>✓</b><span>'+esc(x)+'</span></li>').join('')+'</ul></section>')+
     '<section class="card'+(long?' tap':'')+'" id="plotcard"'+(long?' role="button" tabindex="0" aria-expanded="false"':'')+'><h3>Trama</h3><p class="'+(long?'clamp':'')+'" id="plot">'+esc(d.overview||'Trama non disponibile.')+'</p>'+(long?'<button type="button" class="lnk-btn" id="pmore">Leggi tutto</button>':'')+'</section>'+
@@ -2597,7 +2598,7 @@ function show(r,sur,man,quiet){
   if(man){
     ui({
       l:tbtn('back','back','Torna alla ricerca'),
-      r:tbtn('share','share','Condividi'),
+      r:trTb(d)+tbtn('share','share','Condividi'),
       d:bb('re',IC.restart+'Ricomincia','v')+bb('srch',IC.search+'Cerca ancora','v primary'),
       a:{back:()=>{if(r.back)r.back();else searchPage();},share,seen:seenToggle,re:()=>{RUN++;restart();},srch:()=>searchPage(),cast:()=>castPage(d)}
     });
@@ -2605,7 +2606,7 @@ function show(r,sur,man,quiet){
   }
   ui({
     l:tbtn('back','back','Modifica risposte'),
-    r:tbtn('share','share','Condividi'),
+    r:trTb(d)+tbtn('share','share','Condividi'),
     d:bb('re',IC.restart+'Ricomincia','v')+bb('sur',IC.dice+'Sorprendimi','v')+bb('oth',IC.next+'Un altro','v primary'),
     a:{back:home,share,seen:seenToggle,re:restart,sur:()=>run(true,false),oth:()=>run(false,false),cast:()=>castPage(d)}
   });
