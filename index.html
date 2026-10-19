@@ -301,14 +301,24 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .castbtn .cav{display:flex;align-items:center;gap:10px}
 .castbtn .cav img,.castbtn .cav i{width:46px;height:46px;border-radius:50%;object-fit:cover;border:1px solid var(--line2);flex:none;background:var(--s3)}
 .castbtn .cav i{display:grid;place-items:center;font-style:normal;font-size:1.3rem}
-.sagabtn{overflow:hidden}
+.sagabtn{overflow:hidden;position:relative;isolation:isolate}
+.sagabtn>h3,.sagabtn>.sgm,.sagabtn>.cgo{position:relative;z-index:1}
+.sgbg{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;border-radius:inherit}
+.sgbg i{position:absolute;inset:-25%;background-size:cover;background-position:center;filter:blur(34px) saturate(1.35);opacity:0;transition:opacity 1.6s ease;transform:translateZ(0)}
+.sgbg i.on{opacity:.38}
+.sgbg::after{content:"";position:absolute;inset:0;background:linear-gradient(160deg,rgba(var(--shade),.12),rgba(var(--shade),.5))}
 .sgm{display:block;position:relative;height:200px;margin-top:6px;overflow:hidden;--fw:40px;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 var(--fw),#000 calc(100% - var(--fw)),transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 var(--fw),#000 calc(100% - var(--fw)),transparent 100%)}
 .sgi{position:absolute;left:0;top:0;transform-origin:0 0;transition:transform 1.7s cubic-bezier(.45,.05,.2,1),opacity 1.4s ease;will-change:transform,opacity}
-.sgi img{display:block;width:100%;height:100%;object-fit:cover;border-radius:10px;background:var(--s3);box-shadow:0 3px 10px rgba(0,0,0,.35)}
+.sgi img{display:block;width:100%;height:100%;object-fit:cover;border-radius:12px;background:var(--s3);box-shadow:0 4px 14px rgba(0,0,0,.4),0 0 0 1px var(--line2);transition:box-shadow 1.7s ease}
+.sgi.c img{box-shadow:0 18px 36px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.2)}
+:root[data-theme="light"] .sgi img{box-shadow:0 4px 14px rgba(60,30,110,.22),0 0 0 1px var(--line2)}
+:root[data-theme="light"] .sgi.c img{box-shadow:0 18px 36px rgba(60,30,110,.35),0 0 0 1px var(--line2)}
+:root[data-theme="light"] .sgbg i.on{opacity:.3}
 .sgd{position:absolute;top:50%;transform:translate3d(0,-50%,0);z-index:2;pointer-events:none}
-.sgd b{display:block;font-weight:800;font-size:1rem;line-height:1.2;letter-spacing:-.01em;overflow-wrap:anywhere}
-.sgd i{display:block;font-style:normal;font-size:.82rem;color:var(--mut);margin-top:4px}
-@media (min-width:900px){.sgd b{font-size:1.2rem}.sgd i{font-size:.9rem}}
+.sgd .sgn{display:block;text-decoration:none;font:700 .68rem var(--fb);letter-spacing:.16em;color:var(--gold);margin-bottom:7px}
+.sgd b{display:block;font-weight:800;font-size:1.05rem;line-height:1.18;letter-spacing:-.015em;overflow-wrap:anywhere}
+.sgd i{display:block;font-style:normal;font-size:.82rem;color:var(--mut);margin-top:5px}
+@media (min-width:900px){.sgd b{font-size:1.5rem;line-height:1.12}.sgd i{font-size:.95rem;margin-top:7px}.sgd .sgn{font-size:.74rem;margin-bottom:10px}}
 .castbtn .cgo{display:block;margin-top:12px;font-size:.84rem;font-weight:700;color:var(--gold)}
 .q .res>*,.q .chip,.q .why li,.q .pv{animation:none!important}
 
@@ -1727,6 +1737,7 @@ Object.assign(I18N,{
 "Stagioni ed episodi":["Seasons and episodes","Temporadas y episodios","Saisons et épisodes","Staffeln und Folgen","Temporadas e episódios"],
 "Vedi stagioni ed episodi →":["See seasons and episodes →","Ver temporadas y episodios →","Voir saisons et épisodes →","Staffeln und Folgen ansehen →","Ver temporadas e episódios →"],
 "Saga":["Collection","Saga","Saga","Reihe","Coleção"],
+"Vedi tutta la saga →":["See the whole collection →","Ver toda la saga →","Voir toute la saga →","Ganze Reihe ansehen →","Ver toda a saga →"],
 "Titoli simili":["Similar titles","Títulos similares","Titres similaires","Ähnliche Titel","Títulos semelhantes"],
 "Suggeriti da TMDB in base ai gusti del pubblico: non sono necessariamente sequel, prequel o spin-off.":["Suggested by TMDB based on audience tastes: not necessarily sequels, prequels or spin-offs.","Sugeridos por TMDB según los gustos del público: no son necesariamente secuelas, precuelas o spin-offs.","Suggérés par TMDB selon les goûts du public : pas forcément des suites, préquelles ou spin-offs.","Von TMDB nach dem Publikumsgeschmack vorgeschlagen: nicht unbedingt Fortsetzungen, Prequels oder Spin-offs.","Sugeridos pelo TMDB com base no gosto do público: não são necessariamente sequências, prequelas ou spin-offs."],
 "Carico gli episodi...":["Loading episodes...","Cargando episodios...","Chargement des épisodes...","Lade Folgen...","Carregando episódios..."],
@@ -2291,16 +2302,16 @@ function provHtml(d){
 function startSaga(){
   const box=stage.querySelector(".sgm");
   if(!box)return;
-  const els=[].slice.call(box.querySelectorAll(".sgi")),n=els.length,tt=box.querySelector(".sgd");
-  if(n<2||!tt)return;
+  const els=[].slice.call(box.querySelectorAll(".sgi")),n=els.length,tt=box.querySelector(".sgd"),bgs=[].slice.call((box.parentNode||box).querySelectorAll(".sgbg i"));
+  if(!n||!tt)return;
   let cur=Math.max(0,Math.min(n-1,+box.dataset.cur||0)),vis=true,W=0,cw=0,ch=0,sw=0,H=0,cL=0,pL=0,nL=0,tok=0;
   const layout=()=>{
     W=box.clientWidth||320;
-    cw=Math.max(96,Math.min(170,Math.round(W*.34)));ch=Math.round(cw*1.5);sw=cw*.52;H=ch+34;
+    cw=W>520?Math.max(140,Math.min(180,Math.round(W*.26))):Math.max(96,Math.min(170,Math.round(W*.34)));ch=Math.round(cw*1.5);sw=cw*.52;H=ch+(W>520?44:34);
     pL=-sw*.3;cL=Math.round(pL+sw+10);nL=W-sw*.7;
     let dL=cL+cw+14,dW=nL-8-dL;
     if(W>520){   // schermo largo: il gruppo non si allunga, resta compatto e centrato (il successivo si vede intero)
-      dW=Math.min(270,dW);nL=dL+dW+16;
+      dW=Math.min(260,dW);nL=dL+dW+16;
       const ox=Math.max(0,Math.round((W-(nL+sw))/2));
       pL+=ox;cL+=ox;nL+=ox;dL+=ox;
     }
@@ -2320,17 +2331,19 @@ function startSaga(){
   const apply=(el,dd)=>{
     const q=pos(dd);
     el.style.transform="translate3d("+Math.round(q.x)+"px,"+Math.round((H-ch*q.s)/2)+"px,0) scale("+q.s+")";
-    el.style.opacity=String(q.o);el.style.zIndex=String(q.z);el._d=dd;
+    el.style.opacity=String(q.o);el.style.zIndex=String(q.z);el._d=dd;el.classList.toggle("c",dd===0);
   };
   const dOf=i=>{let dd=((i-cur)%n+n)%n;if(dd>n/2)dd-=n;return dd;};
-  const text=()=>{const el=els[cur];tt.firstElementChild.textContent=el.dataset.t||"";tt.lastElementChild.textContent=el.dataset.y||"";};
+  const text=()=>{const el=els[cur];tt.querySelector("b").textContent=el.dataset.t||"";tt.querySelector("i").textContent=el.dataset.y||"";tt.querySelector(".sgn").textContent=el.dataset.n||"";};
+  const bgOn=()=>bgs.forEach((b,i)=>b.classList.toggle("on",i===cur));
   const placeAll=()=>{els.forEach((el,i)=>{el.style.transition="none";apply(el,dOf(i));});void box.offsetWidth;els.forEach(el=>{el.style.transition="";});};
-  layout();placeAll();text();
+  layout();placeAll();text();bgOn();
   if(RM())return;
   if(window.ResizeObserver){new ResizeObserver(()=>{if(!box.isConnected)return;const w=box.clientWidth;if(w&&Math.abs(w-W)>2){layout();placeAll();}}).observe(box);}
   if(window.IntersectionObserver){new IntersectionObserver(e=>{vis=e[0].isIntersecting;},{threshold:0}).observe(box);}
+  if(n<2)return;
   const step=()=>{
-    cur=(cur+1)%n;const my=++tok;
+    cur=(cur+1)%n;const my=++tok;bgOn();
     els.forEach((el,i)=>{
       const dd=dOf(i),od=el._d;
       if(od<0&&dd>0){   // esce a sinistra e poi rientra da destra
@@ -2358,11 +2371,13 @@ function startSaga(){
   },5000);
 }
 function sagaTile(d){
-  const ps=(d.collParts||[]).filter(x=>x.poster_path);
-  if((d.collParts||[]).length<2||ps.length<2)return "";
-  let cur=ps.findIndex(x=>x.id===d.tid);if(cur<0)cur=0;
-  const one=ps.map(x=>'<span class="sgi" data-t="'+esc(x.title||x.name||"")+'" data-y="'+esc(String(x.release_date||"").slice(0,4))+'"><img src="https://image.tmdb.org/t/p/w185'+esc(x.poster_path)+'" alt="" decoding="async" referrerpolicy="no-referrer"></span>').join("");
-  return '<button type="button" class="card castbtn sagabtn" data-act="saga" aria-label="Saga: '+esc(d.coll)+'"><h3>Saga</h3><span class="sgm" data-cur="'+cur+'">'+one+'<span class="sgd"><b></b><i></i></span></span></button>';
+  // anteprima: solo gli ALTRI film della saga (il film aperto non compare); "n / tot" è la posizione nella saga completa
+  const all=(d.collParts||[]).filter(x=>x&&(x.title||x.name)),tot=all.length;
+  const ps=all.map((x,i)=>({x:x,o:i+1})).filter(p=>p.x.poster_path&&p.x.id!==d.tid);
+  if(tot<2||!ps.length)return "";
+  const one=ps.map(p=>'<span class="sgi" data-t="'+esc(p.x.title||p.x.name||"")+'" data-y="'+esc(String(p.x.release_date||"").slice(0,4))+'" data-n="'+p.o+' / '+tot+'"><img src="https://image.tmdb.org/t/p/w342'+esc(p.x.poster_path)+'" alt="" decoding="async" referrerpolicy="no-referrer"></span>').join("");
+  const bg=ps.map((p,i)=>'<i'+(i===0?' class="on"':'')+' style="background-image:url(\'https://image.tmdb.org/t/p/w92'+esc(p.x.poster_path)+'\')"></i>').join("");
+  return '<button type="button" class="card castbtn sagabtn" data-act="saga" aria-label="Saga: '+esc(d.coll)+'"><span class="sgbg" aria-hidden="true">'+bg+'</span><h3>Saga</h3><span class="sgm" data-cur="0">'+one+'<span class="sgd"><u class="sgn"></u><b></b><i></i></span></span><span class="cgo">Vedi tutta la saga →</span></button>';
 }
 function infoHtml(d){
   const eps=(d.seasons?d.seasons+(d.seasons>1?' stagioni':' stagione'):'')+(d.episodes?(d.seasons?' · ':'')+d.episodes+' episodi':'');
