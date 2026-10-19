@@ -812,9 +812,11 @@ function goBack(fn){if(ROUTED&&!LB&&history.state&&history.state.d>0)history.bac
 async function restoreTitle(k,sub,num){
   const cast=sub==="cast";
   const sp=d=>{if(!d)return;if(sub==="cast")castPage(d);else if(sub==="saga"){if((d.collParts||[]).length)sagaPage(d);}else if(sub==="stagioni"){const se=num&&(d.seasonList||[]).find(x=>String(x.n)===String(num));if(se)episodesPage(d,se);else if((d.seasonList||[]).length)seasonsPage(d);}};
+  // sottopagina (stagioni, episodi, saga, cast) dello stesso titolo gia' aperto: niente ridisegno della scheda (era la "copertina" che compariva per un attimo)
+  if(sub&&S.cur&&S.cur.d&&S.cur.m&&String(S.cur.m.id)===k){sp(S.cur.d);return;}
   const c=RCACHE.get(k);
   PENDCAST=sub?k:"";   // sottopagina (cast, stagioni): la scheda sotto si disegna senza cambiare indirizzo, poi arriva la sottopagina
-  if(c){show(c.r,c.sur,c.man,"fade");PENDCAST="";if(sub&&c.r&&c.r.d)sp(c.r.d);return;}
+  if(c){const fromSub=!sub&&!!stage.querySelector('.page.lst');show(c.r,c.sur,c.man,fromSub?true:"fade");if(fromSub)stage.scrollTop=SY0;PENDCAST="";if(sub&&c.r&&c.r.d)sp(c.r.d);return;}
   let it=RECENT.find(x=>String(x.k)===k);
   const m=/^tm(film|tv)(\d+)$/.exec(k);
   if(!it&&m)it={k:k,t:"",y:"",p:"",mv:m[1]==="film",sr:"tmdb",ti:+m[2]};
@@ -1160,13 +1162,21 @@ function castPage(d,snap){
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>{show(snap.r,snap.sur,snap.man,"fade");}}});
   $("cres").onclick=e=>{const b=e.target.closest&&e.target.closest("[data-i]");if(!b)return;tap();personPage(list[+b.dataset.i],()=>castPage(d,snap));};
 }
+let SY0=0;   // posizione di scorrimento della scheda, per ritrovarla uscendo dalle sottopagine
+function subSwap(h){
+  if(stage.querySelector('.res'))SY0=stage.scrollTop;
+  swap(h,false);
+  stage.classList.remove('q');stage.scrollTop=0;
+  const pg=stage.querySelector('.page');
+  if(pg&&pg.animate&&!RM())pg.animate([{opacity:0},{opacity:1}],{duration:200,easing:"ease-out"});
+}
 /* ---------- Saga (film della collezione TMDB, in ordine di uscita) ---------- */
 function sagaPage(d,snap){
   setBd(null);
   snap=snap||{r:S.cur,sur:S.curSur,man:S.curMan};
   {const k=snap.r&&snap.r.m&&snap.r.m.id!=null?String(snap.r.m.id):"";if(k)setRoute("/t/"+enc(k)+"/saga");else ROUTED=false;}
   const list=d.collParts||[];
-  swap('<div class="page lst"><h1>'+esc(d.coll||"Saga")+'</h1><div class="sres lib" id="sgres">'+list.map((x,i)=>bkCard(x,i,{})).join('')+'</div></div>',true);
+  subSwap('<div class="page lst"><h1>'+esc(d.coll||"Saga")+'</h1><div class="sres lib" id="sgres">'+list.map((x,i)=>bkCard(x,i,{})).join('')+'</div></div>',true);
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>{show(snap.r,snap.sur,snap.man,"fade");}}});
   $("sgres").onclick=e=>{const b=e.target.closest&&e.target.closest("[data-i]");if(!b)return;tap();openSearched(list[+b.dataset.i],()=>sagaPage(d,snap));};
 }
@@ -1179,7 +1189,7 @@ function seasonsPage(d,snap){
   const list=d.seasonList||[];
   const row=(x,i)=>{const nm=x.name||("Stagione "+x.n),sub=[x.date?String(x.date).slice(0,4):"",x.ep?x.ep+" ep.":""].filter(Boolean).join(" · ");
     return '<button type="button" class="sr" data-i="'+i+'"><span class="th">'+(x.img?'<img src="'+PIMG+esc(x.img)+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">':esc(String(x.n)))+'</span><span class="tx"><span class="t">'+esc(nm)+'</span>'+(sub?'<span class="s">'+esc(sub)+'</span>':'')+'</span></button>';};
-  swap('<div class="page lst"><h1>Stagioni</h1><div class="sres" id="sns">'+list.map(row).join('')+'</div></div>',true);
+  subSwap('<div class="page lst"><h1>Stagioni</h1><div class="sres" id="sns">'+list.map(row).join('')+'</div></div>',true);
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>{show(snap.r,snap.sur,snap.man,"fade");}}});
   $("sns").onclick=e=>{const b=e.target.closest&&e.target.closest("[data-i]");if(!b)return;tap();episodesPage(d,list[+b.dataset.i],snap);};
 }
@@ -1190,7 +1200,7 @@ async function episodesPage(d,se,snap){
   snap=snap||{r:S.cur,sur:S.curSur,man:S.curMan};
   {const k=snap.r&&snap.r.m&&snap.r.m.id!=null?String(snap.r.m.id):(S.cur&&S.cur.m?String(S.cur.m.id):"");if(k)setRoute("/t/"+enc(k)+"/stagioni/"+se.n);else ROUTED=false;}
   const nm=se.name||("Stagione "+se.n);
-  swap('<div class="page lst"><h1>'+esc(nm)+'</h1><div class="sres eplist" id="eps"><p class="smsg">Carico gli episodi...</p></div></div>',true);
+  subSwap('<div class="page lst"><h1>'+esc(nm)+'</h1><div class="sres eplist" id="eps"><p class="smsg">Carico gli episodi...</p></div></div>',true);
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>{RUN++;seasonsPage(d,snap);}}});
   const ck=d.tid+"|"+se.n+"|"+LANG();
   let eps=EPC.get(ck);
@@ -1204,10 +1214,12 @@ async function episodesPage(d,se,snap){
   if(my!==RUN||!$("eps"))return;
   if(!eps){$("eps").innerHTML='<p class="smsg">Non riesco a caricare gli episodi'+(navigator.onLine===false?': sei offline':'')+'. Riprova tra poco.</p>';return;}
   if(!eps.length){$("eps").innerHTML='<p class="smsg">Nessun episodio disponibile.</p>';return;}
-  $("eps").innerHTML=eps.map(ep=>{
+  const eb=$("eps");
+  eb.innerHTML=eps.map(ep=>{
     const meta=["E"+ep.episode_number,fdate(ep.air_date),ep.runtime?ep.runtime+" min":""].filter(Boolean).join(" · ");
     return '<section class="card"><h3>'+esc(meta)+'</h3><p style="font-weight:700">'+esc(ep.name||("Episodio "+ep.episode_number))+'</p>'+((ep.overview||"").trim()?'<p style="margin-top:8px;color:var(--mut);font-size:.9rem">'+esc(ep.overview.trim())+'</p>':'')+'</section>';
   }).join("");
+  if(eb.animate&&!RM())eb.animate([{opacity:0},{opacity:1}],{duration:220,easing:"ease-out"});
 }
 function simHtml(d){return "";}
 function personInfo(d){
