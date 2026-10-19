@@ -1896,6 +1896,9 @@ function preImg(u,ms){
 function leaveLoad(){   // testo di caricamento fuori + muro che si dissolve (~.45s) PRIMA che entri il risultato: niente sovrapposizioni
   const p=document.querySelector(".load p"),o=$("ldw");
   if(o){o.style.transitionDuration=".9s";o.classList.remove("on");}
+  if(!RM()){   // anche il tasto Annulla e la X escono dolcemente insieme alla scritta (poi restano invisibili finché arrivano i nuovi)
+    [$("dockin"),$("tl")].forEach(el=>{if(el)[...el.children].forEach(c=>{if(c.animate)c.animate([{opacity:1,transform:"none"},{opacity:0,transform:"translate3d(0,8px,0)"}],{duration:300,easing:"ease-in",fill:"forwards"}).finished.then(()=>{c.style.opacity="0";},()=>{});});});
+  }
   if(RM()||!p||!p.animate)return Promise.resolve();
   return p.animate([{opacity:1,transform:"none"},{opacity:0,transform:"translateY(-8px)"}],{duration:300,easing:"ease-in",fill:"forwards"}).finished.catch(()=>{});
 }
@@ -2325,6 +2328,9 @@ function show(r,sur,man,quiet){
   if(!quiet&&!RM()){   // ingresso morbido della locandina: sale dal basso ingrandendosi, mentre lo sfondo di caricamento si dissolve
     const po=stage.querySelector('.hero .poster');
     if(po&&po.animate)po.animate([{opacity:0,transform:'translate3d(0,46px,0) scale(.78)'},{opacity:1,transform:'none'}],{duration:1100,delay:40,easing:'cubic-bezier(.16,1,.3,1)',fill:'backwards'});
+  }
+  if(!quiet&&!RM()){   // i nuovi pulsanti arrivano dopo la locandina, a cascata
+    setTimeout(()=>{[...$("dockin").children].forEach((c,i)=>{if(c.animate)c.animate([{opacity:0,transform:'translate3d(0,22px,0) scale(.95)'},{opacity:1,transform:'none'}],{duration:800,delay:420+i*80,easing:'cubic-bezier(.16,1,.3,1)',fill:'backwards'});});},0);
   }
   if(snap)settle(snap);
   setBd(d.poster);
