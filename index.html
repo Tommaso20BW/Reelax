@@ -303,8 +303,14 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 /* lightbox locandina */
 #lb{position:fixed;inset:0;z-index:100;display:none}
 #lb.on{display:block}
-#lb .bg{position:absolute;inset:0;background:rgba(5,3,10,.98);opacity:0;transition:opacity .6s ease;will-change:opacity}
+#lb .bg{position:absolute;inset:0;background:var(--bg);opacity:0;transition:opacity .6s ease;will-change:opacity;overflow:hidden}
 #lb.show .bg{opacity:1}
+/* sfondo: la locandina stessa, sfocata. Scuro nel tema scuro, chiaro nel tema chiaro; si ingrandisce piano mentre appare */
+#lb .bg i{position:absolute;inset:-14%;background-size:cover;background-position:center;filter:blur(36px) saturate(1.25) brightness(.62);transform:scale(1.32) translateZ(0);transition:transform 1.2s cubic-bezier(.2,.85,.25,1)}
+#lb.show .bg i{transform:scale(1.16) translateZ(0)}
+#lb .bg::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 90% at 50% 45%,rgba(5,3,10,.12),rgba(5,3,10,.55))}
+:root[data-theme="light"] #lb .bg i{filter:blur(36px) saturate(1.1) brightness(1.18)}
+:root[data-theme="light"] #lb .bg::after{background:radial-gradient(120% 90% at 50% 45%,rgba(246,243,251,.38),rgba(246,243,251,.72))}
 @property --ms{syntax:'<length>';inherits:false;initial-value:0px}
 @property --ml{syntax:'<length>';inherits:false;initial-value:0px}
 @property --ma{syntax:'<number>';inherits:false;initial-value:1}
@@ -594,7 +600,7 @@ body.pre #app{opacity:0}
   </form>
 </div>
 <div id="lb" aria-modal="true" role="dialog" aria-label="Locandina">
-  <div class="bg"></div>
+  <div class="bg"><i></i></div>
   <div class="card2" id="lbc"></div>
   <button type="button" class="tb x" id="lbx" aria-label="Chiudi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   <div class="hint">Tocca per chiudere</div>
@@ -2183,6 +2189,7 @@ function openLb(el){
     const cl=el.cloneNode(true);cl.style.fontSize=(16*T.w/Math.max(60,sr.width))+"px";
     card.innerHTML="";card.appendChild(cl);
   }
+  {const bi=lb.querySelector(".bg i");if(bi){if(im){bi.style.background="";bi.style.backgroundImage='url("'+String(im.currentSrc||im.src).replace(/"/g,"%22")+'")';}else bi.style.background=el.style.background||"";}}
   LB={el,T,card,lb,moved:false,R,ring,edge};
   lb.classList.add("on");void lb.offsetWidth;lb.classList.add("show");
   el.classList.add("lbhide");     // nasconde solo immagine/bordo: l'ombra resta sulla locandina, SOTTO il titolo
