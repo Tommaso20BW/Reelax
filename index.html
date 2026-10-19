@@ -318,7 +318,7 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 #lb .card2 img{width:100%;height:100%;object-fit:cover}
 #lb .card2 .poster{width:100%;height:100%;border-radius:0;box-shadow:none;cursor:default;border:0}
 .poster.lbhide{background:transparent!important;border-color:transparent!important}
-.poster.lbhide>*{visibility:hidden}
+.poster.lbhide>:not(.rate){visibility:hidden}
 .poster.lbhide::before{visibility:hidden}   /* NON display:none: ritogliendola l'animazione "psweep" ripartiva e rifaceva passare la riga bianca */
 #lb .card2 .poster::before{display:none}
 #lb .x{position:absolute;top:calc(var(--sat) + 12px);right:14px;opacity:0;transition:opacity .5s .2s}
@@ -606,6 +606,9 @@ body.pre #app{opacity:0}
 .star{transition:transform .1s,color .5s ease}
 .star svg{fill:currentColor;fill-opacity:0;stroke:currentColor;transition:fill-opacity .5s ease;transition-delay:calc(var(--n,0)*45ms)}
 .star.on svg{fill-opacity:1}
+.poster.lbhide>:not(.rate){visibility:hidden}
+.poster .rate{transition:opacity .6s ease .05s}
+.poster.lbhide .rate{opacity:0;transition:opacity .25s ease}
 /* ingresso più calmo */
 .poster::before{display:none}
 .in .res>*{animation-duration:1s;animation-delay:calc(var(--k,0)*45ms + 60ms)}
