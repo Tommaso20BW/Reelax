@@ -124,7 +124,7 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 #app.onset #stage{padding-bottom:14px;-webkit-mask-image:linear-gradient(transparent,#000 14px,#000 calc(100% - 14px),transparent);mask-image:linear-gradient(transparent,#000 14px,#000 calc(100% - 14px),transparent)}
 #app.onset #dock{padding-top:0;padding-bottom:max(14px,var(--sab))}
 #app.onset .srow.out{position:sticky;bottom:0;z-index:2;flex:none}
-.ghost{position:absolute;z-index:1;box-sizing:border-box;overflow:hidden;padding:10px var(--gut) 20px;pointer-events:none;will-change:transform;-webkit-mask-image:linear-gradient(transparent,#000 14px,#000 calc(100% - 22px),transparent);mask-image:linear-gradient(transparent,#000 14px,#000 calc(100% - 22px),transparent)}
+.ghost{position:absolute;z-index:1;box-sizing:border-box;overflow:hidden;padding:10px var(--gut) 20px;pointer-events:none;will-change:transform,opacity}
 
 /* dock inferiore: resta SOPRA la zona della home-indicator, così i tasti si toccano sempre */
 #dock{flex:none;position:relative;z-index:6;padding:12px var(--gut) max(16px,calc(var(--sab) + 6px))}
@@ -468,7 +468,6 @@ body.pre #app{opacity:0}
 .ldw .prow2{height:var(--ph)}
 .ldw .pc{width:calc(var(--ph)*2/3);height:var(--ph);border-radius:calc(var(--ph)*.08);box-shadow:none;animation:none}
 .ldw::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(44% 22% at 50% 50%,rgba(var(--bgrgb),.96) 0,rgba(var(--bgrgb),.6) 62%,transparent 100%),linear-gradient(to bottom,rgba(var(--shade),.88) 0,rgba(var(--shade),.72) calc(var(--sat) + 90px),rgba(var(--shade),.38) calc(var(--sat) + 170px),transparent 33%,transparent 66%,rgba(var(--shade),.3) 77%,rgba(var(--shade),.62) 89%,rgba(var(--shade),.86) 100%)}
-.ldw::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px);-webkit-mask-image:linear-gradient(to bottom,#000 0,#000 calc(var(--sat) + 100px),transparent 31%,transparent 69%,#000 92%);mask-image:linear-gradient(to bottom,#000 0,#000 calc(var(--sat) + 100px),transparent 31%,transparent 69%,#000 92%)}
 
 /* ===== SCHEDA ATTORE: stessa struttura e stesso movimento della scheda risultato ===== */
 .res>.sech{margin:10px 2px -4px;font:700 .72rem var(--fb);letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
@@ -648,9 +647,9 @@ body.pre #app{opacity:0}
 
 /* tasti del dock: i vecchi sfumano via, i nuovi entrano un attimo dopo (niente sovrapposizione) */
 .dock-in.out .btn::after{display:none}
-.dock-in.xf:not(.out) .btn:nth-child(1){animation-delay:.2s}
-.dock-in.xf:not(.out) .btn:nth-child(2){animation-delay:.25s}
-.dock-in.xf:not(.out) .btn:nth-child(3){animation-delay:.3s}
+.dock-in.xf:not(.out) .btn:nth-child(1){animation-delay:.1s}
+.dock-in.xf:not(.out) .btn:nth-child(2){animation-delay:.14s}
+.dock-in.xf:not(.out) .btn:nth-child(3){animation-delay:.18s}
 </style>
 </head>
 <body class="pre">
@@ -894,7 +893,7 @@ function swap(h,anim){
       stage.querySelectorAll(".opt").forEach((el,i)=>el.animate([{opacity:0,transform:mv(dxs*D)},{opacity:1,transform:"none"}],{duration:340,delay:30+i*28,easing:E,fill:"backwards"}));
       if(ghost){const g=ghost;g.animate([{opacity:1,transform:"none"},{opacity:0,transform:mv(-dxs*D)}],{duration:isOpts?170:220,easing:"cubic-bezier(.4,0,1,1)",fill:"forwards"}).onfinish=()=>g.remove();setTimeout(()=>g.remove(),600);}
     }else{
-      stage.animate([{opacity:0,transform:"translate3d(0,10px,0) scale(.99)"},{opacity:1,transform:"none"}],{duration:340,easing:E});
+      (stage.firstElementChild||stage).animate([{opacity:0,transform:"translate3d(0,10px,0)"},{opacity:1,transform:"none"}],{duration:340,easing:E});
       if(ghost){const g=ghost;g.animate([{opacity:1,transform:"none"},{opacity:0,transform:"translate3d(0,-10px,0) scale(.96)"}],{duration:200,easing:"cubic-bezier(.4,0,1,1)",fill:"forwards"}).onfinish=()=>g.remove();setTimeout(()=>g.remove(),700);}
     }
   }else if(ghost)ghost.remove();
@@ -916,7 +915,7 @@ function ui(o){
       c.querySelectorAll(".rpl").forEach(x=>x.remove());
       dk.parentNode.appendChild(c);
       const rm=()=>c.remove();
-      c.animate([{opacity:1,transform:"none"},{opacity:0,transform:"scale(.97)"}],{duration:230,easing:"cubic-bezier(.3,0,.6,1)",fill:"forwards"}).onfinish=rm;
+      c.animate([{opacity:1,transform:"none"},{opacity:0,transform:"scale(.97)"}],{duration:170,easing:"cubic-bezier(.3,0,.6,1)",fill:"forwards"}).onfinish=rm;
       setTimeout(rm,700);
       dk.classList.add("xf");clearTimeout(dk._xf);dk._xf=setTimeout(()=>dk.classList.remove("xf"),900);   // i nuovi tasti entrano solo dopo che i vecchi sono quasi spariti
     }
@@ -1048,7 +1047,7 @@ function searchPage(){
   const inp=$("sq"),box=$("sres");
   inp.value=SQ;
   let t=null;
-  inp.addEventListener("input",()=>{SQ=inp.value.trim();clearTimeout(t);t=setTimeout(()=>doSearch(SQ),350);});
+  inp.addEventListener("input",()=>{SQ=inp.value.trim();clearTimeout(t);t=setTimeout(()=>doSearch(SQ),250);});
   inp.addEventListener("keydown",e=>{if(e.key==="Enter"){clearTimeout(t);SQ=inp.value.trim();doSearch(SQ);inp.blur();}});
   box.onclick=e=>{const b=e.target.closest&&e.target.closest("[data-i]");if(!b)return;tap();TDX=1;openSearched(SLIST[+b.dataset.i]);};
   // scorrendo l'elenco la tastiera si chiude, così l'ultimo risultato resta raggiungibile senza spazio vuoto in fondo
@@ -1094,15 +1093,15 @@ const bkCard=(x,i,ok)=>{
   const th=x.posterUrl?'<img src="'+esc(x.posterUrl)+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onload="this.classList.add(\'ld\')">':x.poster_path?'<img src="https://image.tmdb.org/t/p/w342'+esc(x.poster_path)+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" class="'+(ok[x.poster_path]?"ld":"")+'" onload="this.classList.add(\'ld\')">':'<span class="nop">'+esc((title||"?").trim().charAt(0).toUpperCase())+'</span>';
   return '<button type="button" class="bk" data-i="'+i+'"><span class="cv">'+th+'</span><span class="t">'+esc(title||"Senza titolo")+'</span><span class="s">'+(year?year+" · ":"")+(x.al?(film?"Film anime":"Anime"):(film?"Film":"Serie TV"))+'</span></button>';
 };
-const bkPreload=async list=>{   // max ~1,4 s: la griglia compare già completa
+const bkPreload=async(list,ms)=>{   // max ~1,4 s: la griglia compare già completa
   const ok={};
   await Promise.race([
     Promise.all(list.slice(0,12).filter(x=>x.poster_path).map(x=>new Promise(r=>{const im=new Image();im.referrerPolicy="no-referrer";im.onload=()=>{ok[x.poster_path]=1;r();};im.onerror=r;im.src="https://image.tmdb.org/t/p/w342"+x.poster_path;}))),
-    new Promise(r=>setTimeout(r,1400))
+    new Promise(r=>setTimeout(r,ms||1400))
   ]);
   return ok;
 };
-const bkReveal=(box,delay)=>{if(RM())return;box.querySelectorAll(".bk").forEach((el,i)=>{if(el.animate)el.animate([{opacity:0,transform:"translate3d(0,8px,0)"},{opacity:1,transform:"none"}],{duration:800,delay:(delay||0)+Math.min(i,11)*45,easing:"cubic-bezier(.2,.85,.25,1)",fill:"backwards"});});};
+const bkReveal=(box,delay,from)=>{if(RM())return;[].slice.call(box.querySelectorAll(".bk"),from||0).forEach((el,i)=>{if(el.animate)el.animate([{opacity:0,transform:"translate3d(0,8px,0)"},{opacity:1,transform:"none"}],{duration:800,delay:(delay||0)+Math.min(i,11)*45,easing:"cubic-bezier(.2,.85,.25,1)",fill:"backwards"});});};
 /* Più in voga ora: uso discover (già consentito dal proxy), ordinato per popolarità, film e serie mescolati */
 const ago=d=>new Date(Date.now()-d*864e5).toISOString().slice(0,10);
 async function trendTitles(){
@@ -1123,26 +1122,43 @@ async function doSearch(q){
   if(!box)return;
   setRoute("/cerca"+(q?"/"+enc(q):""),{replace:true});
   const trend=q.length<2;   // campo vuoto: mostro i titoli più in voga del momento
-  if(box.querySelector(".bk"))box.classList.add("busy");   // risultati precedenti restano, attenuati: niente sfarfallio a ogni lettera
+  const had=!!box.querySelector(".bk");
+  if(had)box.classList.add("busy");   // risultati precedenti restano, attenuati, finché arrivano i nuovi
   else box.innerHTML='<p class="smsg">'+(trend?"Carico le tendenze...":"Cerco...")+'</p>';
+  const unfade=()=>{try{box.getAnimations().forEach(x=>x.cancel());}catch(e){}};
   try{
-    const [list0,al]=await Promise.all([
-      (trend?trendTitles():searchTitles(q)).catch(()=>null),
-      trend?Promise.resolve([]):searchAniList(q).catch(()=>[])]);
+    // TMDB mostra subito i suoi risultati; gli anime di AniList (più lento) arrivano dopo e si aggiungono in fondo
+    const mainP=(trend?trendTitles():searchTitles(q)).catch(()=>null);
+    const alP=trend?Promise.resolve([]):searchAniList(q).catch(()=>[]);
+    const base=await mainP;
     if(my!==SRUN||!$("sres"))return;
-    if(list0===null&&!al.length)throw new Error("ricerca non disponibile");
-    const list=mergeAl(list0||[],al);
-    SLIST=list.slice(0,22);
-    const ok=await bkPreload(SLIST);
+    let al=null;
+    if(base===null||(!base.length&&!trend)){al=await alP;if(my!==SRUN||!$("sres"))return;}
+    if(base===null&&!al.length)throw new Error("ricerca non disponibile");
+    SLIST=mergeAl(base||[],al||[]).slice(0,22);
+    const ok=await bkPreload(SLIST.slice(0,9),380);
     if(my!==SRUN||!$("sres"))return;
-    box.classList.remove("busy");
-    $("sres").classList.remove("busy");
-    $("sres").innerHTML=SLIST.length?(trend?'<p class="trl">Di tendenza ora</p>':"")+SLIST.map((x,i)=>bkCard(x,i,ok)).join(""):'<p class="smsg">Nessun risultato.</p>';
-    if(SLIST.length)bkReveal($("sres"));
+    if(had&&box.animate&&!RM()){   // i vecchi titoli sfumano via prima che arrivino i nuovi
+      await box.animate([{opacity:getComputedStyle(box).opacity},{opacity:0}],{duration:140,easing:"ease-in",fill:"forwards"}).finished.catch(()=>{});
+      if(my!==SRUN||!$("sres"))return;
+    }
+    box.classList.remove("busy");unfade();
+    box.innerHTML=SLIST.length?(trend?'<p class="trl">Di tendenza ora</p>':"")+SLIST.map((x,i)=>bkCard(x,i,ok)).join(""):'<p class="smsg">Nessun risultato.</p>';
+    if(SLIST.length)bkReveal(box);
+    if(al===null){
+      al=await alP;
+      if(my!==SRUN||!$("sres")||!al.length)return;
+      const merged=mergeAl(base||[],al).slice(0,22),start=SLIST.length;
+      if(merged.length>start){
+        SLIST=merged;
+        box.insertAdjacentHTML("beforeend",merged.slice(start).map((x,k)=>bkCard(x,start+k,{})).join(""));
+        bkReveal(box,0,start);
+      }
+    }
   }catch(e){
     if(my!==SRUN||!$("sres"))return;
-    $("sres").classList.remove("busy");
-    $("sres").innerHTML='<p class="smsg">Ricerca non riuscita'+(navigator.onLine===false?': sei offline':' ('+esc((e&&e.message)||"errore")+')')+'. Riprova tra poco.</p>';
+    box.classList.remove("busy");unfade();
+    box.innerHTML='<p class="smsg">Ricerca non riuscita'+(navigator.onLine===false?': sei offline':' ('+esc((e&&e.message)||"errore")+')')+'. Riprova tra poco.</p>';
   }
 }
 async function openSearched(x,back){
