@@ -577,10 +577,6 @@ body.pre #app{opacity:0}
 .stars.sm{justify-content:flex-start;gap:0}
 .stars.sm .star{width:30px;height:30px}
 .stars.sm .star svg{width:20px;height:20px}
-.vb{display:flex;flex-direction:column;gap:2px;min-width:0}
-.vb .stars.sm{justify-content:center}
-.vb .stars.sm .star{width:20%;max-width:26px;height:26px}
-.vb .stars.sm .star svg{width:16px;height:16px}
 .vrow{cursor:default;padding:8px 14px 8px 8px}
 .vrow:active{transform:none}
 .vrow .th{border:0;padding:0}
@@ -1501,29 +1497,29 @@ document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest
 let VQ="";
 function seenPage(){
   RUN++;SRUN++;setBd(null);setRoute("/impostazioni/gia-visti");
-  swap('<div class="page"><h1>Già visti</h1><input class="lgi sin" id="vq" type="search" placeholder="Cerca tra i già visti" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="search" aria-label="Cerca tra i già visti"><div class="seg" id="vview"><button type="button" data-v="grid">'+IC.grid+'Griglia</button><button type="button" data-v="list">'+IC.rows+'Elenco</button></div><div id="vres"></div></div>',true);
+  swap('<div class="page"><h1>Già visti</h1><input class="lgi sin" id="vq" type="search" placeholder="Cerca tra i già visti" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="search" aria-label="Cerca tra i già visti"><div class="sres" id="vres"></div></div>',true);
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>settingsPage()}});
-  const inp=$("vq"),box=$("vres"),vw=$("vview");let list=[];
+  const PG=50,inp=$("vq"),box=$("vres");let list=[],shown=PG;
   inp.value=VQ;
   const stars=x=>'<div class="stars sm" data-sk="'+esc(String(x.k))+'" role="group" aria-label="Voto">'+starsInner(x.r||0)+'</div>';
-  const paint=first=>{
-    const grid=getSet("seenView","grid")!=="list",q=normT(VQ);
-    vw.querySelectorAll("button").forEach(b=>b.classList.toggle("on",(b.dataset.v==="grid")===grid));
-    list=(L.seen||[]).filter(x=>!q||normT(x.t).indexOf(q)>=0);
-    box.className="sres"+(grid?" lib":"");
+  const paint=()=>{
+    const q=normT(VQ);
+    const all=(L.seen||[]).filter(x=>!q||normT(x.t).indexOf(q)>=0);
+    list=q?all:all.slice(0,shown);   // senza ricerca: i più recenti, poi "Mostra altri"; cercando: tutti quelli che corrispondono
+    const more=q?0:all.length-list.length;
     if(!list.length){box.innerHTML='<div class="lemp">'+IC.eye+'<span>'+(L.seen.length?"Nessun titolo trovato.":"Ancora nessun titolo già visto")+'</span></div>';return;}
-    box.innerHTML=grid?list.map((x,i)=>'<div class="vb">'+bkItem(x,i)+stars(x)+'</div>').join(""):list.map((x,i)=>{
+    box.innerHTML=list.map((x,i)=>{
       const u=pu(x);
       return '<div class="sr vrow"><button type="button" class="th" data-i="'+i+'" aria-label="'+esc(x.t||"")+'">'+(u?'<img src="'+esc(u)+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">':esc((x.t||"?").trim().charAt(0).toUpperCase()))+'</button><div class="tx"><button type="button" class="t" data-i="'+i+'">'+esc(x.t||"Senza titolo")+'</button><span class="s">'+(x.y?x.y+" · ":"")+(x.mv?"Film":"Serie")+'</span>'+stars(x)+'</div></div>';
-    }).join("");
-    if(first&&grid)bkReveal(box);
+    }).join("")+(more>0?'<button type="button" class="pfm" data-more="1">Mostra altri ('+Math.min(PG,more)+')</button>':"");
   };
   inp.addEventListener("input",()=>{VQ=inp.value.trim();paint();});
   inp.addEventListener("keydown",e=>{if(e.key==="Enter")inp.blur();});
-  vw.onclick=e=>{const b=e.target.closest&&e.target.closest("button[data-v]");if(!b)return;tap();setSet("seenView",b.dataset.v);paint();};
-  box.onclick=e=>{const b=e.target.closest&&e.target.closest("[data-i]");if(!b)return;tap();openItem(list[+b.dataset.i],()=>seenPage());};
+  box.onclick=e=>{
+    if(e.target.closest&&e.target.closest("[data-more]")){tap();shown+=PG;paint();return;}
+    const b=e.target.closest&&e.target.closest("[data-i]");if(!b)return;tap();openItem(list[+b.dataset.i],()=>seenPage());};
   box.addEventListener("touchmove",()=>{if(document.activeElement===inp)inp.blur();},{passive:true});
-  paint(true);
+  paint();
 }
 function seenGroup(){const on=starsOn();return '<button type="button" class="srow" data-act="seenp">'+IC.eye+'<span class="sl">Già visti</span><span class="sn">'+(L.seen||[]).length+'</span>'+IC.chev+'</button><button type="button" class="srow" data-act="starsw" role="switch" aria-checked="'+on+'">'+IC.star+'<span class="sl">Personalizza con le stelle</span><span class="sw'+(on?' on':'')+'"><i></i></span></button>';}
 sbuild();
@@ -1585,6 +1581,7 @@ Object.assign(I18N,{
 "Già visto":["Watched","Visto","Déjà vu","Schon gesehen","Já visto"],
 "Personalizza con le stelle":["Personalize with stars","Personalizar con las estrellas","Personnaliser avec les étoiles","Mit Sternen personalisieren","Personalizar com as estrelas"],
 "Cerca tra i già visti":["Search watched titles","Buscar entre los vistos","Rechercher parmi les déjà vus","Unter gesehenen suchen","Buscar entre os já vistos"],
+"Mostra altri":["Show more","Mostrar más","Afficher plus","Mehr anzeigen","Mostrar mais"],
 "Griglia":["Grid","Cuadrícula","Grille","Raster","Grade"],
 "Elenco":["List","Lista","Liste","Liste","Lista"],
 "Voto":["Rating","Valoración","Note","Bewertung","Avaliação"],
@@ -1593,6 +1590,7 @@ Object.assign(I18N,{
 "In linea con i titoli a cui hai dato più stelle.":["In line with the titles you gave more stars.","En línea con los títulos a los que diste más estrellas.","Dans la lignée des titres auxquels tu as donné plus d'étoiles.","Passt zu den Titeln, denen du mehr Sterne gegeben hast.","Alinhado com os títulos aos quais você deu mais estrelas."]
 });
 const I18P=[
+  [/^Mostra altri \((\d+)\)$/,["Show more ($1)","Mostrar más ($1)","Afficher plus ($1)","Mehr anzeigen ($1)","Mostrar mais ($1)"]],
   [/^Voto (\d)$/,["Rating $1","Valoración $1","Note $1","Bewertung $1","Avaliação $1"]],
   [/^Cerca \((\d+)\)$/,["Search ($1)","Buscar ($1)","Rechercher ($1)","Suchen ($1)","Buscar ($1)"]],
   [/^Dove guardarlo · (.+)$/,["Where to watch · $1","Dónde verlo · $1","Où regarder · $1","Wo ansehen · $1","Onde assistir · $1"]],
