@@ -309,8 +309,8 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 #lb .bg i{position:absolute;inset:-6%;transform:scale(1.22) translateZ(0);transition:transform 1.2s cubic-bezier(.2,.85,.25,1);will-change:transform;backface-visibility:hidden}
 #lb.show .bg i{transform:scale(1.08) translateZ(0)}
 #lb .bg i canvas{display:block;width:100%;height:100%;object-fit:cover}
-#lb .bg::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 90% at 50% 45%,rgba(5,3,10,.42),rgba(5,3,10,.74))}
-:root[data-theme="light"] #lb .bg::after{background:radial-gradient(120% 90% at 50% 45%,rgba(246,243,251,.5),rgba(246,243,251,.8))}
+#lb .bg::after{content:"";position:absolute;inset:0;pointer-events:none;background:rgba(0,0,0,.7)}
+:root[data-theme="light"] #lb .bg::after{background:rgba(255,255,255,.6)}
 @property --ms{syntax:'<length>';inherits:false;initial-value:0px}
 @property --ml{syntax:'<length>';inherits:false;initial-value:0px}
 @property --ma{syntax:'<number>';inherits:false;initial-value:1}
