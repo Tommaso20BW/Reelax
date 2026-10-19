@@ -80,7 +80,7 @@
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{height:100%;margin:0;background:var(--bg);-webkit-text-size-adjust:100%}
-html,body{overflow:hidden;overscroll-behavior:none;touch-action:pan-x pan-y}
+html,body{overflow:hidden;overscroll-behavior:none;touch-action:pan-y}
 body{margin:0;height:100%;font:16px/1.45 var(--fb);color:var(--fg);background:transparent;
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 button{font:inherit;color:inherit;cursor:pointer;-webkit-appearance:none;appearance:none;touch-action:manipulation;margin:0;border:0;background:none;padding:0}
@@ -117,7 +117,7 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .prog b{display:block;height:100%;width:0;border-radius:inherit;background:var(--grad);box-shadow:0 0 10px rgba(255,61,82,.6);transition:width .65s cubic-bezier(.45,.05,.2,1)}
 
 /* il contenuto sfuma sotto la barra: nessun taglio netto */
-#stage{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:10px var(--gut) 20px;
+#stage{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch;padding:10px var(--gut) 20px;
   -webkit-mask-image:linear-gradient(transparent,#000 14px,#000 calc(100% - 22px),transparent);mask-image:linear-gradient(transparent,#000 14px,#000 calc(100% - 22px),transparent)}
 #stage::-webkit-scrollbar{display:none}
 /* Impostazioni: "Esci" quasi sul bordo, sopra la home-indicator */
@@ -918,11 +918,11 @@ function ui(o){
   if(dk._h!==o.d){
     if(!RM()&&dk.firstChild&&dk.animate){   // i vecchi pulsanti sfumano via mentre arrivano i nuovi (dissolvenza incrociata)
       const c=dk.cloneNode(true);c.removeAttribute("id");c.classList.add("out");c.setAttribute("aria-hidden","true");
-      c.style.cssText="position:absolute;left:"+dk.offsetLeft+"px;top:"+dk.offsetTop+"px;width:"+dk.offsetWidth+"px;";
+      const rc=dk.getBoundingClientRect();c.style.cssText="position:fixed;left:"+rc.left+"px;top:"+rc.top+"px;width:"+rc.width+"px;margin:0;z-index:7;";
       c.querySelectorAll(".rpl").forEach(x=>x.remove());
       dk.parentNode.appendChild(c);
       const rm=()=>c.remove();
-      c.animate([{opacity:1,transform:"none"},{opacity:0,transform:"translate3d(0,-10px,0) scale(.96)"}],{duration:200,easing:"cubic-bezier(.4,0,1,1)",fill:"forwards"}).onfinish=rm;
+      c.animate([{opacity:1},{opacity:0}],{duration:200,easing:"ease-out",fill:"forwards"}).onfinish=rm;
       setTimeout(rm,700);
       dk.classList.add("xf");clearTimeout(dk._xf);dk._xf=setTimeout(()=>dk.classList.remove("xf"),900);   // i nuovi tasti entrano solo dopo che i vecchi sono quasi spariti
     }
@@ -1147,13 +1147,14 @@ async function doSearch(q){
     SLIST=mergeAl(base||[],al||[]).slice(0,22);
     const ok=await bkPreload(SLIST.slice(0,9),380);
     if(my!==SRUN||!$("sres"))return;
-    if(had&&box.animate&&!RM()){   // i vecchi titoli sfumano via prima che arrivino i nuovi
-      await box.animate([{opacity:getComputedStyle(box).opacity},{opacity:0}],{duration:140,easing:"ease-in",fill:"forwards"}).finished.catch(()=>{});
+    if((had||box.querySelector(".smsg"))&&box.animate&&!RM()){   // i vecchi titoli (o il testo di attesa) sfumano via prima che arrivino i nuovi
+      await box.animate([{opacity:getComputedStyle(box).opacity},{opacity:0}],{duration:120,easing:"ease-in",fill:"forwards"}).finished.catch(()=>{});
       if(my!==SRUN||!$("sres"))return;
     }
     box.classList.remove("busy");unfade();
     box.innerHTML=SLIST.length?(trend?'<p class="trl">Di tendenza ora</p>':"")+SLIST.map((x,i)=>bkCard(x,i,ok)).join(""):'<p class="smsg">Nessun risultato.</p>';
     if(SLIST.length)bkReveal(box);
+    {const tl=box.querySelector(".trl");if(tl&&tl.animate&&!RM())tl.animate([{opacity:0,transform:"translate3d(0,8px,0)"},{opacity:1,transform:"none"}],{duration:800,easing:"cubic-bezier(.2,.85,.25,1)",fill:"backwards"});}
     if(al===null){
       al=await alP;
       if(my!==SRUN||!$("sres")||!al.length)return;
@@ -1196,13 +1197,27 @@ async function openSearched(x,back){
   let full=null;
   const imgP=preImg(c.image,1500);   // la locandina si scarica mentre arrivano i dettagli
   try{
-    const d=await tmdbDetails(c);
+    const d=await tmdbDetails(c,true);
     await (d.poster&&d.poster!==c.image?preImg(d.poster,1200):imgP);   // locandina già pronta: niente pop-in
     full={d:d,m:c,s:0};
   }catch(e){}
   stage.style.pointerEvents="";stage.style.cursor="";
   if(my!==RUN||LB)return;
   const r2=full||quick;r2.back=back||null;show(r2,false,true,false);
+  if(full)lateColl(full.d);
+}
+async function lateColl(d){   // saga: arriva a scheda già aperta
+  if(!d||!d.collId||(d.collParts&&d.collParts.length))return;
+  try{
+    const col=await tm("/3/collection/"+d.collId);
+    const parts=((col&&col.parts)||[]).filter(x=>x&&(x.title||x.name)).sort((a,b)=>(a.release_date||"9999").localeCompare(b.release_date||"9999")).map(x=>Object.assign({},x,{media_type:"movie"}));
+    d.collParts=parts;d.sim=parts;
+    if(!(S.cur&&S.cur.d===d))return;
+    const res=stage.querySelector(".res");if(!res||res.querySelector(".sagabtn"))return;
+    const h=sagaTile(d),shr=res.querySelector(".btn.shr");if(!h||!shr)return;
+    shr.insertAdjacentHTML("beforebegin",h);
+    startSaga();
+  }catch(e){}
 }
 
 /* ---------- Cast e persone ---------- */
@@ -2121,7 +2136,7 @@ async function provLogos(){
   if(Object.keys(m).length)PLOGO=m;
   return m;
 }
-async function tmdbDetails(c){
+async function tmdbDetails(c,late){
   const base="/3/"+(c.movie?"movie":"tv")+"/"+c.tid;
   let d={};
   try{d=await tm(base,{append_to_response:c.movie?"watch/providers,credits,videos,release_dates":"watch/providers,credits,videos,content_ratings",include_video_language:LANG().slice(0,2)+",en,null"});}
@@ -2142,7 +2157,7 @@ async function tmdbDetails(c){
   }catch(e){}
   // saga: elenco dei film della collezione, in ordine di uscita (quelli senza data in fondo), compreso il film aperto
   let collParts=[];
-  if(c.movie&&d.belongs_to_collection&&d.belongs_to_collection.id){
+  if(!late&&c.movie&&d.belongs_to_collection&&d.belongs_to_collection.id){
     try{
       const col=await tm("/3/collection/"+d.belongs_to_collection.id);
       collParts=((col&&col.parts)||[]).filter(x=>x&&(x.title||x.name))
@@ -2160,7 +2175,7 @@ async function tmdbDetails(c){
     overview:d.overview||c.summary,it:true,poster:c.image||(d.poster_path?TMDB_IMG+d.poster_path:null),rl:"TMDB",rv:c.rating||d.vote_average||0,vc:d.vote_count||c.vc||0,glist:gl,gt:gl.join(" · "),
     seasonList:c.movie?[]:(d.seasons||[]).filter(x=>x.season_number>0).map(x=>({n:x.season_number,name:x.name||"",ep:x.episode_count||0,date:x.air_date||"",img:x.poster_path||""})),
     coll:c.movie&&d.belongs_to_collection&&d.belongs_to_collection.name?d.belongs_to_collection.name:"",
-    collParts:collParts,
+    collParts:collParts,collId:(c.movie&&d.belongs_to_collection&&d.belongs_to_collection.id)||0,
     sim:collParts,
     gids:(d.genres||[]).map(g=>g.id),tagline:d.tagline||"",orig:(orig&&!sameTitle(orig,c.title))?orig:"",dir:dir.join(", "),cast:cast.slice(0,6).map(x=>x.name).join(", "),castList:cast.slice(0,40).map(x=>({id:x.id,name:x.name,ch:x.character||"",img:x.profile_path||""})),
     nets:c.movie?"":(d.networks||[]).map(x=>x.name).slice(0,2).join(", "),countries:countries.join(", "),lang:d.original_language?lname(d.original_language):"",
@@ -2251,7 +2266,7 @@ function leaveLoad(){   // testo di caricamento fuori + muro che si dissolve (~.
   const p=document.querySelector(".load p"),o=$("ldw");
   if(o){o.style.transitionDuration=".9s";o.classList.remove("on");}
   if(!RM()){   // anche il tasto Annulla e la X escono dolcemente insieme alla scritta (poi restano invisibili finché arrivano i nuovi)
-    [$("dockin"),$("tl")].forEach(el=>{if(el)[...el.children].forEach(c=>{if(c.animate)c.animate([{opacity:1,transform:"none"},{opacity:0,transform:"translate3d(0,-10px,0) scale(.96)"}],{duration:240,easing:"cubic-bezier(.4,0,1,1)",fill:"forwards"}).finished.then(()=>{c.style.opacity="0";},()=>{});});});
+    [$("dockin"),$("tl")].forEach(el=>{if(el)[...el.children].forEach(c=>{if(c.animate)c.animate([{opacity:1},{opacity:0}],{duration:240,easing:"ease-out",fill:"forwards"}).finished.then(()=>{c.style.opacity="0";},()=>{});});});
   }
   if(RM()||!p||!p.animate)return Promise.resolve();
   return p.animate([{opacity:1,transform:"none"},{opacity:0,transform:"translateY(-8px)"}],{duration:300,easing:"ease-in",fill:"forwards"}).finished.catch(()=>{});
