@@ -640,7 +640,7 @@ body.pre #app{opacity:0}
 }
 .castbtn .cs{display:block;font-size:.92rem}
 /* ripple al tocco e cambio tema morbido */
-.rpl{position:absolute;border-radius:50%;background:currentColor;pointer-events:none;opacity:0;transform:scale(0);z-index:0}
+.rpl{position:absolute;border-radius:50%;pointer-events:none;opacity:0;transform:scale(0);z-index:0;background:radial-gradient(circle,currentColor 0,currentColor 30%,transparent 70%)}
 .tfade,.tfade *,.tfade *::before,.tfade *::after{transition:background-color .45s ease,color .45s ease,border-color .45s ease,box-shadow .45s ease,fill .45s ease,stroke .45s ease!important}
 /* ingresso più calmo */
 .poster::before{display:none}
@@ -933,17 +933,17 @@ document.addEventListener("click",e=>{
 });
 const tap=()=>{};   // vibrazione al tocco rimossa
 /* ripple: ogni pulsante, riga o scelta "risponde" al tocco con un'onda che parte dal punto toccato */
-const RPL=".btn,.tb,.opt,.srow,.seg button,.pfr,.pfm,.sr,.castbtn";
+const RPL=".btn,.tb,.seg button";
 document.addEventListener("pointerdown",e=>{
   if(RM()||e.button>0)return;
   const t=e.target.closest&&e.target.closest(RPL);if(!t||t.disabled||!t.animate)return;
-  const r=t.getBoundingClientRect(),sz=Math.max(r.width,r.height)*2.2,x=e.clientX-r.left,y=e.clientY-r.top,cs=getComputedStyle(t);
+  const r=t.getBoundingClientRect(),sz=Math.max(r.width,r.height)*1.5,x=e.clientX-r.left,y=e.clientY-r.top,cs=getComputedStyle(t);
   if(cs.position==="static")t.style.position="relative";
   if(cs.overflow==="visible")t.style.overflow="hidden";
   const d=document.createElement("i");d.className="rpl";d.style.cssText="left:"+(x-sz/2)+"px;top:"+(y-sz/2)+"px;width:"+sz+"px;height:"+sz+"px";
   t.appendChild(d);
-  const a=d.animate([{transform:"scale(0)",opacity:.26},{transform:"scale(1)",opacity:0}],{duration:620,easing:"cubic-bezier(.2,.8,.2,1)"});
-  a.onfinish=()=>d.remove();setTimeout(()=>d.remove(),900);
+  const a=d.animate([{transform:"scale(.15)",opacity:0},{transform:"scale(.55)",opacity:.2,offset:.25},{transform:"scale(1)",opacity:0}],{duration:520,easing:"cubic-bezier(.2,.7,.3,1)"});
+  a.onfinish=()=>d.remove();setTimeout(()=>d.remove(),800);
 },{passive:true});
 function setBd(u){
   if(u)u=String(u).replace(/\/t\/p\/(?:w\d+|h\d+|original)\//,"/t/p/w92/");   // lo sfondo è sfocato: basta un'immagine minuscola   // cambio sfondo morbido: se ce n'è già uno si dissolve prima di mostrare il nuovo (niente scatto)
@@ -2310,6 +2310,34 @@ function startSaga(){
   if(!box)return;
   const els=[].slice.call(box.querySelectorAll(".sgi")),nReal=els.length,tt=box.querySelector(".sgd");
   if(!nReal||!tt)return;
+  if(nReal<=2){   // 1-2 film: niente carosello, le locandine restano affiancate e si alterna quella in evidenza
+    let W=0,cw=0,ch=0,cur=0;const G=18;
+    const layout=()=>{W=box.clientWidth||320;cw=Math.max(78,Math.min(112,Math.round(W*.3)));ch=Math.round(cw*1.5);box.style.setProperty("--fw","24px");box.style.height=(ch+54)+"px";els.forEach(el=>{el.style.width=cw+"px";el.style.height=ch+"px";});};
+    const place=()=>{
+      const total=nReal*cw+(nReal-1)*G;
+      els.forEach((el,i)=>{
+        const act=nReal===1||i===cur,s=act?1:.78,x=(W-total)/2+i*(cw+G)+(cw-cw*s)/2,y=(ch-ch*s)/2;
+        el.style.transform="translate3d("+Math.round(x)+"px,"+Math.round(y)+"px,0) scale("+s+")";
+        el.style.opacity=act?"1":".5";el.style.zIndex=act?"3":"1";
+      });
+    };
+    const text=()=>{const el=els[cur];tt.firstElementChild.textContent=el.dataset.t||"";tt.lastElementChild.textContent=el.dataset.y||"";};
+    layout();
+    els.forEach(el=>{el.style.transition="none";});place();void box.offsetWidth;els.forEach(el=>{el.style.transition="transform 1s cubic-bezier(.45,.05,.2,1),opacity .9s ease";});
+    text();
+    if(RM()||nReal<2)return;
+    if(window.ResizeObserver){new ResizeObserver(()=>{if(!box.isConnected)return;const w=box.clientWidth;if(w&&Math.abs(w-W)>2){layout();place();}}).observe(box);}
+    let vis=true;
+    if(window.IntersectionObserver){new IntersectionObserver(e=>{vis=e[0].isIntersecting;},{threshold:0}).observe(box);}
+    const id=setInterval(()=>{
+      if(!box.isConnected){clearInterval(id);return;}
+      if(!vis||document.hidden)return;
+      cur=(cur+1)%nReal;place();
+      tt.style.transition="opacity .3s ease";tt.style.opacity="0";
+      setTimeout(()=>{if(!box.isConnected)return;text();tt.style.transition="opacity .6s ease";tt.style.opacity="1";},420);
+    },4500);
+    return;
+  }
   // pochi film: duplico le locandine (solo come "ricambi" del giro) così a destra ne entra sempre una subito, senza buchi
   if(nReal>=2){const base=els.slice();for(let k=0;els.length<6;k++){const c=base[k%nReal].cloneNode(true);box.insertBefore(c,tt);els.push(c);}}
   const n=els.length;
