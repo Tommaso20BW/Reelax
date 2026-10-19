@@ -564,6 +564,28 @@ body.pre #app{opacity:0}
 :root[data-theme="light"] .why li b{background:rgba(169,113,10,.14)}
 :root[data-theme="light"] .btn.tg.on{background:rgba(169,113,10,.12)}
 @media (hover:hover){:root[data-theme="light"] .bk:hover .cv{box-shadow:0 12px 28px rgba(60,30,110,.28),0 0 0 1px var(--line2) inset}}
+
+/* ===== GIÀ VISTI: pulsante, stelle e pagina ===== */
+.seenw{flex:none;display:flex;flex-direction:column;gap:10px}
+.seenw .act2{flex:none}
+.stars{display:flex;justify-content:center;gap:6px}
+.star{width:44px;height:44px;display:grid;place-items:center;color:var(--dim);transition:transform .1s,color .15s}
+.star:active{transform:scale(.85)}
+.star svg{width:30px;height:30px;fill:none}
+.star.on{color:var(--gold)}
+.star.on svg{fill:currentColor}
+.stars.sm{justify-content:flex-start;gap:0}
+.stars.sm .star{width:30px;height:30px}
+.stars.sm .star svg{width:20px;height:20px}
+.vb{display:flex;flex-direction:column;gap:2px;min-width:0}
+.vb .stars.sm{justify-content:center}
+.vb .stars.sm .star{width:20%;max-width:26px;height:26px}
+.vb .stars.sm .star svg{width:16px;height:16px}
+.vrow{cursor:default;padding:8px 14px 8px 8px}
+.vrow:active{transform:none}
+.vrow .th{border:0;padding:0}
+.vrow .t{text-align:left}
+.vrow .stars.sm{margin-left:-6px}
 </style>
 </head>
 <body class="pre">
@@ -669,7 +691,9 @@ const IC={
   grid:sv('<rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/>'),
   clock:sv('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
   globe:sv('<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.8 3.9 5.8 3.9 9s-1.3 6.2-3.9 9c-2.6-2.8-3.9-5.8-3.9-9S9.4 5.8 12 3z"/>'),
-  check:sv('<path d="M5 12.5l4.5 4.5L19 7.5"/>')
+  check:sv('<path d="M5 12.5l4.5 4.5L19 7.5"/>'),
+  star:sv('<path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1.1 5.8L12 16.8l-5.3 2.8 1.1-5.8L3.5 9.7l5.9-.8z"/>'),
+  rows:sv('<path d="M4 6h16M4 12h16M4 18h16"/>')
 };
 
 /* ---------- Dati ---------- */
@@ -752,7 +776,7 @@ function routeFromHash(force){
   RUN++;SRUN++;REPL=true;
   const seg=curHash().split("/").filter(Boolean).map(nrm),a=seg[0]||"",b=seg[1]||"";
   try{
-    if(a==="impostazioni"){if(b==="piattaforme")return pfPage();if(b==="regione")return regionPage();if(b==="username")return accountPage("user");if(b==="password")return accountPage("pass");return settingsPage();}
+    if(a==="impostazioni"){if(b==="piattaforme")return pfPage();if(b==="regione")return regionPage();if(b==="gia-visti")return seenPage();if(b==="username")return accountPage("user");if(b==="password")return accountPage("pass");return settingsPage();}
     if(a==="recenti")return recentPage();
     if(a==="cerca"){SQ=b;return searchPage();}
     if(a==="t"||a==="r")return restoreTitle(b,seg[2]==="cast");
@@ -1378,8 +1402,8 @@ const tm=(path,params)=>fjr(TMDB_PROXY.replace(/\/+$/,"")+path+"?"+new URLSearch
   LASTERR=(e&&(e.name==="AbortError"?"timeout":e.message))||"errore";throw e;});
 /* ---------- Liste personali: già visto / da vedere (locale + sincronizzate dal Worker) ---------- */
 const LKEY="reelax_lists",LDIRTY="reelax_lists_dirty";
-let L={platforms:[],recent:[]};
-try{const j=JSON.parse(localStorage.getItem(LKEY)||"null");if(j){L.platforms=Array.isArray(j.platforms)?j.platforms:[];L.recent=Array.isArray(j.recent)?j.recent:[];if(typeof j.pf==="boolean")L.pf=j.pf;if(typeof j.rg==="string")L.rg=j.rg;if(j.st&&typeof j.st==="object"&&!Array.isArray(j.st))L.st=j.st;if(typeof j.ts==="number")L.ts=j.ts;}}catch(e){}
+let L={platforms:[],recent:[],seen:[]};
+try{const j=JSON.parse(localStorage.getItem(LKEY)||"null");if(j){L.platforms=Array.isArray(j.platforms)?j.platforms:[];L.recent=Array.isArray(j.recent)?j.recent:[];L.seen=Array.isArray(j.seen)?j.seen:[];if(typeof j.pf==="boolean")L.pf=j.pf;if(typeof j.rg==="string")L.rg=j.rg;if(j.st&&typeof j.st==="object"&&!Array.isArray(j.st))L.st=j.st;if(typeof j.ts==="number")L.ts=j.ts;}}catch(e){}
 const PX=()=>TMDB_PROXY.replace(/\/+$/,"");
 const AUTHH=()=>({Authorization:"Bearer "+getTok(),"Content-Type":"application/json"});
 let pushT=null;
@@ -1405,9 +1429,11 @@ async function syncPull(){
     const j=await r.json();
     if((+j.ts||0)<(+L.ts||0)){syncPush();return;}   // il server ha una copia piu' vecchia della mia (lettura ritardata del KV): vince la mia
     const keep=RECENT;
-    const pf0=L.pf,rg0=L.rg,st0=L.st;
-    L={platforms:Array.isArray(j.platforms)?j.platforms:[],recent:Array.isArray(j.recent)?j.recent:[]};
+    const pf0=L.pf,rg0=L.rg,st0=L.st,seen0=L.seen;
+    L={platforms:Array.isArray(j.platforms)?j.platforms:[],recent:Array.isArray(j.recent)?j.recent:[],seen:[]};
     if(typeof j.ts==="number")L.ts=j.ts;
+    if(Array.isArray(j.seen))L.seen=j.seen;else if(seen0&&seen0.length){L.seen=seen0;lsave();}   // il server non conosce ancora i "già visti": invio quelli di questo dispositivo
+    sbuild();
     if(typeof j.pf==="boolean")L.pf=j.pf;else if(typeof pf0==="boolean"){L.pf=pf0;lsave();}   // il server non lo conosce ancora: invio il valore di questo dispositivo
     {const rl=(()=>{try{const v=rg0||localStorage.getItem(RGKEY);return REGIONS.indexOf(v)>=0?v:"";}catch(e){return REGIONS.indexOf(rg0)>=0?rg0:"";}})();
       if(REGIONS.indexOf(j.rg)>=0){L.rg=j.rg;if(j.rg!==rl){try{localStorage.setItem(RGKEY,j.rg);}catch(e){}S.seen=[];S.cands=[];setTimeout(i18nRefresh,0);}}   // regione scelta su un altro dispositivo
@@ -1438,6 +1464,69 @@ async function openItem(it,back){
     if(x)return openSearched(x,back);
   }catch(e){}
 }
+/* ---------- Già visti (collegati all'username: stanno nel Worker insieme alle liste) + gusti dalle stelle ---------- */
+const SEEN_MAX=1500;
+let SIX={k:new Set(),t:new Set()};
+const seenTk=(t,y)=>normT(t)?tkey(t,y):"";
+function sbuild(){const k=new Set(),t=new Set();(L.seen||[]).forEach(x=>{if(!x)return;k.add(String(x.k));const q=seenTk(x.t,x.y);if(q)t.add(q);});SIX={k:k,t:t};}
+const isSeen=m=>!!m&&(SIX.k.has(String(m.id))||(!!seenTk(m.title,m.year)&&SIX.t.has(seenTk(m.title,m.year))));
+const seenGet=k=>(L.seen||[]).find(x=>String(x.k)===String(k));
+const starsOn=()=>getSet("stars",true)!==false;   // personalizzazione dalle stelle: attiva di default; spenta, i voti restano ma non contano
+/* generi in comune tra film e serie TV: gli ID delle serie combinati (Azione e avventura...) si spezzano in quelli dei film */
+const GNAME={action:28,adventure:12,comedy:35,drama:18,fantasy:14,horror:27,mystery:9648,romance:10749,"sci-fi":878,"science-fiction":878,"science fiction":878,thriller:53,suspense:53,psychological:53,crime:80,family:10751,war:10752,animation:16};
+const GMAP={10759:[28,12],10765:[878,14],10768:[10752]},GDROP=[10762,10763,10764,10766,10767];
+function canonG(ids){const o=[];(ids||[]).forEach(i=>{(GMAP[i]||[i]).forEach(v=>{if(typeof v==="number"&&GDROP.indexOf(v)<0&&o.indexOf(v)<0)o.push(v);});});return o;}
+function genIds(m){const g=Array.isArray(m.gids)&&m.gids.length?m.gids:(m.genres||[]).map(x=>GNAME[String(x).toLowerCase().replace(/\s*film$/,"").trim()]).filter(Boolean);return canonG(g);}
+function seenItemOf(r){const it=itemOf(r),g=canonG(r.d&&r.d.gids&&r.d.gids.length?r.d.gids:genIds(r.m||{}));return Object.assign(it,{g:g.slice(0,12),r:0,ts:Date.now()});}
+/* profilo dei gusti: ogni genere guadagna punti con 4-5 stelle e li perde con 1-2 (3 = neutro). c = fiducia: cresce fino a 5 titoli votati */
+function tasteProfile(){const P={};let n=0;(L.seen||[]).forEach(x=>{if(!x||!x.r||!Array.isArray(x.g)||!x.g.length)return;const w=(x.r-3)/2;x.g.forEach(id=>{P[id]=(P[id]||0)+w;});n++;});
+  return n?{P:P,c:Math.min(1,n/5),mx:Math.max(1,...Object.keys(P).map(k=>Math.abs(P[k])))}:null;}
+function tasteOf(m,tp){const g=genIds(m);if(!g.length||!tp)return 0;let s=0;g.forEach(id=>{s+=tp.P[id]||0;});return Math.max(-1,Math.min(1,s/g.length/tp.mx));}
+const starsInner=r=>[1,2,3,4,5].map(n=>'<button type="button" class="star'+(n<=r?' on':'')+'" data-star="'+n+'" aria-label="Voto '+n+'">'+IC.star+'</button>').join("");
+const seenInner=k=>{const it=seenGet(k);return '<div class="act2"><button type="button" class="btn tg'+(it?' on':'')+'" data-act="seen" aria-pressed="'+(!!it)+'">'+IC.eye+'Già visto</button></div>'+(it?'<div class="stars" data-sk="'+esc(String(k))+'" role="group" aria-label="Voto">'+starsInner(it.r||0)+'</div>':'');};
+function seenSave(){if(L.seen.length>SEEN_MAX)L.seen.length=SEEN_MAX;sbuild();lsave();}
+function seenToggle(){
+  const r=S.cur;if(!r||!r.m)return;
+  const k=String(r.m.id),i=L.seen.findIndex(x=>String(x.k)===k);
+  if(i>=0)L.seen.splice(i,1);else L.seen.unshift(seenItemOf(r));
+  seenSave();
+  const w=$("seenw");if(w){w.innerHTML=seenInner(k);const st=w.querySelector(".stars");if(st&&!RM())softIn(st,0);}
+}
+function setRating(k,n){
+  const it=seenGet(k);if(!it)return;
+  n=(it.r===n)?0:n;it.r=n;lsave();   // ritoccare la stessa stella toglie il voto
+  document.querySelectorAll(".stars").forEach(e=>{if(e.dataset.sk===String(k))e.innerHTML=starsInner(n);});
+}
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-star]");if(!b)return;const g=b.closest("[data-sk]");if(g)setRating(g.dataset.sk,+b.dataset.star);});
+let VQ="";
+function seenPage(){
+  RUN++;SRUN++;setBd(null);setRoute("/impostazioni/gia-visti");
+  swap('<div class="page"><h1>Già visti</h1><input class="lgi sin" id="vq" type="search" placeholder="Cerca tra i già visti" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="search" aria-label="Cerca tra i già visti"><div class="seg" id="vview"><button type="button" data-v="grid">'+IC.grid+'Griglia</button><button type="button" data-v="list">'+IC.rows+'Elenco</button></div><div id="vres"></div></div>',true);
+  ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>settingsPage()}});
+  const inp=$("vq"),box=$("vres"),vw=$("vview");let list=[];
+  inp.value=VQ;
+  const stars=x=>'<div class="stars sm" data-sk="'+esc(String(x.k))+'" role="group" aria-label="Voto">'+starsInner(x.r||0)+'</div>';
+  const paint=first=>{
+    const grid=getSet("seenView","grid")!=="list",q=normT(VQ);
+    vw.querySelectorAll("button").forEach(b=>b.classList.toggle("on",(b.dataset.v==="grid")===grid));
+    list=(L.seen||[]).filter(x=>!q||normT(x.t).indexOf(q)>=0);
+    box.className="sres"+(grid?" lib":"");
+    if(!list.length){box.innerHTML='<div class="lemp">'+IC.eye+'<span>'+(L.seen.length?"Nessun titolo trovato.":"Ancora nessun titolo già visto")+'</span></div>';return;}
+    box.innerHTML=grid?list.map((x,i)=>'<div class="vb">'+bkItem(x,i)+stars(x)+'</div>').join(""):list.map((x,i)=>{
+      const u=pu(x);
+      return '<div class="sr vrow"><button type="button" class="th" data-i="'+i+'" aria-label="'+esc(x.t||"")+'">'+(u?'<img src="'+esc(u)+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">':esc((x.t||"?").trim().charAt(0).toUpperCase()))+'</button><div class="tx"><button type="button" class="t" data-i="'+i+'">'+esc(x.t||"Senza titolo")+'</button><span class="s">'+(x.y?x.y+" · ":"")+(x.mv?"Film":"Serie")+'</span>'+stars(x)+'</div></div>';
+    }).join("");
+    if(first&&grid)bkReveal(box);
+  };
+  inp.addEventListener("input",()=>{VQ=inp.value.trim();paint();});
+  inp.addEventListener("keydown",e=>{if(e.key==="Enter")inp.blur();});
+  vw.onclick=e=>{const b=e.target.closest&&e.target.closest("button[data-v]");if(!b)return;tap();setSet("seenView",b.dataset.v);paint();};
+  box.onclick=e=>{const b=e.target.closest&&e.target.closest("[data-i]");if(!b)return;tap();openItem(list[+b.dataset.i],()=>seenPage());};
+  box.addEventListener("touchmove",()=>{if(document.activeElement===inp)inp.blur();},{passive:true});
+  paint(true);
+}
+function seenGroup(){const on=starsOn();return '<button type="button" class="srow" data-act="seenp">'+IC.eye+'<span class="sl">Già visti</span><span class="sn">'+(L.seen||[]).length+'</span>'+IC.chev+'</button><button type="button" class="srow" data-act="starsw" role="switch" aria-checked="'+on+'">'+IC.star+'<span class="sl">Personalizza con le stelle</span><span class="sw'+(on?' on':'')+'"><i></i></span></button>';}
+sbuild();
 /* ---------- Trovati di recente (solo su questo dispositivo) ---------- */
 const RKEY="reelax_recent",RCAP=60;
 let RECENT=L.recent;
@@ -1491,7 +1580,20 @@ const UIMAP={IT:"it",ES:"es",MX:"es",AR:"es",FR:"fr",DE:"de",PT:"pt",BR:"pt"};  
 const UIL=()=>UIMAP[REG()]||"en";
 const UIX={en:0,es:1,fr:2,de:3,pt:4};
 const I18N={"Cosa guardi stasera?":["What are you watching tonight?","¿Qué ves esta noche?","Qu'est-ce qu'on regarde ce soir ?","Was schaust du heute Abend?","O que vamos ver esta noite?"],"Film":["Movies","Películas","Films","Filme","Filmes"],"Serie TV":["TV shows","Series de TV","Séries TV","Serien","Séries de TV"],"Anime":["Anime","Anime","Anime","Anime","Anime"],"Cartoni":["Cartoons","Dibujos animados","Dessins animés","Zeichentrick","Desenhos animados"],"Dal grande cinema":["From the big screen","Del gran cine","Du grand cinéma","Vom großen Kino","Do grande cinema"],"Dal piccolo schermo":["From the small screen","De la pequeña pantalla","Du petit écran","Vom kleinen Bildschirm","Da televisão"],"Serie e film giapponesi":["Japanese series and films","Series y películas japonesas","Séries et films japonais","Japanische Serien und Filme","Séries e filmes japoneses"],"Animazione di ogni tipo":["Animation of every kind","Animación de todo tipo","Animation en tout genre","Animation aller Art","Animação de todos os tipos"],"Film o serie?":["Movie or series?","¿Película o serie?","Film ou série ?","Film oder Serie?","Filme ou série?"],"Serie":["Series","Serie","Série","Serie","Série"],"Indifferente":["Either","Indiferente","Peu importe","Egal","Tanto faz"],"Aggiungila alla schermata Home per usarla come un'app.":["Add it to your Home Screen to use it like an app.","Añádela a la pantalla de inicio para usarla como una app.","Ajoutez-la à l'écran d'accueil pour l'utiliser comme une appli.","Füge sie zum Home-Bildschirm hinzu, um sie wie eine App zu nutzen.","Adicione à tela inicial para usar como um app."],"Installa":["Install","Instalar","Installer","Installieren","Instalar"],"Sorprendimi":["Surprise me","Sorpréndeme","Surprends-moi","Überrasch mich","Surpreenda-me"],"Entra":["Sign in","Entrar","Se connecter","Anmelden","Entrar"],"Tocca per chiudere":["Tap to close","Toca para cerrar","Touchez pour fermer","Zum Schließen tippen","Toque para fechar"],"Chiudi":["Close","Cerrar","Fermer","Schließen","Fechar"],"Impostazioni":["Settings","Ajustes","Réglages","Einstellungen","Configurações"],"Cerca un titolo":["Search for a title","Buscar un título","Rechercher un titre","Titel suchen","Buscar um título"],"Nome utente":["Username","Nombre de usuario","Nom d'utilisateur","Benutzername","Nome de usuário"],"Password":["Password","Contraseña","Mot de passe","Passwort","Senha"],"Locandina":["Poster","Cartel","Affiche","Poster","Pôster"],"Indietro":["Back","Atrás","Retour","Zurück","Voltar"],"Ricerca":["Search","Búsqueda","Recherche","Suche","Pesquisa"],"Regione":["Region","Región","Région","Region","Região"],"Filtra per piattaforme":["Filter by platform","Filtrar por plataformas","Filtrer par plateformes","Nach Plattformen filtern","Filtrar por plataformas"],"Cronologia":["History","Historial","Historique","Verlauf","Histórico"],"Trovati di recente":["Recently found","Encontrados recientemente","Trouvés récemment","Kürzlich gefunden","Encontrados recentemente"],"Aspetto":["Appearance","Apariencia","Apparence","Darstellung","Aparência"],"Auto":["Auto","Auto","Auto","Auto","Auto"],"Chiaro":["Light","Claro","Clair","Hell","Claro"],"Scuro":["Dark","Oscuro","Sombre","Dunkel","Escuro"],"Account":["Account","Cuenta","Compte","Konto","Conta"],"Cambia username":["Change username","Cambiar usuario","Changer le nom d'utilisateur","Benutzernamen ändern","Alterar nome de usuário"],"Cambia password":["Change password","Cambiar contraseña","Changer le mot de passe","Passwort ändern","Alterar senha"],"Esci da tutti i dispositivi":["Sign out of all devices","Cerrar sesión en todos los dispositivos","Se déconnecter de tous les appareils","Auf allen Geräten abmelden","Sair de todos os dispositivos"],"Esci":["Sign out","Cerrar sesión","Se déconnecter","Abmelden","Sair"],"Le mie piattaforme":["My platforms","Mis plataformas","Mes plateformes","Meine Plattformen","Minhas plataformas"],"Scegli":["Choose","Elegir","Choisir","Wählen","Escolher"],"Cambia il paese per vedere dove guardare i titoli e l'età consigliata. Anche titoli, trame e locandine passano alla lingua del paese.":["Change the country to see where to watch titles and the recommended age. Titles, plots and posters also switch to the country's language.","Cambia el país para ver dónde ver los títulos y la edad recomendada. Los títulos, sinopsis y carteles también pasan al idioma del país.","Changez de pays pour voir où regarder les titres et l'âge recommandé. Titres, résumés et affiches passent aussi dans la langue du pays.","Wechsle das Land, um zu sehen, wo du Titel schauen kannst und welche Altersfreigabe gilt. Auch Titel, Handlungen und Poster wechseln in die Sprache des Landes.","Mude o país para ver onde assistir e a classificação indicativa. Títulos, sinopses e pôsteres também passam para o idioma do país."],"Scegli i servizi che hai: ti propongo solo titoli disponibili lì, in abbonamento o gratis.":["Choose the services you have: I'll only suggest titles available there, by subscription or free.","Elige los servicios que tienes: solo te propongo títulos disponibles ahí, por suscripción o gratis.","Choisissez vos services : je ne propose que des titres disponibles dessus, par abonnement ou gratuitement.","Wähle deine Dienste: Ich schlage nur Titel vor, die dort im Abo oder kostenlos verfügbar sind.","Escolha os serviços que você tem: só sugiro títulos disponíveis neles, por assinatura ou de graça."],"Non riesco a caricare l'elenco":["I can't load the list","No puedo cargar la lista","Impossible de charger la liste","Die Liste lässt sich nicht laden","Não consigo carregar a lista"],"Mostra altre":["Show more","Mostrar más","Afficher plus","Mehr anzeigen","Mostrar mais"],"Salva":["Save","Guardar","Enregistrer","Speichern","Salvar"],"Nuovo username":["New username","Nuevo usuario","Nouveau nom d'utilisateur","Neuer Benutzername","Novo nome de usuário"],"Password attuale":["Current password","Contraseña actual","Mot de passe actuel","Aktuelles Passwort","Senha atual"],"Nuova password (almeno 8 caratteri)":["New password (at least 8 characters)","Nueva contraseña (mínimo 8 caracteres)","Nouveau mot de passe (8 caractères minimum)","Neues Passwort (mindestens 8 Zeichen)","Nova senha (mínimo de 8 caracteres)"],"Ripeti la nuova password":["Repeat the new password","Repite la nueva contraseña","Répétez le nouveau mot de passe","Neues Passwort wiederholen","Repita a nova senha"],"Nessun risultato.":["No results.","Sin resultados.","Aucun résultat.","Keine Ergebnisse.","Nenhum resultado."],"Film o serie TV":["Movie or TV show","Película o serie de TV","Film ou série TV","Film oder Serie","Filme ou série de TV"],"Ancora vuota":["Still empty","Todavía vacía","Encore vide","Noch leer","Ainda vazia"],"Svuota la cronologia":["Clear history","Borrar el historial","Effacer l'historique","Verlauf löschen","Limpar o histórico"],"Tocca ancora per svuotare":["Tap again to clear","Toca otra vez para borrar","Touchez encore pour effacer","Nochmal tippen zum Löschen","Toque novamente para limpar"],"Tocca ancora per confermare":["Tap again to confirm","Toca otra vez para confirmar","Touchez encore pour confirmer","Nochmal tippen zum Bestätigen","Toque novamente para confirmar"],"Tocca ancora per uscire":["Tap again to sign out","Toca otra vez para salir","Touchez encore pour vous déconnecter","Nochmal tippen zum Abmelden","Toque novamente para sair"],"Che voglia hai?":["What are you in the mood for?","¿Qué te apetece?","Tu as envie de quoi ?","Wonach ist dir?","Está com vontade de quê?"],"Ridere":["Laughs","Reír","Rire","Lachen","Rir"],"Amore e lacrime":["Love and tears","Amor y lágrimas","Amour et larmes","Liebe und Tränen","Amor e lágrimas"],"Paura":["Fear","Miedo","Peur","Angst","Medo"],"Azione":["Action","Acción","Action","Action","Ação"],"Mistero e fantasy":["Mystery and fantasy","Misterio y fantasía","Mystère et fantasy","Mystery und Fantasy","Mistério e fantasia"],"Sport":["Sport","Deporte","Sport","Sport","Esporte"],"Quanto tempo hai?":["How much time do you have?","¿Cuánto tiempo tienes?","Tu as combien de temps ?","Wie viel Zeit hast du?","Quanto tempo você tem?"],"Al volo":["Quick","Rápido","Vite fait","Schnell mal","Rapidinho"],"Meno di 90 minuti":["Under 90 minutes","Menos de 90 minutos","Moins de 90 minutes","Unter 90 Minuten","Menos de 90 minutos"],"Una serata":["An evening","Una velada","Une soirée","Ein Abend","Uma noite"],"Circa due ore":["About two hours","Unas dos horas","Environ deux heures","Etwa zwei Stunden","Cerca de duas horas"],"Senza fretta":["No rush","Sin prisa","Sans se presser","Ohne Eile","Sem pressa"],"Oltre due ore":["Over two hours","Más de dos horas","Plus de deux heures","Über zwei Stunden","Mais de duas horas"],"Non importa":["Doesn't matter","No importa","Peu importe","Egal","Tanto faz"],"Qualsiasi durata":["Any length","Cualquier duración","Peu importe la durée","Beliebige Dauer","Qualquer duração"],"Novità o classici?":["New or classic?","¿Novedades o clásicos?","Nouveautés ou classiques ?","Neu oder Klassiker?","Novidades ou clássicos?"],"Novità":["New releases","Novedades","Nouveautés","Neuheiten","Novidades"],"Usciti dal 2020 a oggi":["Released from 2020 to today","Estrenados desde 2020 hasta hoy","Sortis de 2020 à aujourd'hui","Erschienen von 2020 bis heute","Lançados de 2020 até hoje"],"Recenti":["Recent","Recientes","Récents","Neuere","Recentes"],"Anni 2000 e 2010":["The 2000s and 2010s","Años 2000 y 2010","Années 2000 et 2010","2000er und 2010er","Anos 2000 e 2010"],"Classici":["Classics","Clásicos","Classiques","Klassiker","Clássicos"],"Prima del 2000":["Before 2000","Antes del 2000","Avant 2000","Vor 2000","Antes de 2000"],"Qualsiasi epoca":["Any era","Cualquier época","Toutes les époques","Beliebige Epoche","Qualquer época"],"C'è qualcosa che vuoi evitare?":["Is there anything you want to avoid?","¿Hay algo que quieras evitar?","Y a-t-il quelque chose que tu veux éviter ?","Gibt es etwas, das du vermeiden möchtest?","Há algo que você quer evitar?"],"Puoi sceglierne più di una":["You can pick more than one","Puedes elegir más de una","Tu peux en choisir plusieurs","Du kannst mehrere wählen","Você pode escolher mais de uma"],"Horror e paura":["Horror and fear","Terror y miedo","Horreur et peur","Horror und Angst","Terror e medo"],"Violenza":["Violence","Violencia","Violence","Gewalt","Violência"],"Storie d'amore":["Love stories","Historias de amor","Histoires d'amour","Liebesgeschichten","Histórias de amor"],"Guerra":["War","Guerra","Guerre","Krieg","Guerra"],"Scene spinte":["Explicit scenes","Escenas subidas de tono","Scènes osées","Freizügige Szenen","Cenas picantes"],"Musical":["Musicals","Musicales","Comédies musicales","Musicals","Musicais"],"Roba da bambini":["Kids' stuff","Cosas de niños","Trucs pour enfants","Kinderkram","Coisa de criança"],"Niente da evitare":["Nothing to avoid","Nada que evitar","Rien à éviter","Nichts zu vermeiden","Nada a evitar"],"Quanto è lunga la storia?":["How long is the story?","¿Qué duración tiene la historia?","Quelle est la longueur de l'histoire ?","Wie lang ist die Geschichte?","Qual o tamanho da história?"],"Si chiude in una serata":["Wraps up in one evening","Se acaba en una velada","Se boucle en une soirée","An einem Abend durch","Termina numa noite"],"Episodi da seguire":["Episodes to follow","Episodios para seguir","Épisodes à suivre","Folgen zum Verfolgen","Episódios para acompanhar"],"Film o serie, scegli tu":["Movie or series, you choose","Película o serie, tú eliges","Film ou série, à toi de choisir","Film oder Serie, du entscheidest","Filme ou série, você escolhe"],"Puntate brevi":["Short episodes","Episodios cortos","Épisodes courts","Kurze Folgen","Episódios curtos"],"Puntate normali":["Standard episodes","Episodios normales","Épisodes normaux","Normale Folgen","Episódios normais"],"Puntate lunghe":["Long episodes","Episodios largos","Épisodes longs","Lange Folgen","Episódios longos"],"Breve":["Short","Corta","Courte","Kurz","Curta"],"Fino a 13 episodi":["Up to 13 episodes","Hasta 13 episodios","Jusqu'à 13 épisodes","Bis zu 13 Folgen","Até 13 episódios"],"Una stagione":["One season","Una temporada","Une saison","Eine Staffel","Uma temporada"],"Fino a 26 episodi":["Up to 26 episodes","Hasta 26 episodios","Jusqu'à 26 épisodes","Bis zu 26 Folgen","Até 26 episódios"],"Saga lunga":["Long saga","Saga larga","Longue saga","Lange Saga","Saga longa"],"Oltre 26 episodi":["Over 26 episodes","Más de 26 episodios","Plus de 26 épisodes","Über 26 Folgen","Mais de 26 episódios"],"Qualsiasi lunghezza":["Any length","Cualquier duración","Toute longueur","Beliebige Länge","Qualquer duração"],"Cerco un titolo adatto a te...":["Finding a title for you...","Buscando un título para ti...","Je cherche un titre pour toi...","Ich suche einen passenden Titel...","Procurando um título para você..."],"Controllo i tuoi gusti...":["Checking your tastes...","Revisando tus gustos...","Je vérifie tes goûts...","Ich prüfe deinen Geschmack...","Conferindo seus gostos..."],"Ci siamo quasi...":["Almost there...","Casi listo...","On y est presque...","Fast geschafft...","Quase lá..."],"Annulla":["Cancel","Cancelar","Annuler","Abbrechen","Cancelar"],"Non riesco a trovare un risultato adesso.":["I can't find a result right now.","No puedo encontrar un resultado ahora.","Je ne trouve aucun résultat pour le moment.","Ich finde gerade kein Ergebnis.","Não consigo encontrar um resultado agora."],"Modifica":["Edit","Modificar","Modifier","Ändern","Editar"],"Riprova":["Try again","Reintentar","Réessayer","Erneut versuchen","Tentar de novo"],"Un altro":["Another","Otro","Un autre","Noch einer","Outro"],"Perché fa per te":["Why it's for you","Por qué es para ti","Pourquoi c'est pour toi","Warum er zu dir passt","Por que é a sua cara"],"Torna alla ricerca":["Back to search","Volver a la búsqueda","Retour à la recherche","Zurück zur Suche","Voltar à pesquisa"],"Condividi":["Share","Compartir","Partager","Teilen","Compartilhar"],"Ricomincia":["Start over","Empezar de nuevo","Recommencer","Neu starten","Recomeçar"],"Cerca ancora":["Search again","Buscar otra vez","Chercher encore","Erneut suchen","Buscar de novo"],"Modifica risposte":["Edit answers","Modificar respuestas","Modifier les réponses","Antworten ändern","Editar respostas"],"Leggi tutto":["Read more","Leer más","Lire la suite","Mehr lesen","Ler mais"],"Riduci":["Show less","Mostrar menos","Réduire","Weniger anzeigen","Mostrar menos"],"Ingrandisci la locandina":["Enlarge the poster","Ampliar el cartel","Agrandir l'affiche","Poster vergrößern","Ampliar o pôster"],"Ingrandisci":["Enlarge","Ampliar","Agrandir","Vergrößern","Ampliar"],"Trama non disponibile.":["Plot not available.","Sinopsis no disponible.","Résumé non disponible.","Handlung nicht verfügbar.","Sinopse indisponível."],"Carico le tendenze...":["Loading trends...","Cargando tendencias...","Chargement des tendances...","Lade Trends...","Carregando tendências..."],"Cerco...":["Searching...","Buscando...","Recherche...","Suche...","Buscando..."],"Senza titolo":["Untitled","Sin título","Sans titre","Ohne Titel","Sem título"],"In abbonamento":["Subscription","Suscripción","Abonnement","Abo","Assinatura"],"Gratis con pubblicità":["Free with ads","Gratis con anuncios","Gratuit avec pub","Gratis mit Werbung","Grátis com anúncios"],"Noleggio":["Rent","Alquiler","Location","Leihen","Aluguel"],"Acquisto":["Buy","Compra","Achat","Kaufen","Compra"],"Generi":["Genres","Géneros","Genres","Genres","Gêneros"],"Titolo originale":["Original title","Título original","Titre original","Originaltitel","Título original"],"Ideata da":["Created by","Creada por","Créée par","Entwickelt von","Criada por"],"Rete":["Network","Cadena","Chaîne","Sender","Emissora"],"Paese":["Country","País","Pays","Land","País"],"Lingua originale":["Original language","Idioma original","Langue originale","Originalsprache","Idioma original"],"Prima messa in onda":["First aired","Primera emisión","Première diffusion","Erstausstrahlung","Estreia"],"Uscita":["Release","Estreno","Sortie","Erscheinungsdatum","Lançamento"],"Episodi":["Episodes","Episodios","Épisodes","Folgen","Episódios"],"Stato":["Status","Estado","Statut","Status","Status"],"Classificazione":["Rating","Clasificación","Classification","Altersfreigabe","Classificação"],"Voto pubblico":["Audience score","Nota del público","Note du public","Publikumsbewertung","Nota do público"],"Recitazione":["Acting","Interpretación","Interprétation","Schauspiel","Atuação"],"Regia":["Directing","Dirección","Réalisation","Regie","Direção"],"Sceneggiatura":["Writing","Guion","Scénario","Drehbuch","Roteiro"],"Produzione":["Production","Producción","Production","Produktion","Produção"],"Nato/a il":["Born","Nacimiento","Né(e) le","Geboren","Nascimento"],"Luogo di nascita":["Place of birth","Lugar de nacimiento","Lieu de naissance","Geburtsort","Local de nascimento"],"Morto/a il":["Died","Fallecimiento","Décès","Gestorben","Falecimento"],"In corso":["Ongoing","En emisión","En cours","Laufend","Em andamento"],"Conclusa":["Ended","Finalizada","Terminée","Beendet","Encerrada"],"Cancellata":["Canceled","Cancelada","Annulée","Abgesetzt","Cancelada"],"In produzione":["In production","En producción","En production","In Produktion","Em produção"],"Pianificata":["Planned","Planificada","Prévue","Geplant","Planejada"],"Commedia":["Comedy","Comedia","Comédie","Komödie","Comédia"],"Drammatico":["Drama","Drama","Drame","Drama","Drama"],"Sentimentale":["Romance","Romance","Romance","Romantik","Romance"],"Avventura":["Adventure","Aventura","Aventure","Abenteuer","Aventura"],"Fantascienza":["Sci-Fi","Ciencia ficción","Science-fiction","Science-Fiction","Ficção científica"],"Mistero":["Mystery","Misterio","Mystère","Mystery","Mistério"],"Vita quotidiana":["Slice of life","Vida cotidiana","Tranche de vie","Alltagsleben","Cotidiano"],"Psicologico":["Psychological","Psicológico","Psychologique","Psychologisch","Psicológico"],"Famiglia":["Family","Familia","Famille","Familie","Família"],"Crimine":["Crime","Crimen","Crime","Krimi","Crime"],"Horror":["Horror","Terror","Horreur","Horror","Terror"],"Nome utente o password non corretti.":["Incorrect username or password.","Usuario o contraseña incorrectos.","Nom d'utilisateur ou mot de passe incorrect.","Benutzername oder Passwort falsch.","Nome de usuário ou senha incorretos."],"Impossibile contattare il server":["Unable to reach the server","No se puede contactar con el servidor","Impossible de joindre le serveur","Server nicht erreichbar","Não foi possível contatar o servidor"],"Scrivi il nuovo username.":["Enter the new username.","Escribe el nuevo usuario.","Saisissez le nouveau nom d'utilisateur.","Gib den neuen Benutzernamen ein.","Digite o novo nome de usuário."],"La nuova password deve avere almeno 8 caratteri.":["The new password must be at least 8 characters.","La nueva contraseña debe tener al menos 8 caracteres.","Le nouveau mot de passe doit comporter au moins 8 caractères.","Das neue Passwort muss mindestens 8 Zeichen haben.","A nova senha deve ter pelo menos 8 caracteres."],"Le due password non coincidono.":["The two passwords don't match.","Las dos contraseñas no coinciden.","Les deux mots de passe ne correspondent pas.","Die beiden Passwörter stimmen nicht überein.","As duas senhas não coincidem."],"Inserisci la password attuale.":["Enter your current password.","Introduce la contraseña actual.","Saisissez le mot de passe actuel.","Gib dein aktuelles Passwort ein.","Digite a senha atual."],"Username cambiato.":["Username changed.","Usuario cambiado.","Nom d'utilisateur modifié.","Benutzername geändert.","Nome de usuário alterado."],"Fatto: gli altri dovranno rifare l'accesso":["Done: other devices will need to sign in again","Hecho: los demás tendrán que volver a iniciar sesión","C'est fait : les autres devront se reconnecter","Erledigt: Die anderen müssen sich neu anmelden","Pronto: os outros precisarão entrar de novo"],"Sorpresa totale: categoria e voglia sono state scelte a caso.":["Total surprise: category and mood were picked at random.","Sorpresa total: categoría y apetencia elegidas al azar.","Surprise totale : catégorie et envie tirées au hasard.","Totale Überraschung: Kategorie und Stimmung wurden zufällig gewählt.","Surpresa total: categoria e vontade escolhidas ao acaso."],"Scelta a sorpresa: un titolo meno battuto del solito.":["Surprise pick: a less obvious title than usual.","Elección sorpresa: un título menos trillado de lo habitual.","Choix surprise : un titre moins vu que d'habitude.","Überraschungswahl: ein weniger ausgetretener Titel als sonst.","Escolha surpresa: um título menos batido que o normal."]};
+Object.assign(I18N,{
+"Già visti":["Watched","Vistos","Déjà vus","Schon gesehen","Já vistos"],
+"Già visto":["Watched","Visto","Déjà vu","Schon gesehen","Já visto"],
+"Personalizza con le stelle":["Personalize with stars","Personalizar con las estrellas","Personnaliser avec les étoiles","Mit Sternen personalisieren","Personalizar com as estrelas"],
+"Cerca tra i già visti":["Search watched titles","Buscar entre los vistos","Rechercher parmi les déjà vus","Unter gesehenen suchen","Buscar entre os já vistos"],
+"Griglia":["Grid","Cuadrícula","Grille","Raster","Grade"],
+"Elenco":["List","Lista","Liste","Liste","Lista"],
+"Voto":["Rating","Valoración","Note","Bewertung","Avaliação"],
+"Nessun titolo trovato.":["No titles found.","No se ha encontrado ningún título.","Aucun titre trouvé.","Kein Titel gefunden.","Nenhum título encontrado."],
+"Ancora nessun titolo già visto":["No watched titles yet","Aún no hay títulos vistos","Aucun titre déjà vu pour l'instant","Noch keine gesehenen Titel","Ainda nenhum título visto"],
+"In linea con i titoli a cui hai dato più stelle.":["In line with the titles you gave more stars.","En línea con los títulos a los que diste más estrellas.","Dans la lignée des titres auxquels tu as donné plus d'étoiles.","Passt zu den Titeln, denen du mehr Sterne gegeben hast.","Alinhado com os títulos aos quais você deu mais estrelas."]
+});
 const I18P=[
+  [/^Voto (\d)$/,["Rating $1","Valoración $1","Note $1","Bewertung $1","Avaliação $1"]],
   [/^Cerca \((\d+)\)$/,["Search ($1)","Buscar ($1)","Rechercher ($1)","Suchen ($1)","Buscar ($1)"]],
   [/^Dove guardarlo · (.+)$/,["Where to watch · $1","Dónde verlo · $1","Où regarder · $1","Wo ansehen · $1","Onde assistir · $1"]],
   [/^Al momento non risulta disponibile in questa regione \((.+)\) su piattaforme di streaming, noleggio o acquisto\.$/,["Not currently available in this region ($1) on streaming, rental or purchase platforms.","Ahora mismo no está disponible en esta región ($1) en plataformas de streaming, alquiler o compra.","Pour le moment indisponible dans cette région ($1) en streaming, location ou achat.","Derzeit in dieser Region ($1) nicht über Streaming, Leihe oder Kauf verfügbar.","No momento não está disponível nesta região ($1) em streaming, aluguel ou compra."]]
@@ -1557,12 +1659,14 @@ function settingsPage(){
   const sec=(t,h)=>'<div class="sblock"><div class="sh">'+t+'</div>'+h+'</div>';
   swap('<div class="page"><h1>Impostazioni</h1>'+
     sec('Ricerca','<div class="sgrp" id="sg_pf">'+pfGroup()+'</div>')+
+    sec('Già visti','<div class="sgrp" id="sg_sn">'+seenGroup()+'</div>')+
     sec('Cronologia','<div class="sgrp"><button type="button" class="srow" data-act="recent">'+IC.clock+'<span class="sl">Trovati di recente</span><span class="sn">'+RECENT.length+'</span>'+IC.chev+'</button></div>')+
     sec('Aspetto','<div class="seg" id="thseg">'+[["auto","Auto"],["light","Chiaro"],["dark","Scuro"]].map(x=>'<button type="button" data-t="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>')+
     sec('Account','<div class="sgrp"><button type="button" class="srow" data-act="acuser">'+IC.user+'<span class="sl">Cambia username</span>'+IC.chev+'</button><button type="button" class="srow" data-act="acpass">'+IC.lock+'<span class="sl">Cambia password</span>'+IC.chev+'</button><button type="button" class="srow" data-act="acall">'+IC.devs+'<span class="sl">Esci da tutti i dispositivi</span></button></div>')+
     '<button type="button" class="srow out" data-act="logout">'+IC.out+'<span class="sl">Esci</span></button></div>',true);
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>home(),recent:()=>recentPage(),logout:confirmLogout,acall:revokeAll,
     pfsw:()=>{const v=!pfOn();pfSet(v);const box=$("sg_pf");if(box)box.innerHTML=pfGroup();if(v&&!pfSel().length)pfPage();},
+    seenp:()=>seenPage(),starsw:()=>{setSet("stars",!starsOn());S.seen=[];S.cands=[];const box=$("sg_sn");if(box)box.innerHTML=seenGroup();},
     pfpick:()=>pfPage(),reg:()=>regionPage(),acuser:()=>accountPage("user"),acpass:()=>accountPage("pass")}});
   const th=$("thseg"),pr=window.themePref();
   th.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.t===pr));
@@ -1804,7 +1908,7 @@ async function tmDiscover(kind,a,anim,ja){
   if(AV.g.length)base=base.filter(m=>!(m.genre_ids||[]).some(g=>AV.g.indexOf(g)>=0));   // cose da evitare: mai allentate
   return base.map(m=>({
     id:"tm"+kind+m.id,tid:m.id,src:"tmdb",movie:film,anim:!!anim,title:film?m.title:m.name,
-    kwm:!!kw&&kwUsed,year:((film?m.release_date:m.first_air_date)||"").slice(0,4),genres:gen(m.genre_ids),
+    kwm:!!kw&&kwUsed,year:((film?m.release_date:m.first_air_date)||"").slice(0,4),genres:gen(m.genre_ids),gids:m.genre_ids||[],
     rating:m.vote_average||0,vc:m.vote_count||0,image:m.poster_path?TMDB_IMG+m.poster_path:null,summary:m.overview}));
 }
 const dnC={};const dnf=t=>{try{const l=UIL(),k=t+l;return dnC[k]||(dnC[k]=new Intl.DisplayNames([l],{type:t}));}catch(e){return null;}};
@@ -1851,7 +1955,7 @@ async function tmdbDetails(c){
   const countries=uniq((c.movie?(d.production_countries||[]).map(x=>x.iso_3166_1):(d.origin_country||[])).map(cname)).slice(0,3);
   return{movie:c.movie,isTv:!c.movie,tid:c.tid,title:c.title,year:c.year||((c.movie?d.release_date:d.first_air_date)||"").slice(0,4),runtime:c.runtime||rt,seasons:c.movie?null:(d.number_of_seasons||null),episodes:c.movie?null:(d.number_of_episodes||null),
     overview:d.overview||c.summary,it:true,poster:c.image||(d.poster_path?TMDB_IMG+d.poster_path:null),rl:"TMDB",rv:c.rating||d.vote_average||0,vc:d.vote_count||c.vc||0,glist:gl,gt:gl.join(" · "),
-    tagline:d.tagline||"",orig:(orig&&!sameTitle(orig,c.title))?orig:"",dir:dir.join(", "),cast:cast.slice(0,6).map(x=>x.name).join(", "),castList:cast.slice(0,40).map(x=>({id:x.id,name:x.name,ch:x.character||"",img:x.profile_path||""})),
+    gids:(d.genres||[]).map(g=>g.id),tagline:d.tagline||"",orig:(orig&&!sameTitle(orig,c.title))?orig:"",dir:dir.join(", "),cast:cast.slice(0,6).map(x=>x.name).join(", "),castList:cast.slice(0,40).map(x=>({id:x.id,name:x.name,ch:x.character||"",img:x.profile_path||""})),
     nets:c.movie?"":(d.networks||[]).map(x=>x.name).slice(0,2).join(", "),countries:countries.join(", "),lang:d.original_language?lname(d.original_language):"",
     date:fdate(c.movie?d.release_date:d.first_air_date),status:c.movie?"":(STAT[d.status]||d.status||""),cert:cert,
     ytKey:tv?tv.key:"",prov:prov,provKnown:!!wpAll,
@@ -1901,10 +2005,16 @@ const SRC={
   anime:a=>viaTmdb(()=>animeNew(a),()=>animeDiscover(a),a),
   cartoni:a=>viaTmdb(()=>cartoniNew(a),()=>cartoniOld(a),a)
 };
-async function rank(a){let list=await SRC[S.cat](a);if(!list||!list.length)throw new Error("EMPTY");
+async function rank(a){let list=null;
+  for(let t=0;t<3;t++){   // i "già visti" non si riproporre mai: se i titoli pescati erano tutti già visti, pesco altre pagine
+    list=await SRC[S.cat](a);if(!list||!list.length)throw new Error("EMPTY");
+    list=list.filter(m=>!isSeen(m));if(list.length)break;
+  }
+  if(!list.length)throw new Error("EMPTY");
   if(a.era&&a.era!=="any"){const f=list.filter(m=>eraOk(m.year,a));if(f.length>=3)list=f;}
   if((a.mood==="love"||a.mood==="scare"||a.mood==="sport")&&(S.cat==="anime"||S.cat==="cartoni")){const rx=a.mood==="love"?/romance|drama/i:a.mood==="sport"?/sport/i:/horror/i;const rf=list.filter(m=>m.kwm||(m.genres||[]).some(x=>rx.test(x)));if(rf.length>=2)list=rf;}
-  const out=list.map(m=>({m,s:score(S.cat,m,a)})).sort((x,y)=>y.s-x.s);
+  const TP=starsOn()?tasteProfile():null;   // gusti dedotti dalle stelle (solo se la personalizzazione è attiva)
+  const out=list.map(m=>({m,s:score(S.cat,m,a)+(TP?30*TP.c*tasteOf(m,TP):0)})).sort((x,y)=>y.s-x.s);
   if(S.cat!=="cartoni")return out;
   const f=out.filter(x=>isFilmItem(x.m)),t=out.filter(x=>!isFilmItem(x.m));
   if(!f.length||!t.length)return out;
@@ -1990,6 +2100,7 @@ function why(r,sur){
     else o.push("Non è il genere più ovvio per chi vuole "+mt+(gl?" ("+gl+")":"")+": lo propongo per gli altri criteri.");
   }
   const av=avoidNow().map(x=>(AVOID.find(y=>y[0]===x)||[0,0,x])[2].toLowerCase());
+  {const tp=starsOn()?tasteProfile():null;if(tp&&tp.c>=.4&&tasteOf(m,tp)>.35)o.splice(1,0,"In linea con i titoli a cui hai dato più stelle.");}
   if(av.length)o.push("Senza: "+av.join(", ")+".");
   if(a.era&&a.era!=="any"&&d.year&&eraOk(d.year,a))o.push("Del "+d.year+", nella fascia di anni che volevi.");
   const tk=timeOk(d,a);
@@ -2413,6 +2524,7 @@ function show(r,sur,man,quiet){
   const long=(d.overview||'').length>220;
   const h='<div class="res">'+
     '<div class="hero">'+poster+'<h2>'+esc(d.title)+'</h2>'+(d.tagline?'<p class="tag">'+esc(d.tagline)+'</p>':'')+'<div class="chips">'+chips.join('')+'</div></div>'+
+    '<div class="seenw" id="seenw">'+seenInner(String(r.m.id))+'</div>'+
     (d.ytKey?'<a class="btn" href="https://www.youtube.com/watch?v='+esc(d.ytKey)+'" data-yt="'+esc(d.ytKey)+'" target="_blank" rel="noopener" style="flex:none;color:var(--fg)"><span style="color:var(--red);display:grid">'+IC.play+'</span>Guarda il trailer</a>':'')+
     (rnd?'':'<section class="card compat"><div class="ringw"><svg viewBox="0 0 64 64"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6c653"/><stop offset="1" stop-color="#ff3d52"/></linearGradient></defs><circle class="bgc" cx="32" cy="32" r="27"/><circle class="fgc" cx="32" cy="32" r="27"/></svg><div class="pn"><span><span id="pn">0</span>%</span></div></div><div><b>Compatibilità</b><span class="sub">Risposte date e voto del pubblico</span></div></section>')+
     (man?'':'<section class="card"><h3>Perché fa per te</h3><ul class="why">'+why(r,sur).map(x=>'<li><b>✓</b><span>'+esc(x)+'</span></li>').join('')+'</ul></section>')+
@@ -2458,7 +2570,7 @@ function show(r,sur,man,quiet){
       l:tbtn('back','back','Torna alla ricerca'),
       r:tbtn('share','share','Condividi'),
       d:bb('re',IC.restart+'Ricomincia','v')+bb('srch',IC.search+'Cerca ancora','v primary'),
-      a:{back:()=>{if(r.back)r.back();else searchPage();},share,re:()=>{RUN++;restart();},srch:()=>searchPage(),cast:()=>castPage(d)}
+      a:{back:()=>{if(r.back)r.back();else searchPage();},share,seen:seenToggle,re:()=>{RUN++;restart();},srch:()=>searchPage(),cast:()=>castPage(d)}
     });
     return;
   }
@@ -2466,7 +2578,7 @@ function show(r,sur,man,quiet){
     l:tbtn('back','back','Modifica risposte'),
     r:tbtn('share','share','Condividi'),
     d:bb('re',IC.restart+'Ricomincia','v')+bb('sur',IC.dice+'Sorprendimi','v')+bb('oth',IC.next+'Un altro','v primary'),
-    a:{back:home,share,re:restart,sur:()=>run(true,false),oth:()=>run(false,false),cast:()=>castPage(d)}
+    a:{back:home,share,seen:seenToggle,re:restart,sur:()=>run(true,false),oth:()=>run(false,false),cast:()=>castPage(d)}
   });
 }
 
