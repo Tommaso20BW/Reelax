@@ -305,9 +305,9 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .sgm{display:block;position:relative;height:200px;margin-top:6px;overflow:hidden;--fw:40px;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 var(--fw),#000 calc(100% - var(--fw)),transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 var(--fw),#000 calc(100% - var(--fw)),transparent 100%)}
 .sgi{position:absolute;left:0;top:0;transform-origin:0 0;transition:transform 1.7s cubic-bezier(.45,.05,.2,1),opacity 1.4s ease;will-change:transform,opacity}
 .sgi img{display:block;width:100%;height:100%;object-fit:cover;border-radius:10px;background:var(--s3);box-shadow:0 3px 10px rgba(0,0,0,.35)}
-.sgd{position:absolute;top:50%;transform:translate3d(0,-50%,0);z-index:2;pointer-events:none}
-.sgd b{display:block;font-weight:800;font-size:.9rem;line-height:1.2;letter-spacing:-.01em;overflow-wrap:anywhere}
-.sgd i{display:block;font-style:normal;font-size:.76rem;color:var(--mut);margin-top:4px}
+.sgd{position:absolute;left:0;right:0;bottom:0;text-align:center;padding:0 6px;z-index:2;pointer-events:none}
+.sgd b{display:block;font-weight:800;font-size:.9rem;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em;overflow-wrap:anywhere}
+.sgd i{display:block;font-style:normal;font-size:.76rem;color:var(--mut);margin-top:3px}
 @media (min-width:900px){.sgd b{font-size:1.05rem}.sgd i{font-size:.84rem}}
 .castbtn .cgo{display:block;margin-top:12px;font-size:.84rem;font-weight:700;color:var(--gold)}
 .q .res>*,.q .chip,.q .why li,.q .pv{animation:none!important}
@@ -2293,33 +2293,28 @@ function startSaga(){
   if(!box)return;
   const els=[].slice.call(box.querySelectorAll(".sgi")),n=els.length,tt=box.querySelector(".sgd");
   if(!n||!tt)return;
-  let cur=Math.max(0,Math.min(n-1,+box.dataset.cur||0)),vis=true,W=0,cw=0,ch=0,sw=0,H=0,cL=0,pL=0,nL=0,tok=0;
+  let cur=Math.max(0,Math.min(n-1,+box.dataset.cur||0)),vis=true,W=0,cw=0,ch=0,H=0,tok=0,wide=false;
+  const S1=.7,S2=.5,G=14;
   const layout=()=>{
-    W=box.clientWidth||320;
-    cw=Math.max(78,Math.min(124,Math.round(W*.27)));ch=Math.round(cw*1.5);sw=cw*.52;H=ch+22;
-    pL=-sw*.3;cL=Math.round(pL+sw+10);nL=W-sw*.7;
-    let dL=cL+cw+14,dW=nL-8-dL;
-    if(W>520){   // schermo largo: il gruppo non si allunga, resta compatto e centrato (il successivo si vede intero)
-      dW=Math.min(220,dW);nL=dL+dW+16;
-      const ox=Math.max(0,Math.round((W-(nL+sw))/2));
-      pL+=ox;cL+=ox;nL+=ox;dL+=ox;
-    }
-    // sfumatura sui bordi: sui telefoni copre la parte visibile delle locandine laterali (la centrale e' piu' dentro, non viene toccata)
-    const fw=W>520?Math.max(24,Math.min(48,Math.round(pL+sw*.3+10))):Math.round(sw*.7);
-    box.style.setProperty("--fw",fw+"px");
+    W=box.clientWidth||320;wide=W>520;
+    cw=wide?124:Math.max(78,Math.min(112,Math.round(W*.3)));ch=Math.round(cw*1.5);H=ch+54;
+    box.style.setProperty("--fw",(wide?72:Math.round(cw*.62))+"px");
     box.style.height=H+"px";
-    tt.style.left=dL+"px";tt.style.width=Math.max(60,dW)+"px";
     els.forEach(el=>{el.style.width=cw+"px";el.style.height=ch+"px";});
   };
+  // la locandina centrale sta al centro; le altre scorrono su un'unica linea, via via più piccole e sfumate. Il titolo sta sotto: niente buchi durante il passaggio.
   const pos=dd=>{
-    if(dd===0)return{x:cL,s:1,o:1,z:5};
-    if(dd===-1)return{x:pL,s:.52,o:.7,z:3};
-    if(dd===1)return{x:nL,s:.52,o:.7,z:3};
-    return dd<0?{x:-cw*.6,s:.52,o:0,z:1}:{x:W+10,s:.52,o:0,z:1};
+    const a=Math.min(Math.abs(dd),3),sg=dd<0?-1:1;
+    if(!a)return{x:(W-cw)/2,s:1,o:1,z:5};
+    const sc=a===1?S1:S2;
+    let o=cw/2+G+S1*cw/2;
+    if(a>=2)o+=S1*cw/2+G+S2*cw/2;
+    if(a>=3)o+=S2*cw/2+G+S2*cw/2;
+    return{x:W/2+sg*o-sc*cw/2,s:sc,o:a===1?.78:a===2?(wide?.4:0):0,z:a===1?3:1};
   };
   const apply=(el,dd)=>{
     const q=pos(dd);
-    el.style.transform="translate3d("+Math.round(q.x)+"px,"+Math.round((H-ch*q.s)/2)+"px,0) scale("+q.s+")";
+    el.style.transform="translate3d("+Math.round(q.x)+"px,"+Math.round((ch-ch*q.s)/2)+"px,0) scale("+q.s+")";
     el.style.opacity=String(q.o);el.style.zIndex=String(q.z);el._d=dd;
   };
   const dOf=i=>{let dd=((i-cur)%n+n)%n;if(dd>n/2)dd-=n;return dd;};
@@ -2335,22 +2330,22 @@ function startSaga(){
     els.forEach((el,i)=>{
       const dd=dOf(i),od=el._d;
       if(od<0&&dd>0){   // esce a sinistra e poi rientra da destra
-        el.style.transition="";apply(el,-2);
-        setTimeout(()=>{if(my!==tok||!box.isConnected)return;el.style.transition="none";apply(el,2);void el.offsetWidth;el.style.transition="";apply(el,dd);},1800);
+        el.style.transition="";apply(el,-3);
+        setTimeout(()=>{if(my!==tok||!box.isConnected)return;el.style.transition="none";apply(el,3);void el.offsetWidth;el.style.transition="";apply(el,dd);},1800);
       }else{
-        el.style.transition=(Math.abs(od)>=2&&Math.abs(dd)>=2)?"none":"";
+        el.style.transition=(Math.min(Math.abs(od),3)>=3&&Math.min(Math.abs(dd),3)>=3)?"none":"";
         apply(el,dd);
       }
     });
-    // titolo: solo dissolvenza, senza spostamenti; il nuovo compare quando la locandina e' quasi al centro
-    tt.style.transition="opacity .5s ease";
+    // titolo sotto la locandina: sfuma via subito e il nuovo arriva mentre la nuova locandina si assesta al centro
+    tt.style.transition="opacity .35s ease";
     tt.style.opacity="0";
     setTimeout(()=>{
       if(!box.isConnected)return;
       text();
-      tt.style.transition="opacity 1s ease";
+      tt.style.transition="opacity .8s ease";
       tt.style.opacity="1";
-    },1000);
+    },950);
   };
   const id=setInterval(()=>{
     if(!box.isConnected){clearInterval(id);return;}
