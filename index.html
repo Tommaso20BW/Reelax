@@ -591,16 +591,14 @@ body.pre #app{opacity:0}
 .chip.tr svg{width:14px;height:14px}
 .chip.tr:active{filter:brightness(1.25)}
 
-/* ===== RITOCCO: riga chip e pulsante "Già visto" più curati ===== */
-.chips.one{gap:8px;align-items:center}
-.chip{display:inline-flex;align-items:center;justify-content:center;height:34px;padding:0 14px;line-height:1}
-.chip.tr{padding:0 14px 0 11px;gap:7px}
-.chip.tr.ic{padding:0 11px}
-.seenw{align-items:center;gap:8px;margin-top:-2px}
-.seenw .act2{width:auto;justify-content:center}
-.seenw .act2 .btn{flex:none;width:auto;height:42px;padding:0 20px;gap:8px;border-radius:999px;font-size:.88rem;font-weight:600;background:var(--soft2);border-color:var(--line)}
-.seenw .act2 .btn svg{margin:0;width:18px;height:18px}
-.seenw .act2 .btn.on{background:rgba(246,198,83,.14);border-color:var(--gold)}
+/* ===== RITOCCO: chip separati, voto sulla locandina, trailer come pulsante ===== */
+.chips.one{flex-wrap:wrap;overflow:visible;gap:8px;justify-content:center}
+.chips.one .chip{flex:none;white-space:nowrap}
+.chip.cert{min-width:30px;text-align:center;font-weight:700}
+.poster .rate{position:absolute;top:10px;right:10px;z-index:3;padding:4px 10px;border-radius:999px;font:700 .8rem var(--fb);color:var(--gold);background:rgba(var(--shade),.62);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid rgba(246,198,83,.45);pointer-events:none}
+:root[data-theme="light"] .poster .rate{background:rgba(255,255,255,.78)}
+.btn.trl{flex:none;width:100%;height:50px;border-radius:16px;font-size:.92rem;gap:9px}
+.btn.trl svg{width:16px;height:16px;color:var(--red)}
 </style>
 </head>
 <body class="pre">
@@ -2547,18 +2545,16 @@ function show(r,sur,man,quiet){
   const poster=d.poster
     ?'<div class="poster" role="button" tabindex="0" aria-label="Ingrandisci la locandina"><img'+(quiet?' class="ld"':'')+' src="'+esc(d.poster)+'" alt="Locandina di '+esc(d.title)+'" referrerpolicy="no-referrer"></div>'
     :fbPoster(d.title,d.year);
+  const posterR=d.rv?poster.replace(/<\/div>$/,'<span class="rate">★ '+(+d.rv).toFixed(1)+'</span></div>'):poster;
   /* una sola riga: anno, stagioni (o Film/Serie per anime e cartoni), durata e classificazione stanno in un unico chip;
      se non c'è spazio, fitChips() toglie prima la classificazione, poi la durata, e riduce il trailer alla sola icona */
   const kindTxt=(man?r.m.src==="anime":(S.cat==='anime'||S.cat==='cartoni'))?(d.movie?'Film':'Serie'):'';
   const parts=[d.year?String(d.year):'',d.seasons?d.seasons+(d.seasons>1?' stagioni':' stagione'):kindTxt,d.runtime?d.runtime+' min'+(d.movie===false?'/ep.':''):'',d.cert?String(d.cert):''].filter(Boolean);
-  const chips=[];
-  if(parts.length)chips.push('<span class="chip meta">'+esc(parts.join(' · '))+'</span>');
-  if(d.rv)chips.push('<span class="chip r">★ '+(+d.rv).toFixed(1)+'</span>');
-  if(d.ytKey)chips.push('<a class="chip tr" href="https://www.youtube.com/watch?v='+esc(d.ytKey)+'" data-yt="'+esc(d.ytKey)+'" target="_blank" rel="noopener" aria-label="Trailer"><span>'+IC.play+'</span><b class="tt">Trailer</b></a>');
+  const chips=parts.map((x,i)=>'<span class="chip'+(d.cert&&i===parts.length-1&&x===String(d.cert)?' cert':'')+'">'+esc(x)+'</span>');
   const long=(d.overview||'').length>220;
   const h='<div class="res">'+
-    '<div class="hero">'+poster+'<h2>'+esc(d.title)+'</h2>'+(d.tagline?'<p class="tag">'+esc(d.tagline)+'</p>':'')+'<div class="chips one" data-parts="'+esc(JSON.stringify(parts))+'">'+chips.join('')+'</div></div>'+
-    '<div class="seenw" id="seenw">'+seenInner(String(r.m.id))+'</div>'+
+    '<div class="hero">'+posterR+'<h2>'+esc(d.title)+'</h2>'+(d.tagline?'<p class="tag">'+esc(d.tagline)+'</p>':'')+'<div class="chips one" data-parts="'+esc(JSON.stringify(parts))+'">'+chips.join('')+'</div></div>'+
+    '<div class="seenw" id="seenw">'+seenInner(String(r.m.id))+'</div>'+(d.ytKey?'<a class="btn trl" href="https://www.youtube.com/watch?v='+esc(d.ytKey)+'" data-yt="'+esc(d.ytKey)+'" target="_blank" rel="noopener">'+IC.play+'Trailer</a>':'')+
     (rnd?'':'<section class="card compat"><div class="ringw"><svg viewBox="0 0 64 64"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6c653"/><stop offset="1" stop-color="#ff3d52"/></linearGradient></defs><circle class="bgc" cx="32" cy="32" r="27"/><circle class="fgc" cx="32" cy="32" r="27"/></svg><div class="pn"><span><span id="pn">0</span>%</span></div></div><div><b>Compatibilità</b><span class="sub">Risposte date e voto del pubblico</span></div></section>')+
     (man?'':'<section class="card"><h3>Perché fa per te</h3><ul class="why">'+why(r,sur).map(x=>'<li><b>✓</b><span>'+esc(x)+'</span></li>').join('')+'</ul></section>')+
     '<section class="card'+(long?' tap':'')+'" id="plotcard"'+(long?' role="button" tabindex="0" aria-expanded="false"':'')+'><h3>Trama</h3><p class="'+(long?'clamp':'')+'" id="plot">'+esc(d.overview||'Trama non disponibile.')+'</p>'+(long?'<button type="button" class="lnk-btn" id="pmore">Leggi tutto</button>':'')+'</section>'+
