@@ -865,7 +865,16 @@ function gkey(cat,a){cat=cat==="cartoni"?(a&&a.fmt==="movie"?"film":"serie"):cat
 function opt(g,o,on,i){const sub=(g==="time"||g==="era")&&o[3]?'<span class="s">'+esc(o[3])+'</span>':'';return '<button type="button" class="opt'+(on?' on':'')+'" style="--i:'+i+'" data-g="'+g+'" data-v="'+o[0]+'" aria-pressed="'+(on?'true':'false')+'"><span class="em">'+o[1]+'</span><span class="tx"><span class="t">'+esc(o[2])+'</span>'+sub+'</span></button>';}
 function restart(){Object.assign(S,{cat:"",fmt:"",mood:"",time:"",era:"",style:"",step:0,seen:[],cands:[],cur:null,avoid:[]});home();}
 function surpriseAll(){
-  S.cat=pick(CATS)[0];S.fmt="any";S.mood=pick(MOOD)[0];S.time="any";S.era="any";S.style="surprise";S.avoid=[];S.step=steps().length-1;
+  /* nessuna categoria scelta (schermata iniziale, senza selezioni): tutto a caso, categoria compresa.
+     Altrimenti le risposte già date restano e si sceglie a caso solo ciò che manca. */
+  const none=!S.cat;
+  if(none){S.fmt="";S.mood="";S.time="";S.era="";S.avoid=[];S.cat=pick(CATS)[0];}
+  if(isAnim()&&!S.fmt)S.fmt=pick(FMT)[0];
+  if(!S.mood)S.mood=pick(MOOD)[0];
+  if(timeShown()&&!S.time)S.time=pick(timeOpts())[0];
+  if(!S.era)S.era=pick(ERA)[0];
+  S.style=none?"surprise":"";   // "Sorpresa totale" solo se è davvero tutto a caso
+  S.step=steps().length-1;
   S.seen=[];S.cands=[];run(true,true);
 }
 function home(anim){
