@@ -2237,18 +2237,25 @@ function openLb(el){
   }
   {const bi=lb.querySelector(".bg i");if(bi){bi.innerHTML="";bi.style.background="";if(im){bgMake(im).then(c=>{if(!c||!LB||LB.card!==card)return;c.style.cssText="opacity:0;transition:opacity .5s ease";bi.innerHTML="";bi.appendChild(c);void c.offsetWidth;c.style.opacity="1";});}else bi.style.background=el.style.background||"";}}
   LB={el,T,card,lb,moved:false,R,ring,edge};
-  lb.classList.add("on");void lb.offsetWidth;lb.classList.add("show");
-  el.classList.add("lbhide");     // nasconde solo immagine/bordo: l'ombra resta sulla locandina, SOTTO il titolo
-  el.getAnimations().forEach(x=>x.cancel());
-  el.animate([{boxShadow:SHC1()},{boxShadow:SHC0()}],{duration:RM()?1:560,easing:"ease-out",fill:"forwards"});
-  const D=RM()?1:780;
-  const F0={x:sr.left-T.x,y:sr.top-T.y,s:k},F1={x:0,y:0,s:1};
-  const VC=visClip(el,sr);
-  const oa=card.animate(kfs(F0,F1,R,24,false,VC,true,fadeM(sr,T)),{duration:D,easing:EASE});
-  OA=oa;
-  if(edge)edge.animate(kfs(F0,F1,R,24,true),{duration:D,easing:EASE});
-  if(ring)ring.animate([{opacity:1},{opacity:0,offset:.35},{opacity:0}],{duration:D,easing:"linear",fill:"forwards"});
   try{history.pushState({lb:1},"");}catch(e){}
+  const start=()=>{
+    if(!LB||LB.card!==card||LB.started)return;LB.started=true;
+    lb.classList.add("on");void lb.offsetWidth;lb.classList.add("show");
+    el.classList.add("lbhide");     // nasconde solo immagine/bordo: l'ombra resta sulla locandina, SOTTO il titolo
+    el.getAnimations().forEach(x=>x.cancel());
+    el.animate([{boxShadow:SHC1()},{boxShadow:SHC0()}],{duration:RM()?1:560,easing:"ease-out",fill:"forwards"});
+    const D=RM()?1:780;
+    const F0={x:sr.left-T.x,y:sr.top-T.y,s:k},F1={x:0,y:0,s:1};
+    const VC=visClip(el,sr);
+    const oa=card.animate(kfs(F0,F1,R,24,false,VC,true,fadeM(sr,T)),{duration:D,easing:EASE});
+    OA=oa;
+    if(edge)edge.animate(kfs(F0,F1,R,24,true),{duration:D,easing:EASE});
+    if(ring)ring.animate([{opacity:1},{opacity:0,offset:.35},{opacity:0}],{duration:D,easing:"linear",fill:"forwards"});
+  };
+  // alla prima apertura l'immagine della card non è ancora decodificata: partiva su fondo nero. Aspetto che sia pronta (max 250 ms).
+  const ci0=im&&card.querySelector("img");
+  if(ci0&&ci0.decode)Promise.race([ci0.decode().catch(()=>{}),sleep(250)]).then(start);
+  else start();
 }
 function closeLb(){
   if(!LB||LB.closing)return;
