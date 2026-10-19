@@ -415,7 +415,10 @@ body.pre #app{opacity:0}
   .res{display:grid;grid-template-columns:340px minmax(0,1fr);grid-template-rows:repeat(12,auto) 1fr;column-gap:48px;row-gap:0;align-items:start;max-width:1040px;margin:0 auto;padding-top:6px}
   .res>*{grid-column:2;margin-bottom:14px}
   .res>.hero{grid-column:1;grid-row:1/-1;position:sticky;top:6px;margin:0}
-  .poster{width:min(100%,320px)}
+  /* la locandina si adatta all'altezza disponibile: locandina, titolo e chip restano sempre visibili senza scorrere (barra alta + dock + titolo + chip ≈ 450px, con margine per titoli lunghi) */
+  .poster{width:min(100%,320px,max(90px,calc((100vh - 450px)*2/3)))}
+  @supports (height:100dvh){.poster{width:min(100%,320px,max(90px,calc((100dvh - 450px)*2/3)))}}
+  .hero{gap:12px}
   .hero h2{font-size:clamp(1.9rem,2.6vw,2.4rem)}
   .res>.attr{font-size:.7rem;margin-bottom:0}
   .card{padding:20px}
@@ -428,6 +431,7 @@ body.pre #app{opacity:0}
   #lg .lgc{max-width:400px}
 }
 @media (min-width:900px) and (max-height:559px){#app{max-width:1180px}.dock-in{max-width:620px;margin:0 auto}}
+@media (min-width:900px) and (max-height:559px){.poster{width:min(54vw,224px,max(96px,calc((100vh - 360px)*2/3)))}}
 
 /* ===== CARICAMENTO A TUTTO SCHERMO: il muro di locandine sta dietro l'app (barra alta e pulsanti restano sopra) ===== */
 .load{overflow:visible;margin:0;min-height:100%}
