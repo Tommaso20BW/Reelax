@@ -302,9 +302,8 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .castbtn .cav img,.castbtn .cav i{width:46px;height:46px;border-radius:50%;object-fit:cover;border:1px solid var(--line2);flex:none;background:var(--s3)}
 .castbtn .cav i{display:grid;place-items:center;font-style:normal;font-size:1.3rem}
 .sagabtn{overflow:hidden}
-.sgm{display:block;margin-top:12px;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent);mask-image:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent)}
-.sgt{display:flex;width:max-content;will-change:transform}
-.sgt img{flex:none;width:46px;height:69px;margin-right:8px;border-radius:7px;object-fit:cover;background:var(--s3)}
+.sgm{display:block;position:relative;height:112px;margin-top:12px;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)}
+.sgm img{position:absolute;left:50%;top:50%;width:46px;height:69px;margin:-34px 0 0 -23px;border-radius:7px;object-fit:cover;background:var(--s3);will-change:transform,opacity}
 .castbtn .cgo{display:block;margin-top:12px;font-size:.84rem;font-weight:700;color:var(--gold)}
 .q .res>*,.q .chip,.q .why li,.q .pv{animation:none!important}
 
@@ -2285,25 +2284,42 @@ function provHtml(d){
   return '<section class="card"><h3>Dove guardarlo'+(it?' in Italia':' · '+esc(regName(REG())))+'</h3>'+h+'</section>';
 }
 function startSaga(){
-  const t=stage.querySelector(".sgt");
-  if(!t||RM())return;
-  const n=+t.dataset.n||0,W=54;   // larghezza di una locandina + spazio
-  if(!n)return;
-  let i=0;
-  const id=setInterval(()=>{
-    if(!t.isConnected){clearInterval(id);return;}
-    i++;
-    t.style.transition="transform 1100ms cubic-bezier(.22,1,.36,1)";
-    t.style.transform="translate3d("+(-i*W)+"px,0,0)";
-    if(i>=n){setTimeout(()=>{if(!t.isConnected)return;t.style.transition="none";t.style.transform="translate3d(0,0,0)";i=0;},1150);}
-  },2600);
+  const box=stage.querySelector(".sgm");
+  if(!box)return;
+  const im=[].slice.call(box.children),n=im.length,S=56,total=n*S;
+  let off=0,last=0,vis=true,w=box.clientWidth||320,fr=0;
+  const draw=()=>{
+    const half=w/2;
+    for(let i=0;i<n;i++){
+      let d=((i*S-off)%total+total)%total;if(d>total/2)d-=total;
+      const a=Math.min(Math.abs(d)/half,1),sc=1.3-.6*a;
+      const el=im[i];
+      el.style.transform="translate3d("+d.toFixed(1)+"px,0,0) scale("+sc.toFixed(3)+")";
+      el.style.opacity=(1-.75*a).toFixed(2);
+      el.style.zIndex=String(100-Math.round(Math.abs(d)/4));
+    }
+  };
+  draw();
+  if(RM())return;
+  if(window.IntersectionObserver){new IntersectionObserver(e=>{vis=e[0].isIntersecting;},{threshold:0}).observe(box);}
+  const tick=ts=>{
+    if(!box.isConnected)return;
+    if(vis){
+      const dt=last?Math.min((ts-last)/1000,.05):0;
+      off+=dt*17*(1+.6*Math.sin(ts/2400));   // velocità che sale e scende piano: niente scorrimento a macchina
+      if(++fr%45===0)w=box.clientWidth||w;
+      draw();
+    }
+    last=ts;requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
 }
 function sagaTile(d){
   const ps=(d.collParts||[]).filter(x=>x.poster_path);
   if((d.collParts||[]).length<2||!ps.length)return "";
-  let base=ps.slice();while(base.length<20)base=base.concat(ps);   // la metà della fila deve riempire la larghezza
-  const one=base.map(x=>'<img src="https://image.tmdb.org/t/p/w92'+esc(x.poster_path)+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">').join("");
-  return '<button type="button" class="card castbtn sagabtn" data-act="saga" aria-label="Saga: '+esc(d.coll)+'"><h3>Saga</h3><span class="sgm"><span class="sgt" data-n="'+base.length+'">'+one+one+'</span></span></button>';
+  let base=ps.slice();while(base.length<20)base=base.concat(ps);   // abbastanza locandine per riempire anche uno schermo largo
+  const one=base.map(x=>'<img src="https://image.tmdb.org/t/p/w92'+esc(x.poster_path)+'" alt="" decoding="async" referrerpolicy="no-referrer">').join("");
+  return '<button type="button" class="card castbtn sagabtn" data-act="saga" aria-label="Saga: '+esc(d.coll)+'"><h3>Saga</h3><span class="sgm">'+one+'</span></button>';
 }
 function infoHtml(d){
   const eps=(d.seasons?d.seasons+(d.seasons>1?' stagioni':' stagione'):'')+(d.episodes?(d.seasons?' · ':'')+d.episodes+' episodi':'');
