@@ -2175,6 +2175,34 @@ function bgBlur(im){   // locandina -> piccola tela già sfocata (niente filtri 
     return src;
   }catch(e){return null;}
 }
+/* Sfondo liscio: scarico la locandina con CORS (TMDB lo consente), la riduco a 64 px, la sfoco io con un vero sfocato (3 passate di box blur)
+   e la riporto a 256 px con interpolazione bilineare: i pixel del risultato sono già morbidi, quindi anche l'ingrandimento del browser non mostra quadretti. */
+const BGC=new Map();
+function bx(a,W,H,r,hz){const n=hz?W:H,m=hz?H:W,st=hz?1:W,ln=hz?W:1,t=new Float32Array(n),k=2*r+1;
+  for(let l=0;l<m;l++){const b=l*ln;let s=0;for(let i=-r;i<=r;i++)s+=a[b+Math.min(n-1,Math.max(0,i))*st];
+    for(let i=0;i<n;i++){t[i]=s/k;s+=a[b+Math.min(n-1,i+r+1)*st]-a[b+Math.max(0,i-r)*st];}
+    for(let i=0;i<n;i++)a[b+i*st]=t[i];}}
+async function bgSmooth(url){
+  if(BGC.has(url))return BGC.get(url);
+  const r=await fetch(url,{mode:"cors",referrerPolicy:"no-referrer"});if(!r.ok)throw new Error("img");
+  const bm=await createImageBitmap(await r.blob());
+  const W=64,H=Math.max(24,Math.round(W*bm.height/bm.width));
+  let src=bm,w=bm.width,h=bm.height;
+  while(w>W*2){const nw=Math.round(w/2),nh=Math.round(h/2),c=document.createElement("canvas");c.width=nw;c.height=nh;const x=c.getContext("2d");x.imageSmoothingEnabled=true;x.imageSmoothingQuality="high";x.drawImage(src,0,0,nw,nh);src=c;w=nw;h=nh;}
+  const sc=document.createElement("canvas");sc.width=W;sc.height=H;const sx=sc.getContext("2d",{willReadFrequently:true});sx.imageSmoothingEnabled=true;sx.imageSmoothingQuality="high";sx.drawImage(src,0,0,W,H);
+  const px=sx.getImageData(0,0,W,H).data,ch=[0,1,2].map(k=>{const a=new Float32Array(W*H);for(let i=0;i<W*H;i++)a[i]=px[i*4+k];return a;});
+  ch.forEach(a=>{for(let q=0;q<3;q++){bx(a,W,H,3,true);bx(a,W,H,3,false);}});
+  const OW=256,OH=Math.round(OW*H/W),o=document.createElement("canvas");o.width=OW;o.height=OH;
+  const ox=o.getContext("2d"),od=ox.createImageData(OW,OH),d=od.data;
+  for(let y=0;y<OH;y++){const fy=Math.min(H-1,Math.max(0,(y+.5)*H/OH-.5)),y0=Math.floor(fy),y1=Math.min(H-1,y0+1),ty=fy-y0;
+    for(let x=0;x<OW;x++){const fx=Math.min(W-1,Math.max(0,(x+.5)*W/OW-.5)),x0=Math.floor(fx),x1=Math.min(W-1,x0+1),tx=fx-x0,o4=(y*OW+x)*4;
+      for(let k=0;k<3;k++){const a=ch[k],v=(a[y0*W+x0]*(1-tx)+a[y0*W+x1]*tx)*(1-ty)+(a[y1*W+x0]*(1-tx)+a[y1*W+x1]*tx)*ty;d[o4+k]=v;}
+      d[o4+3]=255;}}
+  ox.putImageData(od,0,0);
+  BGC.set(url,o);if(BGC.size>12)BGC.delete(BGC.keys().next().value);
+  return o;
+}
+async function bgMake(im){try{return await bgSmooth(im.currentSrc||im.src);}catch(e){return bgBlur(im);}}
 function openLb(el){
   if(LB)return;
   if(PEND)PEND();
@@ -2206,7 +2234,7 @@ function openLb(el){
     const cl=el.cloneNode(true);cl.style.fontSize=(16*T.w/Math.max(60,sr.width))+"px";
     card.innerHTML="";card.appendChild(cl);
   }
-  {const bi=lb.querySelector(".bg i");if(bi){bi.innerHTML="";bi.style.background="";if(im){const c=bgBlur(im);if(c)bi.appendChild(c);}else bi.style.background=el.style.background||"";}}
+  {const bi=lb.querySelector(".bg i");if(bi){bi.innerHTML="";bi.style.background="";if(im){bgMake(im).then(c=>{if(!c||!LB||LB.card!==card)return;c.style.cssText="opacity:0;transition:opacity .5s ease";bi.innerHTML="";bi.appendChild(c);void c.offsetWidth;c.style.opacity="1";});}else bi.style.background=el.style.background||"";}}
   LB={el,T,card,lb,moved:false,R,ring,edge};
   lb.classList.add("on");void lb.offsetWidth;lb.classList.add("show");
   el.classList.add("lbhide");     // nasconde solo immagine/bordo: l'ombra resta sulla locandina, SOTTO il titolo
