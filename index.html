@@ -650,6 +650,13 @@ body.pre #app{opacity:0}
 .dock-in.xf:not(.out) .btn:nth-child(1){animation-delay:.1s}
 .dock-in.xf:not(.out) .btn:nth-child(2){animation-delay:.14s}
 .dock-in.xf:not(.out) .btn:nth-child(3){animation-delay:.18s}
+
+/* ricerca: niente salti di altezza, feedback al tocco */
+#sres{min-height:55vh}
+.bk{transition:transform .15s,opacity .25s}
+.bk.pick{transform:scale(.94);opacity:.8}
+.sres.lib.wait .bk:not(.pick){opacity:.4}
+.sres.lib.wait{pointer-events:none}
 </style>
 </head>
 <body class="pre">
@@ -915,7 +922,7 @@ function ui(o){
       c.querySelectorAll(".rpl").forEach(x=>x.remove());
       dk.parentNode.appendChild(c);
       const rm=()=>c.remove();
-      c.animate([{opacity:1,transform:"none"},{opacity:0,transform:"scale(.97)"}],{duration:170,easing:"cubic-bezier(.3,0,.6,1)",fill:"forwards"}).onfinish=rm;
+      c.animate([{opacity:1,transform:"none"},{opacity:0,transform:"translate3d(0,-10px,0) scale(.96)"}],{duration:200,easing:"cubic-bezier(.4,0,1,1)",fill:"forwards"}).onfinish=rm;
       setTimeout(rm,700);
       dk.classList.add("xf");clearTimeout(dk._xf);dk._xf=setTimeout(()=>dk.classList.remove("xf"),900);   // i nuovi tasti entrano solo dopo che i vecchi sono quasi spariti
     }
@@ -1049,12 +1056,14 @@ function searchPage(){
   let t=null;
   inp.addEventListener("input",()=>{SQ=inp.value.trim();clearTimeout(t);t=setTimeout(()=>doSearch(SQ),250);});
   inp.addEventListener("keydown",e=>{if(e.key==="Enter"){clearTimeout(t);SQ=inp.value.trim();doSearch(SQ);inp.blur();}});
-  box.onclick=e=>{const b=e.target.closest&&e.target.closest("[data-i]");if(!b)return;tap();TDX=1;openSearched(SLIST[+b.dataset.i]);};
+  box.onclick=e=>{const b=e.target.closest&&e.target.closest("[data-i]");if(!b||box.classList.contains("wait"))return;tap();TDX=1;
+    inp.blur();b.classList.add("pick");box.classList.add("wait");
+    Promise.resolve(openSearched(SLIST[+b.dataset.i])).finally(()=>{b.classList.remove("pick");box.classList.remove("wait");});};
   // scorrendo l'elenco la tastiera si chiude, così l'ultimo risultato resta raggiungibile senza spazio vuoto in fondo
   box.addEventListener("touchmove",()=>{if(document.activeElement===inp)inp.blur();},{passive:true});
   doSearch(SQ);   // vuoto = i più in voga del momento
   // niente focus durante lo scorrimento: farebbe saltare la pagina a metà animazione
-  setTimeout(()=>{try{if($("sq")===inp)inp.focus({preventScroll:true});}catch(e){}},780);
+  setTimeout(()=>{try{if($("sq")===inp&&matchMedia("(pointer:fine)").matches)inp.focus({preventScroll:true});}catch(e){}},780);
 }
 /* Ricerca solo TMDB: prima la ricerca generale, poi film e serie separati */
 async function searchTitles(q){
@@ -1168,7 +1177,7 @@ async function openSearched(x,back){
     const quick={d:{movie:c.movie,isTv:!c.movie,title:c.title,year:c.year,runtime:c.runtime,episodes:c.episodes,overview:c.summary||"Trama non disponibile.",it:true,poster:c.image,rl:"AniList",rv:c.rating,glist:itg(c.genres),gt:itg(c.genres).join(" · "),provKnown:false},m:c,s:0};
     stage.style.pointerEvents="none";stage.style.cursor="progress";
     let full=null;
-    try{const d=await detailsOf(c);await preImg(d.poster||c.image,2800);full={d:d,m:c,s:0};}catch(e){}
+    try{const imgA=preImg(c.image,1200);const d=await detailsOf(c);await (d.poster&&d.poster!==c.image?preImg(d.poster,1200):imgA);full={d:d,m:c,s:0};}catch(e){}
     stage.style.pointerEvents="";stage.style.cursor="";
     if(my!==RUN||LB)return;
     const r2=full||quick;r2.back=back||null;show(r2,false,true,false);
@@ -1185,9 +1194,10 @@ async function openSearched(x,back){
     tmdbUrl:"https://www.themoviedb.org/"+(film?"movie":"tv")+"/"+c.tid},m:c,s:0};
   stage.style.pointerEvents="none";stage.style.cursor="progress";
   let full=null;
+  const imgP=preImg(c.image,1500);   // la locandina si scarica mentre arrivano i dettagli
   try{
     const d=await tmdbDetails(c);
-    await preImg(d.poster||c.image,2800);   // locandina già pronta: niente pop-in
+    await (d.poster&&d.poster!==c.image?preImg(d.poster,1200):imgP);   // locandina già pronta: niente pop-in
     full={d:d,m:c,s:0};
   }catch(e){}
   stage.style.pointerEvents="";stage.style.cursor="";
@@ -2241,7 +2251,7 @@ function leaveLoad(){   // testo di caricamento fuori + muro che si dissolve (~.
   const p=document.querySelector(".load p"),o=$("ldw");
   if(o){o.style.transitionDuration=".9s";o.classList.remove("on");}
   if(!RM()){   // anche il tasto Annulla e la X escono dolcemente insieme alla scritta (poi restano invisibili finché arrivano i nuovi)
-    [$("dockin"),$("tl")].forEach(el=>{if(el)[...el.children].forEach(c=>{if(c.animate)c.animate([{opacity:1,transform:"none"},{opacity:0,transform:"translate3d(0,8px,0)"}],{duration:300,easing:"ease-in",fill:"forwards"}).finished.then(()=>{c.style.opacity="0";},()=>{});});});
+    [$("dockin"),$("tl")].forEach(el=>{if(el)[...el.children].forEach(c=>{if(c.animate)c.animate([{opacity:1,transform:"none"},{opacity:0,transform:"translate3d(0,-10px,0) scale(.96)"}],{duration:240,easing:"cubic-bezier(.4,0,1,1)",fill:"forwards"}).finished.then(()=>{c.style.opacity="0";},()=>{});});});
   }
   if(RM()||!p||!p.animate)return Promise.resolve();
   return p.animate([{opacity:1,transform:"none"},{opacity:0,transform:"translateY(-8px)"}],{duration:300,easing:"ease-in",fill:"forwards"}).finished.catch(()=>{});
