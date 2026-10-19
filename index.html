@@ -301,11 +301,10 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .castbtn .cav{display:flex;align-items:center;gap:10px}
 .castbtn .cav img,.castbtn .cav i{width:46px;height:46px;border-radius:50%;object-fit:cover;border:1px solid var(--line2);flex:none;background:var(--s3)}
 .castbtn .cav i{display:grid;place-items:center;font-style:normal;font-size:1.3rem}
-.sagabtn{padding:12px 0;overflow:hidden}
-.sgm{display:block;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent);mask-image:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent)}
-.sgt{display:flex;width:max-content;animation:pmove var(--t,50s) linear infinite}
+.sagabtn{overflow:hidden}
+.sgm{display:block;margin-top:12px;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent);mask-image:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent)}
+.sgt{display:flex;width:max-content;will-change:transform}
 .sgt img{flex:none;width:46px;height:69px;margin-right:8px;border-radius:7px;object-fit:cover;background:var(--s3)}
-@media (prefers-reduced-motion:reduce){.sgt{animation:none}}
 .castbtn .cgo{display:block;margin-top:12px;font-size:.84rem;font-weight:700;color:var(--gold)}
 .q .res>*,.q .chip,.q .why li,.q .pv{animation:none!important}
 
@@ -2285,12 +2284,26 @@ function provHtml(d){
   if(!h)h='<p>Al momento non risulta disponibile '+(it?'in Italia':'in questa regione ('+esc(regName(REG()))+')')+' su piattaforme di streaming, noleggio o acquisto.</p>';
   return '<section class="card"><h3>Dove guardarlo'+(it?' in Italia':' · '+esc(regName(REG())))+'</h3>'+h+'</section>';
 }
+function startSaga(){
+  const t=stage.querySelector(".sgt");
+  if(!t||RM())return;
+  const n=+t.dataset.n||0,W=54;   // larghezza di una locandina + spazio
+  if(!n)return;
+  let i=0;
+  const id=setInterval(()=>{
+    if(!t.isConnected){clearInterval(id);return;}
+    i++;
+    t.style.transition="transform 1100ms cubic-bezier(.22,1,.36,1)";
+    t.style.transform="translate3d("+(-i*W)+"px,0,0)";
+    if(i>=n){setTimeout(()=>{if(!t.isConnected)return;t.style.transition="none";t.style.transform="translate3d(0,0,0)";i=0;},1150);}
+  },2600);
+}
 function sagaTile(d){
   const ps=(d.collParts||[]).filter(x=>x.poster_path);
   if((d.collParts||[]).length<2||!ps.length)return "";
   let base=ps.slice();while(base.length<20)base=base.concat(ps);   // la metà della fila deve riempire la larghezza
   const one=base.map(x=>'<img src="https://image.tmdb.org/t/p/w92'+esc(x.poster_path)+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">').join("");
-  return '<button type="button" class="card castbtn sagabtn" data-act="saga" aria-label="Saga: '+esc(d.coll)+'"><span class="sgm"><span class="sgt" style="--t:'+Math.round(base.length*2.6)+'s">'+one+one+'</span></span></button>';
+  return '<button type="button" class="card castbtn sagabtn" data-act="saga" aria-label="Saga: '+esc(d.coll)+'"><h3>Saga</h3><span class="sgm"><span class="sgt" data-n="'+base.length+'">'+one+one+'</span></span></button>';
 }
 function infoHtml(d){
   const eps=(d.seasons?d.seasons+(d.seasons>1?' stagioni':' stagione'):'')+(d.episodes?(d.seasons?' · ':'')+d.episodes+' episodi':'');
@@ -2776,6 +2789,7 @@ function show(r,sur,man,quiet){
   if(man)stage.querySelectorAll('.card').forEach(c=>{const h3=c.querySelector('h3');if(c.classList.contains('compat')||(h3&&h3.textContent==='Perché fa per te'))c.remove();});
   const rs=stage.querySelectorAll('.res>*');rs.forEach((el,i)=>el.style.setProperty('--k',i));
   polish(p,r);
+  startSaga();
   if(!quiet&&!RM()){   // ingresso morbido della locandina: sale dal basso ingrandendosi, mentre lo sfondo di caricamento si dissolve
     const po=stage.querySelector('.hero .poster');
     if(po&&po.animate)po.animate([{opacity:0,transform:'translate3d(0,22px,0) scale(.93)'},{opacity:1,transform:'none'}],{duration:1000,delay:40,easing:'cubic-bezier(.16,1,.3,1)',fill:'backwards'});
