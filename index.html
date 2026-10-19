@@ -1197,6 +1197,7 @@ async function episodesPage(d,se,snap){
 }
 function simHtml(d){
   if(!d.sim||!d.sim.length)return "";
+  if(d.collParts&&d.collParts.length)return '<div class="sech">Saga</div><p class="smsg" style="margin:0;text-align:left;font-size:.8rem">'+esc(d.coll)+' · gli altri film, in ordine di uscita.</p><div class="sres lib" id="simg">'+d.sim.map((x,i)=>bkCard(x,i,{})).join("")+'</div>';
   return '<div class="sech">Titoli simili</div><p class="smsg" style="margin:0;text-align:left;font-size:.8rem">Suggeriti da TMDB in base ai gusti del pubblico: non sono necessariamente sequel, prequel o spin-off.</p><div class="sres lib" id="simg">'+d.sim.map((x,i)=>bkCard(x,i,{})).join("")+'</div>';
 }
 function personInfo(d){
@@ -1696,6 +1697,7 @@ Object.assign(I18N,{
 "Stagioni ed episodi":["Seasons and episodes","Temporadas y episodios","Saisons et épisodes","Staffeln und Folgen","Temporadas e episódios"],
 "Vedi stagioni ed episodi →":["See seasons and episodes →","Ver temporadas y episodios →","Voir saisons et épisodes →","Staffeln und Folgen ansehen →","Ver temporadas e episódios →"],
 "Saga":["Collection","Saga","Saga","Reihe","Coleção"],
+"gli altri film, in ordine di uscita":["the other films, in release order","las demás películas, por orden de estreno","les autres films, par ordre de sortie","die anderen Filme in Erscheinungsreihenfolge","os outros filmes, em ordem de lançamento"],
 "Titoli simili":["Similar titles","Títulos similares","Titres similaires","Ähnliche Titel","Títulos semelhantes"],
 "Suggeriti da TMDB in base ai gusti del pubblico: non sono necessariamente sequel, prequel o spin-off.":["Suggested by TMDB based on audience tastes: not necessarily sequels, prequels or spin-offs.","Sugeridos por TMDB según los gustos del público: no son necesariamente secuelas, precuelas o spin-offs.","Suggérés par TMDB selon les goûts du public : pas forcément des suites, préquelles ou spin-offs.","Von TMDB nach dem Publikumsgeschmack vorgeschlagen: nicht unbedingt Fortsetzungen, Prequels oder Spin-offs.","Sugeridos pelo TMDB com base no gosto do público: não são necessariamente sequências, prequelas ou spin-offs."],
 "Carico gli episodi...":["Loading episodes...","Cargando episodios...","Chargement des épisodes...","Lade Folgen...","Carregando episódios..."],
@@ -2057,6 +2059,16 @@ async function tmdbDetails(c){
     if(c.movie){const x=((d.release_dates&&d.release_dates.results)||[]).find(r=>r.iso_3166_1===REG());const y=x&&(x.release_dates||[]).find(z=>z.certification);cert=y?y.certification:"";}
     else{const x=((d.content_ratings&&d.content_ratings.results)||[]).find(r=>r.iso_3166_1===REG());cert=x?x.rating:"";}
   }catch(e){}
+  // saga: elenco dei film della collezione, in ordine di uscita (quelli senza data in fondo), escluso il film aperto
+  let collParts=[];
+  if(c.movie&&d.belongs_to_collection&&d.belongs_to_collection.id){
+    try{
+      const col=await tm("/3/collection/"+d.belongs_to_collection.id);
+      collParts=((col&&col.parts)||[]).filter(x=>x&&x.id!==c.tid&&(x.title||x.name))
+        .sort((a,b)=>(a.release_date||"9999").localeCompare(b.release_date||"9999"))
+        .map(x=>Object.assign({},x,{media_type:"movie"}));
+    }catch(e){collParts=[];}
+  }
   const crew=(d.credits&&d.credits.crew)||[],cast=(d.credits&&d.credits.cast)||[];
   const dir=c.movie?crew.filter(x=>x.job==="Director").map(x=>x.name).slice(0,2):(d.created_by||[]).map(x=>x.name).slice(0,2);
   const vids=((d.videos&&d.videos.results)||[]).filter(v=>v.site==="YouTube"&&(v.type==="Trailer"||v.type==="Teaser"));
@@ -2067,7 +2079,8 @@ async function tmdbDetails(c){
     overview:d.overview||c.summary,it:true,poster:c.image||(d.poster_path?TMDB_IMG+d.poster_path:null),rl:"TMDB",rv:c.rating||d.vote_average||0,vc:d.vote_count||c.vc||0,glist:gl,gt:gl.join(" · "),
     seasonList:c.movie?[]:(d.seasons||[]).filter(x=>x.season_number>0).map(x=>({n:x.season_number,name:x.name||"",ep:x.episode_count||0,date:x.air_date||"",img:x.poster_path||""})),
     coll:c.movie&&d.belongs_to_collection&&d.belongs_to_collection.name?d.belongs_to_collection.name:"",
-    sim:((d.recommendations&&d.recommendations.results)||[]).filter(x=>(x.title||x.name)&&x.poster_path).slice(0,12).map(x=>Object.assign({},x,{media_type:c.movie?"movie":"tv"})),
+    collParts:collParts,
+    sim:collParts.length?collParts:((d.recommendations&&d.recommendations.results)||[]).filter(x=>(x.title||x.name)&&x.poster_path).slice(0,12).map(x=>Object.assign({},x,{media_type:c.movie?"movie":"tv"})),
     gids:(d.genres||[]).map(g=>g.id),tagline:d.tagline||"",orig:(orig&&!sameTitle(orig,c.title))?orig:"",dir:dir.join(", "),cast:cast.slice(0,6).map(x=>x.name).join(", "),castList:cast.slice(0,40).map(x=>({id:x.id,name:x.name,ch:x.character||"",img:x.profile_path||""})),
     nets:c.movie?"":(d.networks||[]).map(x=>x.name).slice(0,2).join(", "),countries:countries.join(", "),lang:d.original_language?lname(d.original_language):"",
     date:fdate(c.movie?d.release_date:d.first_air_date),status:c.movie?"":(STAT[d.status]||d.status||""),cert:cert,
