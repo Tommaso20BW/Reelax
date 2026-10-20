@@ -466,7 +466,8 @@ body.pre #app{opacity:0}
 .ldw.on{opacity:1}
 @media (min-width:900px){.load p{font-size:1.9rem}}
 .ldw .prow2{height:var(--ph)}
-.ldw .pc{width:calc(var(--ph)*2/3);height:var(--ph);border-radius:calc(var(--ph)*.08);box-shadow:none;animation:none}
+.ldw .pc{width:calc(var(--ph)*2/3);height:var(--ph);border-radius:calc(var(--ph)*.08);box-shadow:none;animation:none;overflow:visible}
+.ldw .pc img{border-radius:inherit}   /* il ritaglio ad angoli tondi sta sull'immagine, non su ogni cella con overflow:hidden (centinaia di maschere di ritaglio sulle righe in movimento): stesso aspetto, meno lavoro per il rendering */
 .ldw::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(44% 22% at 50% 50%,rgba(var(--bgrgb),.96) 0,rgba(var(--bgrgb),.6) 62%,transparent 100%),linear-gradient(to bottom,rgba(var(--shade),.88) 0,rgba(var(--shade),.72) calc(var(--sat) + 90px),rgba(var(--shade),.38) calc(var(--sat) + 170px),transparent 33%,transparent 66%,rgba(var(--shade),.3) 77%,rgba(var(--shade),.62) 89%,rgba(var(--shade),.86) 100%)}
 
 /* ===== SCHEDA ATTORE: stessa struttura e stesso movimento della scheda risultato ===== */
@@ -872,8 +873,11 @@ function swap(h,anim){
     const ar=app.getBoundingClientRect(),sr=stage.getBoundingClientRect();
     ghost=document.createElement("div");ghost.className="ghost";ghost.setAttribute("aria-hidden","true");
     ghost.style.cssText="left:"+(sr.left-ar.left)+"px;top:"+(sr.top-ar.top)+"px;width:"+sr.width+"px;height:"+sr.height+"px";
-    ghost.innerHTML=old.replace(/ id="[^"]*"/g,"");
-    app.insertBefore(ghost,stage);ghost.scrollTop=stage.scrollTop;
+    // sposto i nodi vivi nel "ghost" invece di duplicarli con innerHTML: le immagini restano già decodificate (un clone le ricarica da zero e per ~100 ms la locandina/gli avatar lampeggiavano vuoti)
+    const sy=stage.scrollTop;
+    while(stage.firstChild)ghost.appendChild(stage.firstChild);
+    ghost.querySelectorAll("[id]").forEach(e=>e.removeAttribute("id"));
+    app.insertBefore(ghost,stage);ghost.scrollTop=sy;
   }
   stage.innerHTML=h;
   app.classList.toggle("onset",h.indexOf('srow out')>-1);
