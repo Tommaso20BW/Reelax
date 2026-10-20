@@ -1262,6 +1262,7 @@ const EPC=new Map();
 function seasonsPage(d,snap){
   setBd(null);
   snap=snap||{r:S.cur,sur:S.curSur,man:S.curMan};
+  if((d.seasonList||[]).length===1){episodesPage(d,d.seasonList[0],snap);return;}   // una sola stagione: niente elenco, si va diretti agli episodi (vale anche per la route /stagioni senza numero)
   {const k=snap.r&&snap.r.m&&snap.r.m.id!=null?String(snap.r.m.id):"";if(k)setRoute("/t/"+enc(k)+"/stagioni");else ROUTED=false;}
   const list=d.seasonList||[];
   const row=(x,i)=>{const nm=x.name||("Stagione "+x.n),sub=[x.date?String(x.date).slice(0,4):"",x.ep?x.ep+" ep.":""].filter(Boolean).join(" · ");
@@ -1278,7 +1279,7 @@ async function episodesPage(d,se,snap){
   {const k=snap.r&&snap.r.m&&snap.r.m.id!=null?String(snap.r.m.id):(S.cur&&S.cur.m?String(S.cur.m.id):"");if(k)setRoute("/t/"+enc(k)+"/stagioni/"+se.n);else ROUTED=false;}
   const nm=se.name||("Stagione "+se.n);
   subSwap('<div class="page lst"><h1>'+esc(nm)+'</h1><div class="sres eplist" id="eps"><p class="smsg">Carico gli episodi...</p></div></div>',true);
-  ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>{RUN++;seasonsPage(d,snap);}}});
+  ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>{RUN++;if((d.seasonList||[]).length===1)show(snap.r,snap.sur,snap.man,"fade");else seasonsPage(d,snap);}}});   // con una sola stagione l'elenco non esiste: Indietro torna alla scheda
   const ck=d.tid+"|"+se.n+"|"+LANG();
   let eps=EPC.get(ck);
   if(!eps){
@@ -1797,6 +1798,7 @@ Object.assign(I18N,{
 "Stagioni":["Seasons","Temporadas","Saisons","Staffeln","Temporadas"],
 "Stagioni ed episodi":["Seasons and episodes","Temporadas y episodios","Saisons et épisodes","Staffeln und Folgen","Temporadas e episódios"],
 "Vedi stagioni ed episodi →":["See seasons and episodes →","Ver temporadas y episodios →","Voir saisons et épisodes →","Staffeln und Folgen ansehen →","Ver temporadas e episódios →"],
+"Vedi episodi →":["See episodes →","Ver episodios →","Voir les épisodes →","Folgen ansehen →","Ver episódios →"],
 "Saga":["Collection","Saga","Saga","Reihe","Coleção"],
 "Titoli simili":["Similar titles","Títulos similares","Titres similaires","Ähnliche Titel","Títulos semelhantes"],
 "Suggeriti da TMDB in base ai gusti del pubblico: non sono necessariamente sequel, prequel o spin-off.":["Suggested by TMDB based on audience tastes: not necessarily sequels, prequels or spin-offs.","Sugeridos por TMDB según los gustos del público: no son necesariamente secuelas, precuelas o spin-offs.","Suggérés par TMDB selon les goûts du public : pas forcément des suites, préquelles ou spin-offs.","Von TMDB nach dem Publikumsgeschmack vorgeschlagen: nicht unbedingt Fortsetzungen, Prequels oder Spin-offs.","Sugeridos pelo TMDB com base no gosto do público: não são necessariamente sequências, prequelas ou spin-offs."],
@@ -2927,7 +2929,7 @@ function show(r,sur,man,quiet){
     (man?'':'<section class="card"><h3>Perché fa per te</h3><ul class="why">'+why(r,sur).map(x=>'<li><b>✓</b><span>'+esc(x)+'</span></li>').join('')+'</ul></section>')+
     '<section class="card'+(long?' tap':'')+'" id="plotcard"'+(long?' role="button" tabindex="0" aria-expanded="false"':'')+'><h3>Trama</h3><p class="'+(long?'clamp':'')+'" id="plot">'+esc(d.overview||'Trama non disponibile.')+'</p>'+(long?'<button type="button" class="lnk-btn" id="pmore">Leggi tutto</button>':'')+'</section>'+
     (d.castList&&d.castList.length?'<button type="button" class="card castbtn" data-act="cast"><h3>Cast</h3><span class="cav">'+d.castList.slice(0,5).map(x=>x.img?'<img src="'+PIMG+esc(x.img)+'" alt="" loading="lazy" referrerpolicy="no-referrer">':'<i>👤</i>').join('')+'</span><span class="cgo">Vedi tutto il cast →</span></button>':'')+
-    (d.seasonList&&d.seasonList.length?'<button type="button" class="card castbtn" data-act="seasons"><h3>Stagioni ed episodi</h3><span class="cs">'+d.seasonList.length+(d.seasonList.length>1?' stagioni':' stagione')+(d.episodes?' · '+d.episodes+' episodi':'')+'</span><span class="cgo">Vedi stagioni ed episodi →</span></button>':'')+
+    (d.seasonList&&d.seasonList.length?'<button type="button" class="card castbtn" data-act="seasons"><h3>Stagioni ed episodi</h3><span class="cs">'+d.seasonList.length+(d.seasonList.length>1?' stagioni':' stagione')+(d.episodes?' · '+d.episodes+' episodi':'')+'</span><span class="cgo">'+(d.seasonList.length===1?'Vedi episodi →':'Vedi stagioni ed episodi →')+'</span></button>':'')+
     infoHtml(d)+
     provHtml(d)+
     simHtml(d)+
