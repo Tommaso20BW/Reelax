@@ -2328,10 +2328,12 @@ function why(r,sur){
   const av=avoidNow().map(x=>(AVOID.find(y=>y[0]===x)||[0,0,x])[2].toLowerCase());
   {const tp=starsOn()?tasteProfile():null;if(tp&&tp.c>=.4&&tasteOf(m,tp)>.35)o.splice(1,0,"In linea con i titoli a cui hai dato più stelle.");}
   if(av.length)o.push("Senza: "+av.join(", ")+".");
-  if(a.era&&a.era!=="any"&&d.year&&eraOk(d.year,a))o.push("Del "+d.year+", nella fascia di anni che volevi.");
+  if(!sur&&!rnd&&a.era&&a.era!=="any"&&d.year&&eraOk(d.year,a))o.push("Del "+d.year+", nella fascia di anni che volevi.");
   const tk=timeOk(d,a);
-  if(d.runtime)o.push((d.movie===false?"Episodi da "+d.runtime+" min":"Dura "+fmtMin(d.runtime))+(tk===true?", nel tempo che avevi.":"."));
-  else if(d.episodes)o.push(d.episodes+" episodi"+(tk===true?", nella lunghezza che volevi.":"."));
+  if(!sur&&!rnd&&a.time&&a.time!=="any"){   // motivazione su durata solo se l'utente ha scelto un filtro (non con "Non importa" né con "Sorprendimi")
+    if(d.runtime)o.push((d.movie===false?"Episodi da "+d.runtime+" min":"Dura "+fmtMin(d.runtime))+(tk===true?", nel tempo che avevi.":"."));
+    else if(d.episodes)o.push(d.episodes+" episodi"+(tk===true?", nella lunghezza che volevi.":"."));
+  }
   if(d.rv)o.push("Voto "+(+d.rv).toFixed(1)+" / 10.");
   return o.slice(0,5);
 }
