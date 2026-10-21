@@ -51,7 +51,23 @@
     if(f){f.setAttribute("type","image/png");f.setAttribute("href",abs(I.fav));}
   }
   window.themePref=pref;
-  window.setTheme=function(v){try{var h=document.documentElement;h.classList.add("tfade");clearTimeout(window._tf);window._tf=setTimeout(function(){h.classList.remove("tfade");},520);}catch(e){}try{if(v==="auto")localStorage.removeItem(K);else localStorage.setItem(K,v);}catch(e){}apply();};
+  window.setTheme=function(v,x,y){
+    var h=document.documentElement;
+    var run=function(){try{if(v==="auto")localStorage.removeItem(K);else localStorage.setItem(K,v);}catch(e){}apply();};
+    var rm=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if(!document.startViewTransition||rm){run();return;}
+    try{if(window._vt)window._vt.skipTransition();}catch(e){}
+    var circ=typeof x==="number"&&typeof y==="number";
+    h.classList.add(circ?"vtc":"vt");
+    var t;try{t=document.startViewTransition(run);}catch(e){h.classList.remove("vt","vtc");run();return;}
+    window._vt=t;
+    t.ready.then(function(){
+      if(!circ)return;
+      var r=Math.hypot(Math.max(x,innerWidth-x),Math.max(y,innerHeight-y));
+      h.animate({clipPath:["circle(0px at "+x+"px "+y+"px)","circle("+r+"px at "+x+"px "+y+"px)"]},{duration:700,easing:"cubic-bezier(.4,0,.2,1)",pseudoElement:"::view-transition-new(root)"});
+    }).catch(function(){});
+    t.finished.then(function(){},function(){}).then(function(){h.classList.remove("vt","vtc");});
+  };
   if(mq){if(mq.addEventListener)mq.addEventListener("change",apply);else if(mq.addListener)mq.addListener(apply);}
   apply();
 })();
@@ -664,7 +680,11 @@ body.pre #app{opacity:0}
 .castbtn .cs{display:block;font-size:.92rem}
 /* ripple al tocco e cambio tema morbido */
 .rpl{position:absolute;border-radius:50%;pointer-events:none;opacity:0;transform:scale(0);z-index:0;background:radial-gradient(circle,currentColor 0,currentColor 30%,transparent 70%)}
-.tfade,.tfade *,.tfade *::before,.tfade *::after{transition:background-color .45s ease,color .45s ease,border-color .45s ease,box-shadow .45s ease,fill .45s ease,stroke .45s ease!important}
+/* cambio tema: istantanea intera della pagina (testi, gradienti, immagini cambiano insieme), rivelata a cerchio dal tocco */
+::view-transition-group(root){animation-duration:.4s}
+html.vtc::view-transition-old(root),html.vtc::view-transition-new(root){animation:none;mix-blend-mode:normal;display:block}
+html.vtc::view-transition-old(root){z-index:1}
+html.vtc::view-transition-new(root){z-index:2}
 /* ingresso più calmo */
 .poster::before{display:none}
 .in .res>*{animation-duration:1s;animation-delay:calc(var(--k,0)*45ms + 60ms)}
@@ -1924,7 +1944,7 @@ function settingsPage(){
     pfpick:()=>pfPage(),reg:()=>regionPage(),acuser:()=>accountPage("user"),acpass:()=>accountPage("pass")}});
   const th=$("thseg"),pr=window.themePref();
   th.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.t===pr));
-  th.onclick=e=>{const b=e.target.closest&&e.target.closest("button[data-t]");if(!b)return;tap();window.setTheme(b.dataset.t);setSet("theme",b.dataset.t);th.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));};
+  th.onclick=e=>{const b=e.target.closest&&e.target.closest("button[data-t]");if(!b)return;tap();{const r=b.getBoundingClientRect(),cx=(e.clientX||e.clientY)?e.clientX:r.left+r.width/2,cy=(e.clientX||e.clientY)?e.clientY:r.top+r.height/2;window.setTheme(b.dataset.t,cx,cy);}setSet("theme",b.dataset.t);th.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));};
 }
 /* ---------- Regione ---------- */
 function regionPage(){
