@@ -873,7 +873,7 @@ let TDX=0,LASTSTEP=-1,NAV=0,NAVT=0;
    #/ e #/domanda/N (domande) · #/cerca[/testo] · #/recenti · #/impostazioni[/piattaforme|regione|username|password]
    #/r/ID (risultato) · #/t/ID (scheda titolo) · #/t/ID/cast · #/p/ID (persona) */
 let CURR="",REPL=false,ROUTED=false,PENDCAST="",PD=0;
-const SCR={};let BKN=false,BKT=0;   // posizione di scorrimento per pagina: tornando indietro si riprende da dove eri
+const SCR={};let EDGET=0,IGN=0,BTAP=0;let BKN=false,BKT=0;   // posizione di scorrimento per pagina: tornando indietro si riprende da dove eri
 function restoreScroll(y){const go=()=>{stage.scrollTop=y;};go();requestAnimationFrame(go);[120,350].forEach(t=>setTimeout(()=>{if(stage.scrollTop<y-2)go();},t));}
 const RCACHE=new Map();
 const enc=encodeURIComponent,nrm=x=>{try{return decodeURIComponent(x);}catch(e){return x;}};
@@ -1008,7 +1008,7 @@ document.addEventListener("click",e=>{
   if(y){openYt(e,y.dataset.yt);return;}
   const b=e.target.closest&&e.target.closest("[data-act]");
   if(!b||b.disabled)return;
-  const f=ACT[b.dataset.act];if(f){tap();const an=b.dataset.act;NAV=0;const onHome=!!stage.querySelector(".opts");if(an==="settings"&&onHome)NAV=-1;else if(an==="search"&&onHome)NAV=1;else if(FWD[an])NAV=1;else if(an==="back"||an==="cancel"){NAV=stage.querySelector(".srow.out")?1:-1;}clearTimeout(NAVT);NAVT=setTimeout(()=>{NAV=0;},700);try{if(an==="back")goBack(f);else f();}catch(x){}}
+  const f=ACT[b.dataset.act];if(f){tap();const an=b.dataset.act;if(an==="back"||an==="cancel")BTAP=Date.now();NAV=0;const onHome=!!stage.querySelector(".opts");if(an==="settings"&&onHome)NAV=-1;else if(an==="search"&&onHome)NAV=1;else if(FWD[an])NAV=1;else if(an==="back"||an==="cancel"){NAV=stage.querySelector(".srow.out")?1:-1;}clearTimeout(NAVT);NAVT=setTimeout(()=>{NAV=0;},700);try{if(an==="back")goBack(f);else f();}catch(x){}}
 });
 const tap=()=>{};   // vibrazione al tocco rimossa
 /* ripple: ogni pulsante, riga o scelta "risponde" al tocco con un'onda che parte dal punto toccato */
@@ -3076,7 +3076,18 @@ function show(r,sur,man,quiet){
 }
 
 
-addEventListener("popstate",()=>{if(LB){doCloseLb();return;}if(document.body.classList.contains("locked"))return;
+/* swipe dal bordo per "tornare indietro" (iOS): bloccato. Si torna indietro solo con il tasto dell'app. */
+addEventListener("touchstart",e=>{const t=e.touches&&e.touches[0];if(!t)return;
+  if(t.clientX<=22||t.clientX>=innerWidth-22){EDGET=Date.now();EDGEX=t.clientX;
+    if(!(e.target.closest&&e.target.closest("button,a,input,textarea,select,[data-act]")))e.preventDefault();}
+},{passive:false,capture:true});
+let EDGEX=-1;
+addEventListener("touchmove",e=>{const t=e.touches&&e.touches[0];if(EDGEX>=0&&t&&Math.abs(t.clientX-EDGEX)>4&&e.cancelable)e.preventDefault();},{passive:false,capture:true});
+addEventListener("touchend",()=>{EDGEX=-1;},true);addEventListener("touchcancel",()=>{EDGEX=-1;},true);
+addEventListener("popstate",()=>{
+  if(IGN){IGN=0;return;}
+  if(Date.now()-EDGET<900&&Date.now()-BTAP>900&&history.state&&typeof history.state.d==="number"&&history.state.d<PD){IGN=1;try{history.forward();}catch(e){IGN=0;}return;}
+  if(LB){doCloseLb();return;}if(document.body.classList.contains("locked"))return;
   if(history.state&&typeof history.state.d==="number"){const dd=history.state.d;if(!NAV&&!TDX){NAV=dd<PD?-1:dd>PD?1:0;clearTimeout(NAVT);NAVT=setTimeout(()=>{NAV=0;},700);}if(dd<PD){BKN=true;clearTimeout(BKT);BKT=setTimeout(()=>{BKN=false;},1500);}PD=dd;}
   routeFromHash();});
 
