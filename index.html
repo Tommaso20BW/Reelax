@@ -1058,7 +1058,12 @@ let HGEN=0;
   const goHome=()=>{
     if(document.body.classList.contains("locked")||LB||idle())return;
     if(!RM()){let fx=br.querySelector(".fx");if(!fx){fx=document.createElement("span");fx.className="fx";fx.setAttribute("aria-hidden","true");fx.innerHTML="<b>Reelax</b>";br.appendChild(fx);}
-      if(fx.animate){fx.animate([{opacity:0},{opacity:1,offset:.14},{opacity:1,offset:.5},{opacity:0}],{duration:1500,easing:"ease-out"});fx.firstChild.animate([{backgroundPosition:"0% 50%"},{backgroundPosition:"100% 50%"}],{duration:1500,easing:"linear"});const c0=getComputedStyle(br).color;br.animate([{color:c0},{color:"transparent",offset:.14},{color:"transparent",offset:.5},{color:c0}],{duration:1500,easing:"ease-out"});}}   // lampo di colore che svanisce (niente seconda animazione di scala: si sommava a quella del tocco)
+      if(fx.animate){
+        const cp=(l,r)=>"inset(-4px "+r+" -4px "+l+")",EA="cubic-bezier(.65,0,.35,1)";
+        fx.animate([{opacity:1,clipPath:cp("0%","100%"),easing:EA},{opacity:1,clipPath:cp("0%","0%"),offset:.38},{opacity:1,clipPath:cp("0%","0%"),offset:.55,easing:EA},{opacity:1,clipPath:cp("100%","0%")}],{duration:1700});
+        fx.firstChild.animate([{backgroundPosition:"0% 50%"},{backgroundPosition:"100% 50%"}],{duration:1700,easing:"linear"});
+        br.animate([{transform:"scale(1)"},{transform:"scale(1.1)",offset:.3},{transform:"scale(1)"}],{duration:900,easing:"cubic-bezier(.2,.85,.25,1)"});
+      }}   // lampo di colore che svanisce (niente seconda animazione di scala: si sommava a quella del tocco)
     if(clean())return;
     HGEN++;RUN++;SRUN++;restart();
   };
