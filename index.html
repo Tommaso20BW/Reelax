@@ -1710,7 +1710,6 @@ async function syncPull(){
       else if(rl&&rl!=="IT"){L.rg=rl;lsave();}}   // il server non la conosce ancora: invio quella di questo dispositivo
     if(j.st&&typeof j.st==="object"&&!Array.isArray(j.st)){L.st=j.st;}
     else if(st0&&Object.keys(st0).length){L.st=st0;lsave();}   // il server non ha ancora le impostazioni: invio quelle di questo dispositivo
-    try{const th=getSet("theme","");if((th==="auto"||th==="light"||th==="dark")&&th!==window.themePref())window.setTheme(th);}catch(e){}
     RECENT=L.recent;
     if(!RECENT.length&&keep.length){RECENT=L.recent=keep;lsave();}   // il server non ha ancora la lista: invio quella di questo dispositivo
     try{localStorage.setItem(LKEY,JSON.stringify(L));}catch(e){}
@@ -1983,7 +1982,7 @@ function settingsPage(){
     pfpick:()=>pfPage(),reg:()=>regionPage(),acuser:()=>accountPage("user"),acpass:()=>accountPage("pass")}});
   const th=$("thseg"),pr=window.themePref();
   th.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.t===pr));
-  th.onclick=e=>{const b=e.target.closest&&e.target.closest("button[data-t]");if(!b)return;tap();{const r=b.getBoundingClientRect(),cx=(e.clientX||e.clientY)?e.clientX:r.left+r.width/2,cy=(e.clientX||e.clientY)?e.clientY:r.top+r.height/2;window.setTheme(b.dataset.t,cx,cy);}setSet("theme",b.dataset.t);th.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));};
+  th.onclick=e=>{const b=e.target.closest&&e.target.closest("button[data-t]");if(!b)return;tap();{const r=b.getBoundingClientRect(),cx=(e.clientX||e.clientY)?e.clientX:r.left+r.width/2,cy=(e.clientX||e.clientY)?e.clientY:r.top+r.height/2;window.setTheme(b.dataset.t,cx,cy);}th.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));};
 }
 /* ---------- Regione ---------- */
 function regionPage(){
