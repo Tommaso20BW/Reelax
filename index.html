@@ -1066,7 +1066,7 @@ let HGEN=0;
         const fg=getComputedStyle(br).color;
         t.style.background="linear-gradient(100deg,"+fg+" 0 38%,#ff3d52 44%,#c13bd9 50%,#8f62f8 56%,"+fg+" 62% 100%) 95% 0/300% 100% no-repeat";
         t.style.webkitBackgroundClip="text";t.style.backgroundClip="text";t.style.webkitTextFillColor="transparent";
-        const an=t.animate([{backgroundPosition:"95% 0"},{backgroundPosition:"5% 0"}],{duration:1200,easing:"ease-in-out"});
+        const an=t.animate([{backgroundPosition:"95% 0"},{backgroundPosition:"5% 0"}],{duration:520,easing:"cubic-bezier(.4,0,.2,1)"});
         const rs=()=>t.removeAttribute("style");an.finished.then(rs,rs);
       }
     }   // lampo di colore che svanisce (niente seconda animazione di scala: si sommava a quella del tocco)
