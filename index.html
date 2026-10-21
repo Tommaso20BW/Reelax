@@ -304,7 +304,7 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .castbtn .cav i{display:grid;place-items:center;font-style:normal;font-size:1.3rem}
 .sagabtn{overflow:hidden}
 .sgm{display:block;position:relative;height:200px;margin-top:6px;overflow:hidden;--fw:40px;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 var(--fw),#000 calc(100% - var(--fw)),transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 var(--fw),#000 calc(100% - var(--fw)),transparent 100%)}
-.sgi{position:absolute;left:0;top:0;transform-origin:0 0;transition:transform 1.7s cubic-bezier(.45,.05,.2,1),opacity 1.4s ease;will-change:transform,opacity}
+.sgi{position:absolute;left:0;top:0;transform-origin:0 0;transition:transform 1.1s cubic-bezier(.45,.05,.2,1),opacity .9s ease;will-change:transform,opacity}
 .sgi img{display:block;width:100%;height:100%;object-fit:cover;border-radius:10px;background:var(--s3);box-shadow:0 3px 10px rgba(0,0,0,.35)}
 .sgd{position:absolute;left:0;right:0;bottom:0;text-align:center;padding:0 6px;z-index:2;pointer-events:none}
 .sgd b{display:block;font-weight:800;font-size:.9rem;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em;overflow-wrap:anywhere}
@@ -2439,7 +2439,7 @@ function startSaga(){
       const dd=dOf(i),od=el._d;
       if(od<0&&dd>0){   // esce a sinistra e poi rientra da destra
         el.style.transition="";apply(el,-3);
-        setTimeout(()=>{if(my!==tok||!box.isConnected)return;el.style.transition="none";apply(el,3);void el.offsetWidth;el.style.transition="";apply(el,dd);},1800);
+        setTimeout(()=>{if(my!==tok||!box.isConnected)return;el.style.transition="none";apply(el,3);void el.offsetWidth;el.style.transition="";apply(el,dd);},1200);
       }else{
         el.style.transition=(Math.min(Math.abs(od),3)>=3&&Math.min(Math.abs(dd),3)>=3)?"none":"";
         apply(el,dd);
@@ -2453,13 +2453,13 @@ function startSaga(){
       text();
       tt.style.transition="opacity .8s ease";
       tt.style.opacity="1";
-    },950);
+    },650);
   };
   const id=setInterval(()=>{
     if(!box.isConnected){clearInterval(id);return;}
     if(!vis||document.hidden)return;
     step();
-  },5000);
+  },3200);
 }
 function sagaTile(d){
   // anteprima: solo gli ALTRI film della saga (il film aperto non compare); "n / tot" è la posizione nella saga completa
