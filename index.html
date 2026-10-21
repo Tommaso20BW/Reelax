@@ -931,6 +931,7 @@ function swap(h,anim){
     const ar=app.getBoundingClientRect(),sr=stage.getBoundingClientRect();
     ghost=document.createElement("div");ghost.className="ghost";ghost.setAttribute("aria-hidden","true");
     ghost.style.cssText="left:"+(sr.left-ar.left)+"px;top:"+(sr.top-ar.top)+"px;width:"+sr.width+"px;height:"+sr.height+"px";
+    {const cs=getComputedStyle(stage);ghost.style.padding=cs.paddingTop+" "+cs.paddingRight+" "+cs.paddingBottom+" "+cs.paddingLeft;}   // stesso padding dello stage: il contenuto non si sposta di qualche pixel nel passaggio
     // sposto i nodi vivi nel "ghost" invece di duplicarli con innerHTML: le immagini restano già decodificate (un clone le ricarica da zero e per ~100 ms la locandina/gli avatar lampeggiavano vuoti)
     const sy=stage.scrollTop;
     while(stage.firstChild)ghost.appendChild(stage.firstChild);
