@@ -1266,7 +1266,7 @@ function seasonsPage(d,snap){
   {const k=snap.r&&snap.r.m&&snap.r.m.id!=null?String(snap.r.m.id):"";if(k)setRoute("/t/"+enc(k)+"/stagioni");else ROUTED=false;}
   const list=d.seasonList||[];
   const row=(x,i)=>{const nm=x.name||("Stagione "+x.n),sub=[x.date?String(x.date).slice(0,4):"",x.ep?x.ep+" ep.":""].filter(Boolean).join(" · ");
-    return '<button type="button" class="sr" data-i="'+i+'"><span class="th">'+(x.img?'<img src="'+PIMG+esc(x.img)+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">':esc(String(x.n)))+'</span><span class="tx"><span class="t">'+esc(nm)+'</span>'+(sub?'<span class="s">'+esc(sub)+'</span>':'')+'</span></button>';};
+    return '<button type="button" class="sr" data-i="'+i+'">'+(x.img?'<span class="th"><img src="'+PIMG+esc(x.img)+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"></span>':'')+'<span class="tx"><span class="t">'+esc(nm)+'</span>'+(sub?'<span class="s">'+esc(sub)+'</span>':'')+'</span></button>';};
   subSwap('<div class="page lst"><h1>Stagioni</h1><div class="sres" id="sns">'+list.map(row).join('')+'</div></div>',true);
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>{show(snap.r,snap.sur,snap.man,"fade");}}});
   $("sns").onclick=e=>{const b=e.target.closest&&e.target.closest("[data-i]");if(!b)return;tap();TDX=1;episodesPage(d,list[+b.dataset.i],snap);};
