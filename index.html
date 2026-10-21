@@ -280,6 +280,8 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .pv{flex:1 1 0;min-width:0;max-width:46px;aspect-ratio:1;display:block;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--s3);transition:transform .1s}
 .pv img{width:100%;height:100%;object-fit:cover}
 .pv.t{display:grid;place-items:center;font:800 .7rem var(--fd);color:var(--mut)}
+.pv{text-decoration:none}
+.pv[href]:active{transform:scale(.9)}
 .info{display:grid;grid-template-columns:auto minmax(0,1fr);gap:9px 16px;margin:0;font-size:.88rem}
 .info dt{color:var(--mut)}
 .info dd{margin:0}
@@ -2562,6 +2564,31 @@ const PV_AL={amazonvideo:"primevideo",appletvstore:"appletv",appletvplus:"applet
 const PV_NM={primevideo:"Amazon Prime Video",appletv:"Apple TV",mediasetinfinity:"Mediaset Infinity"};
 const provKey=n=>{const k=provKey0(n);return PV_AL[k]||k;};
 function dedupeProv(arr){const m=new Map();arr.forEach(p=>{const k=provKey(p.provider_name),ch=CH_RE.test(p.provider_name||"")||/with ads|con pubblicit/i.test(p.provider_name||"");const o=m.get(k);if(!o)m.set(k,{p,ch});else if(o.ch&&!ch)m.set(k,{p,ch});});return Array.from(m.values()).map(x=>x.p);}
+/* link esatti alle piattaforme (JustWatch, tramite il Worker: /jw/offers). Se il servizio non risponde o non trova il titolo, i loghi restano statici */
+const JW_T={flat:["FLATRATE","FLATRATE_AND_BUY","CINEMA"],ads:["ADS","FREE","FAST"],rent:["RENT"],buy:["BUY","FLATRATE_AND_BUY"]};
+function jwLink(d,g,k){
+  const a=d&&d.jw;if(!a||!a.length)return"";
+  const m=a.filter(o=>o&&typeof o.u==="string"&&/^https:\/\//.test(o.u)&&provKey(o.n)===k);if(!m.length)return"";
+  return (m.find(o=>(JW_T[g]||[]).indexOf(o.t)>=0)||m[0]).u;
+}
+function jwApply(d){   // i link arrivano dopo che la scheda e' gia' visibile: si aggiungono ai loghi senza ridisegnare nulla
+  const sec=stage.querySelector('section[data-jw="'+String(d.tid)+'"]');if(!sec)return;
+  sec.querySelectorAll("a.pv[data-pk]").forEach(a=>{
+    if(a.getAttribute("href"))return;
+    const u=jwLink(d,a.dataset.pg,a.dataset.pk);if(!u)return;
+    a.setAttribute("href",u);a.setAttribute("target","_blank");a.setAttribute("rel","noopener noreferrer");a.removeAttribute("role");
+  });
+}
+function jwLoad(d){
+  if(!d||d.rl!=="TMDB"||!d.provKnown||!d.tid||d.jw!==undefined||d._jwp)return;
+  const P=d.prov;if(!P||!["flat","ads","rent","buy"].some(g=>(P[g]||[]).length))return;
+  d._jwp=1;
+  const q=new URLSearchParams({title:d.title||"",year:d.year||"",type:d.movie?"movie":"tv",country:REG(),lang:LANG().slice(0,2)});
+  if(d.orig)q.set("orig",d.orig);
+  fj(TMDB_PROXY.replace(/\/+$/,"")+"/jw/offers?"+q.toString(),7000,{headers:{Authorization:"Bearer "+getTok()}})
+    .then(j=>{d.jw=Array.isArray(j&&j.offers)?j.offers.filter(o=>o&&typeof o.n==="string"&&typeof o.u==="string").slice(0,80):[];d._jwp=0;jwApply(d);})
+    .catch(()=>{d._jwp=0;});   // errore: nessun link; si riprova alla prossima apertura della scheda
+}
 function provHtml(d){
   if(d.rl!=="TMDB"||!d.provKnown)return "";
   const groups=[["flat","In abbonamento"],["ads","Gratis con pubblicità"],["rent","Noleggio"],["buy","Acquisto"]];
@@ -2570,12 +2597,13 @@ function provHtml(d){
     const arr=dedupeProv((d.prov&&d.prov[g[0]])||[]);if(!arr.length)return;
     h+='<div class="pg"><small>'+g[1]+'</small><div class="pl">'+arr.map(p=>{
       const nm=esc(provBase(p.provider_name));
-      return '<span class="pv'+(p.logo_path?'':' t')+'" title="'+nm+'" role="img" aria-label="'+nm+'">'+(p.logo_path?'<img src="https://image.tmdb.org/t/p/w92'+esc(p.logo_path)+'" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.classList.add(\'t\');this.parentNode.textContent=this.parentNode.title.slice(0,2);">':nm.slice(0,2))+'</span>';
+      const pk=provKey(p.provider_name),lk=jwLink(d,g[0],pk);
+      return '<a class="pv'+(p.logo_path?'':' t')+'" data-pg="'+g[0]+'" data-pk="'+esc(pk)+'" title="'+nm+'"'+(lk?' href="'+esc(lk)+'" target="_blank" rel="noopener noreferrer"':' role="img"')+' aria-label="'+nm+'">'+(p.logo_path?'<img src="https://image.tmdb.org/t/p/w92'+esc(p.logo_path)+'" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.classList.add(\'t\');this.parentNode.textContent=this.parentNode.title.slice(0,2);">':nm.slice(0,2))+'</a>';
     }).join('')+'</div></div>';
   });
   const it=REG()==="IT";
   if(!h)h='<p>Al momento non risulta disponibile '+(it?'in Italia':'in questa regione ('+esc(regName(REG()))+')')+' su piattaforme di streaming, noleggio o acquisto.</p>';
-  return '<section class="card"><h3>Dove guardarlo'+(it?' in Italia':' · '+esc(regName(REG())))+'</h3>'+h+'</section>';
+  return '<section class="card" data-jw="'+esc(String(d.tid||""))+'"><h3>Dove guardarlo'+(it?' in Italia':' · '+esc(regName(REG())))+'</h3>'+h+'</section>';
 }
 function startSaga(){
   const box=stage.querySelector(".sgm");
@@ -3173,6 +3201,7 @@ function show(r,sur,man,quiet){
   {const sg=$("simg");if(sg)sg.onclick=e=>{const b=e.target.closest&&e.target.closest("[data-i]");if(!b)return;tap();TDX=1;openSearched(d.sim[+b.dataset.i],()=>show(r,sur,man,"fade"));};}
   if(snap)settle(snap);
   setBd(d.poster);
+  try{jwLoad(d);}catch(e){}
   setTimeout(()=>{const f=()=>{try{prepShare(d);}catch(e){}};if(window.requestIdleCallback)requestIdleCallback(f,{timeout:6000});else f();},2500);
   if(man){
     ui({
