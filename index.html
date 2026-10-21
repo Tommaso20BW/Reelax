@@ -1557,17 +1557,17 @@ function wallOn(){
   killWall(true);
   const o=document.createElement("div");o.className="ldw";o.id="ldw";o.style.setProperty("--ph",wallDims().ph+"px");o.setAttribute("aria-hidden","true");o.innerHTML=wallHtml();
   document.body.appendChild(o);
-  requestAnimationFrame(()=>requestAnimationFrame(()=>o.classList.add("on")));
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{if(o.id==="ldw")o.classList.add("on");}));
 }
 function loading(){
   ROUTED=false;setBd(null);
   const t=["Cerco un titolo adatto a te...","Controllo i tuoi gusti...","Ci siamo quasi..."];
   let canc=false;
   const cancel=()=>{   // Annulla: si interrompe la ricerca, tutto torna deselezionato e si riparte dalla home; scritta, tasti e muro di locandine escono insieme, senza sovrapporsi alla home
-    if(canc)return;canc=true;RUN++;
+    if(canc)return;canc=true;RUN++;endLoad();
     const fast=RM(),T=fast?0:300;
     if(!fast){
-      const fo=el=>{if(el&&el.animate)el.animate([{opacity:1},{opacity:0}],{duration:200,easing:"ease-in",fill:"forwards"});};
+      const fo=el=>{if(!el)return;const o=parseFloat(getComputedStyle(el).opacity);if(!el.animate){el.style.opacity="0";return;}el.getAnimations().forEach(x=>x.cancel());el.style.animation="none";el.style.opacity=String(o);const a=el.animate([{opacity:o},{opacity:0}],{duration:200,easing:"ease-in",fill:"forwards"});const z=()=>{el.style.opacity="0";};a.finished.then(z,z);};
       fo(document.querySelector(".load p"));[...$("dockin").children].forEach(fo);fo($("tl").firstElementChild);
     }
     const w=$("ldw");
@@ -1583,7 +1583,9 @@ function loading(){
   }
   WLOAD=true;if(!WPOOL.length)wallWait().then(fillWall);
   let i=0;const iv=setInterval(()=>{i=(i+1)%t.length;const p=$('lt');if(p){p.textContent=t[i];if(p.animate)p.animate([{opacity:0,transform:'translateY(8px)'},{opacity:1,transform:'none'}],{duration:320,easing:'ease-out'});}},1300);
-  return ()=>{clearInterval(iv);WLOAD=false;setTimeout(wallRelease,2500);};
+  let ended=false;
+  const endLoad=()=>{if(ended)return;ended=true;clearInterval(iv);WLOAD=false;setTimeout(wallRelease,2500);};
+  return endLoad;
 }
 
 function showError(e){
@@ -1704,10 +1706,49 @@ let pushT=null;
 function lsave(){L.ts=Date.now();try{localStorage.setItem(LKEY,JSON.stringify(L));localStorage.setItem(LDIRTY,"1");}catch(e){}clearTimeout(pushT);pushT=setTimeout(syncPush,900);}
 /* Impostazioni generiche: getSet(chiave,predefinito) / setSet(chiave,valore). Si salvano su questo dispositivo e nel Worker (L.st), quindi vale anche per quelle future. */
 const getSet=(k,d)=>{const v=L.st&&L.st[k];return v===undefined?d:v;};
-const setSet=(k,v)=>{if(!L.st||typeof L.st!=="object")L.st={};L.st[k]=v;lsave();};
+const stT=()=>{if(!L.st||typeof L.st!=="object"||Array.isArray(L.st))L.st={};if(!L.st._t||typeof L.st._t!=="object")L.st._t={};return L.st._t;};   // data dell'ultima modifica di ogni impostazione
+const setSet=(k,v)=>{if(!L.st||typeof L.st!=="object")L.st={};L.st[k]=v;stT()[k]=Date.now();lsave();};
+/* Impostazioni (esclusa la scelta del tema): ciascuna ha la sua data di modifica e, tra questo dispositivo e il server, vince la modifica piu' recente.
+   Cosi' un dispositivo che salva soltanto un "recente" non sovrascrive piu' le impostazioni cambiate altrove. */
+function mergeSettings(j){
+  const out={ch:[],push:false};
+  j=j&&typeof j==="object"?j:{};
+  const rs=(j.st&&typeof j.st==="object"&&!Array.isArray(j.st))?j.st:{},rt=(rs._t&&typeof rs._t==="object")?rs._t:{},lt=stT();
+  const lrg=()=>{if(REGIONS.indexOf(L.rg)>=0)return L.rg;try{const v=localStorage.getItem(RGKEY);if(REGIONS.indexOf(v)>=0&&v!=="IT")return v;}catch(e){}return undefined;};
+  const rget=k=>k==="pf"?j.pf:k==="rg"?j.rg:k==="platforms"?j.platforms:rs[k];
+  const lget=k=>k==="pf"?(typeof L.pf==="boolean"?L.pf:undefined):k==="rg"?lrg():k==="platforms"?((L.platforms.length||lt.platforms)?L.platforms:undefined):(L.st?L.st[k]:undefined);
+  const ok=(k,v)=>v!==undefined&&(k==="pf"?typeof v==="boolean":k==="rg"?REGIONS.indexOf(v)>=0:k==="platforms"?Array.isArray(v):true);
+  const put=(k,v)=>{
+    if(k==="pf"){L.pf=v;try{localStorage.setItem(PFKEY,v?"1":"0");}catch(e){}}
+    else if(k==="rg"){L.rg=v;try{localStorage.setItem(RGKEY,v);}catch(e){}}
+    else if(k==="platforms")L.platforms=v;
+    else{if(!L.st||typeof L.st!=="object")L.st={};L.st[k]=v;}
+  };
+  const keys=new Set(["pf","rg","platforms"]);
+  [rs,L.st].forEach(o=>{if(o&&typeof o==="object")Object.keys(o).forEach(k=>{if(k!=="_t")keys.add(k);});});
+  keys.forEach(k=>{
+    const r=rget(k),l=lget(k),rts=+rt[k]||0,lts=+lt[k]||0;
+    if(ok(k,r)&&rts>=lts){
+      if(JSON.stringify(r)!==JSON.stringify(l)){put(k,r);out.ch.push(k);}
+      if(rts)lt[k]=rts;
+    }else if(l!==undefined)out.push=true;   // il server non la conosce oppure la mia modifica e' piu' recente
+  });
+  return out;
+}
+function afterSettings(ch){
+  try{localStorage.setItem(LKEY,JSON.stringify(L));}catch(e){}
+  S.seen=[];S.cands=[];
+  if(ch.indexOf("rg")>=0)setTimeout(i18nRefresh,0);
+  if(CURR==="/impostazioni"){try{const a=$("sg_pf"),b=$("sg_sn");if(a)a.innerHTML=pfGroup();if(b)b.innerHTML=seenGroup();}catch(e){}}   // pagina Impostazioni aperta: si aggiorna sul posto
+}
 async function syncPush(){
   if(!tmdbOn()||!getTok())return;
   try{
+    try{   // prima unisco le impostazioni del server, poi invio: niente sovrascritture
+      const g=await fetch(PX()+"/me/lists",{headers:AUTHH()});
+      if(g.status===401){doLogout();return;}
+      if(g.ok){const m=mergeSettings(await g.json());if(m.ch.length)afterSettings(m.ch);}
+    }catch(e){}
     const r=await fetch(PX()+"/me/lists",{method:"PUT",headers:AUTHH(),body:JSON.stringify(L)});
     if(r.status===401){doLogout();return;}
     if(r.ok)try{localStorage.removeItem(LDIRTY);}catch(e){}
@@ -1715,28 +1756,25 @@ async function syncPush(){
 }
 async function syncPull(){
   if(!tmdbOn()||!getTok())return;
-  try{if(localStorage.getItem(LDIRTY)==="1")return syncPush();}catch(e){}   // modifiche locali non ancora inviate: vincono loro
+  try{if(localStorage.getItem(LDIRTY)==="1")return syncPush();}catch(e){}   // modifiche locali non ancora inviate: si inviano prima
+  const ts0=L.ts;
   try{
     const r=await fetch(PX()+"/me/lists",{headers:AUTHH()});
     if(r.status===401){doLogout();return;}
     if(!r.ok)return;
     const j=await r.json();
-    if((+j.ts||0)<(+L.ts||0)){syncPush();return;}   // il server ha una copia piu' vecchia della mia (lettura ritardata del KV): vince la mia
-    const keep=RECENT;
-    const pf0=L.pf,rg0=L.rg,st0=L.st,seen0=L.seen;
-    L={platforms:Array.isArray(j.platforms)?j.platforms:[],recent:Array.isArray(j.recent)?j.recent:[],seen:[]};
+    if(L.ts!==ts0){syncPush();return;}   // nel frattempo e' cambiato qualcosa qui: vince la modifica locale
+    const m=mergeSettings(j);
+    if((+j.ts||0)<(+L.ts||0)){if(m.ch.length)afterSettings(m.ch);syncPush();return;}
+    const keep=RECENT,seen0=L.seen||[];let need=m.push;
+    L.recent=Array.isArray(j.recent)?j.recent:[];
+    if(Array.isArray(j.seen))L.seen=j.seen;else{L.seen=seen0;if(seen0.length)need=true;}
     if(typeof j.ts==="number")L.ts=j.ts;
-    if(Array.isArray(j.seen))L.seen=j.seen;else if(seen0&&seen0.length){L.seen=seen0;lsave();}   // il server non conosce ancora i "già visti": invio quelli di questo dispositivo
-    sbuild();
-    if(typeof j.pf==="boolean")L.pf=j.pf;else if(typeof pf0==="boolean"){L.pf=pf0;lsave();}   // il server non lo conosce ancora: invio il valore di questo dispositivo
-    {const rl=(()=>{try{const v=rg0||localStorage.getItem(RGKEY);return REGIONS.indexOf(v)>=0?v:"";}catch(e){return REGIONS.indexOf(rg0)>=0?rg0:"";}})();
-      if(REGIONS.indexOf(j.rg)>=0){L.rg=j.rg;if(j.rg!==rl){try{localStorage.setItem(RGKEY,j.rg);}catch(e){}S.seen=[];S.cands=[];setTimeout(i18nRefresh,0);}}   // regione scelta su un altro dispositivo
-      else if(rl&&rl!=="IT"){L.rg=rl;lsave();}}   // il server non la conosce ancora: invio quella di questo dispositivo
-    if(j.st&&typeof j.st==="object"&&!Array.isArray(j.st)){L.st=j.st;}
-    else if(st0&&Object.keys(st0).length){L.st=st0;lsave();}   // il server non ha ancora le impostazioni: invio quelle di questo dispositivo
-    RECENT=L.recent;
-    if(!RECENT.length&&keep.length){RECENT=L.recent=keep;lsave();}   // il server non ha ancora la lista: invio quella di questo dispositivo
+    sbuild();RECENT=L.recent;
+    if(!RECENT.length&&keep.length){RECENT=L.recent=keep;need=true;}
     try{localStorage.setItem(LKEY,JSON.stringify(L));}catch(e){}
+    if(m.ch.length)afterSettings(m.ch);
+    if(need)lsave();
   }catch(e){}
 }
 const itemOf=r=>{const m=r.m,d=r.d,t=m.src==="tmdb",p=d.poster||m.image||"";
@@ -1874,7 +1912,7 @@ const flagIc=c=>'<span class="fl" aria-hidden="true"><svg viewBox="0 0 60 40" pr
 const REG=()=>{if(L&&REGIONS.indexOf(L.rg)>=0)return L.rg;try{const v=localStorage.getItem(RGKEY);if(v&&REGIONS.indexOf(v)>=0)return v;}catch(e){}return "IT";};
 let RGN=null,RGNL="";
 const regName=c=>{try{const l=UIL();if(!RGN||RGNL!==l){RGN=new Intl.DisplayNames([l],{type:"region"});RGNL=l;}return RGN.of(c)||c;}catch(e){return c;}};
-function setRegion(c){if(REGIONS.indexOf(c)<0||c===REG())return;try{localStorage.setItem(RGKEY,c);}catch(e){}L.rg=c;S.seen=[];S.cands=[];lsave();i18nRefresh();}
+function setRegion(c){if(REGIONS.indexOf(c)<0||c===REG())return;try{localStorage.setItem(RGKEY,c);}catch(e){}L.rg=c;stT().rg=Date.now();S.seen=[];S.cands=[];lsave();i18nRefresh();}
 
 /* ---------- Lingua dell'interfaccia, in base alla regione ---------- */
 const UIMAP={IT:"it",ES:"es",MX:"es",AR:"es",FR:"fr",DE:"de",PT:"pt",BR:"pt"};   // tutte le altre regioni: inglese
@@ -1934,7 +1972,7 @@ setTimeout(i18nRefresh,0);
 
 const PFKEY="reelax_pf_on";
 const pfOn=()=>{if(typeof L.pf==="boolean")return L.pf;try{return localStorage.getItem(PFKEY)==="1";}catch(e){return false;}};   // sincronizzato col Worker; se manca, valore vecchio di questo dispositivo
-const pfSet=v=>{L.pf=!!v;try{localStorage.setItem(PFKEY,v?"1":"0");}catch(e){}lsave();};
+const pfSet=v=>{L.pf=!!v;stT().pf=Date.now();try{localStorage.setItem(PFKEY,v?"1":"0");}catch(e){}lsave();};
 const pfSel=()=>L.platforms.filter(x=>x&&typeof x==="object"&&Array.isArray(x.ids));
 const pfIds=()=>pfOn()?[].concat(...pfSel().map(x=>x.ids)):[];
 function pfNorm(){   // selezioni salvate con nomi doppi (es. Amazon Video + Amazon Prime Video): le unisco
@@ -2095,7 +2133,7 @@ async function pfPage(){
     const b=e.target.closest&&e.target.closest("[data-i]");if(!b)return;tap();
     const x=list[+b.dataset.i],i=L.platforms.findIndex(y=>y&&y.k===x.k);
     if(i>=0)L.platforms.splice(i,1);else L.platforms.push({k:x.k,n:x.n,l:x.l,ids:x.ids});
-    lsave();const on=i<0;b.classList.toggle("on",on);b.setAttribute("aria-pressed",on?"true":"false");
+    stT().platforms=Date.now();lsave();const on=i<0;b.classList.toggle("on",on);b.setAttribute("aria-pressed",on?"true":"false");
   };
 }
 let outT=null;
@@ -3200,6 +3238,10 @@ const boot=()=>{document.body.classList.remove("pre");try{if(!(history.state&&ty
 const fontsOk=(document.fonts&&document.fonts.ready)?Promise.race([document.fonts.ready,sleep(1200)]):Promise.resolve();
 const pageOk=document.readyState==="complete"?Promise.resolve():new Promise(r=>{addEventListener("load",r,{once:true});setTimeout(r,3000);});
 Promise.all([fontsOk,pageOk,0]).then(()=>requestAnimationFrame(()=>requestAnimationFrame(boot)));
+/* aggiornamento live: tornando sull'app (o ogni minuto) si leggono le impostazioni dagli altri dispositivi */
+let lastPull=Date.now();
+const livePull=()=>{if(document.hidden||document.body.classList.contains("locked")||!isAuthed()||Date.now()-lastPull<15000)return;lastPull=Date.now();syncPull();};
+document.addEventListener("visibilitychange",livePull);addEventListener("focus",livePull);setInterval(livePull,60000);
 let dp=null;const ib=$("ib");
 addEventListener("beforeinstallprompt",e=>{e.preventDefault();dp=e;try{if(!localStorage.getItem("stasera_ix"))ib.hidden=false;}catch(x){ib.hidden=false;}});
 $("ibtn").onclick=()=>{ib.hidden=true;if(dp){dp.prompt();dp=null;}};
