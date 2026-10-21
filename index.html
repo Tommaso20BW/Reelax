@@ -133,6 +133,7 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .prog{height:3px;margin:2px var(--gut) 8px;border-radius:3px;background:var(--soft);overflow:hidden;transition:opacity .3s}
 /* linea gradiente del tasto Reelax: sta sopra la barra di progresso, visibile solo durante l'effetto */
 .bline{position:absolute;left:var(--gut);right:var(--gut);bottom:8px;height:3px;border-radius:3px;background:var(--grad);box-shadow:0 0 10px rgba(255,61,82,.6);transform:scaleX(0);opacity:0;pointer-events:none;z-index:6}
+.btrack{position:absolute;left:var(--gut);right:var(--gut);bottom:8px;height:3px;border-radius:3px;background:var(--soft);opacity:0;pointer-events:none;z-index:5}   /* pista sotto la linea del tasto Reelax quando la barra di progresso è nascosta (scheda film ecc.) */
 .prog.off{opacity:0}
 .prog b{display:block;height:100%;width:0;border-radius:inherit;background:var(--grad);box-shadow:0 0 10px rgba(255,61,82,.6);transition:width .65s cubic-bezier(.45,.05,.2,1)}
 
@@ -425,6 +426,7 @@ body.pre #app{opacity:0}
   .top-in{grid-template-columns:108px 1fr 108px;height:64px}
   .brand{font-size:.95rem}
   .prog{margin:2px var(--gut) 10px;max-width:1100px;align-self:center;width:calc(100% - var(--gut)*2)}
+  .bline,.btrack{bottom:10px}
   #stage{padding:18px var(--gut) 28px}
   #dock{padding:14px var(--gut) 28px}
   .dock-in{max-width:620px;margin:0 auto}
@@ -1087,6 +1089,7 @@ let HGEN=0;
     if(top){
       let ln=top.querySelector(".bline");
       if(!ln){ln=document.createElement("div");ln.className="bline";top.appendChild(ln);}
+      if($("prog").classList.contains("off")){let tk=top.querySelector(".btrack");if(!tk){tk=document.createElement("div");tk.className="btrack";top.appendChild(tk);}tk.getAnimations().forEach(x=>x.cancel());tk.animate([{opacity:0},{opacity:1,offset:.1},{opacity:1,offset:.35},{opacity:0}],{duration:FXD,easing:"linear"});}   // barra nascosta: pista che svanisce quando arriva quella vera
       ln.getAnimations().forEach(x=>x.cancel());
       ln.animate([
         {transform:"scaleX(0)",opacity:1,transformOrigin:"left"},
