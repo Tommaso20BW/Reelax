@@ -526,10 +526,15 @@ body.pre #app{opacity:0}
 .acf{display:flex;flex-direction:column;gap:12px}
 .acm{min-height:1.3em;margin:0;font-size:.9rem;font-weight:600;color:var(--red)}
 .acm.ok{color:#2fb859}
-.sw{position:relative;flex:none;width:46px;height:28px;border-radius:999px;background:var(--s3);border:1px solid var(--line2);transition:background .2s,border-color .2s}
-.sw i{position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;background:var(--fg);transition:transform .2s var(--ease),background .2s}
-.sw.on{background:var(--grad);border-color:transparent}
+.sw{position:relative;flex:none;width:46px;height:28px;border-radius:999px;background:var(--s3);border:1px solid var(--line2);transition:border-color .25s}
+.sw::before{content:"";position:absolute;inset:-1px;border-radius:inherit;background:var(--grad);opacity:0;transition:opacity .3s ease}
+.sw i{position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;background:var(--fg);box-shadow:0 2px 6px rgba(0,0,0,.28);transition:transform .42s cubic-bezier(.34,1.56,.64,1),width .2s ease,background .25s}
+.sw.on{border-color:transparent}
+.sw.on::before{opacity:1}
 .sw.on i{transform:translateX(18px);background:#fff}
+.srow:active .sw i{width:28px}
+.srow:active .sw.on i{transform:translateX(12px)}
+@media (prefers-reduced-motion:reduce){.sw::before,.sw i{transition:none}}
 .pfg{display:flex;flex-direction:column;gap:8px}
 .pfg .lemp{padding:36px 0}
 .pfr{display:flex;align-items:center;gap:12px;width:100%;min-height:54px;padding:8px 14px 8px 8px;text-align:left;border-radius:var(--r2);border:1px solid var(--line);background:linear-gradient(160deg,var(--s2),var(--s1));transition:border-color .15s,transform .1s}
@@ -1908,11 +1913,12 @@ function pfNorm(){   // selezioni salvate con nomi doppi (es. Amazon Video + Ama
   });
   if(ch){L.platforms=[...m.values()];lsave();}
 }
+function pfPickRow(){return '<button type="button" class="srow" data-act="pfpick">'+IC.grid+'<span class="sl">Le mie piattaforme</span><span class="sn">'+(pfSel().length||'Scegli')+'</span>'+IC.chev+'</button>';}
 function pfGroup(){
   pfNorm();
   const on=pfOn(),n=pfSel().length;
   return '<button type="button" class="srow" data-act="reg">'+IC.globe+'<span class="sl">Regione</span><span class="sn rgv">'+flagIc(REG())+esc(regName(REG()))+'</span>'+IC.chev+'</button>'+'<button type="button" class="srow" data-act="pfsw" role="switch" aria-checked="'+on+'">'+IC.tv+'<span class="sl">Filtra per piattaforme</span><span class="sw'+(on?' on':'')+'"><i></i></span></button>'+
-    (on?'<button type="button" class="srow" data-act="pfpick">'+IC.grid+'<span class="sl">Le mie piattaforme</span><span class="sn">'+(n?n:'Scegli')+'</span>'+IC.chev+'</button>':'');
+    (on?pfPickRow():'');
 }
 let allT=null;
 async function revokeAll(){
@@ -1939,7 +1945,28 @@ function settingsPage(){
     sec('Account','<div class="sgrp"><button type="button" class="srow" data-act="acuser">'+IC.user+'<span class="sl">Cambia username</span>'+IC.chev+'</button><button type="button" class="srow" data-act="acpass">'+IC.lock+'<span class="sl">Cambia password</span>'+IC.chev+'</button><button type="button" class="srow" data-act="acall">'+IC.devs+'<span class="sl">Esci da tutti i dispositivi</span></button></div>')+
     '<button type="button" class="srow out" data-act="logout">'+IC.out+'<span class="sl">Esci</span></button></div>',true);
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>home(),recent:()=>recentPage(),logout:confirmLogout,acall:revokeAll,
-    pfsw:()=>{const v=!pfOn();pfSet(v);const sw=document.querySelector('[data-act="pfsw"] .sw');if(sw)sw.classList.toggle("on",v);setTimeout(()=>{const box=$("sg_pf");if(!box)return;box.innerHTML=pfGroup();const r=box.querySelectorAll(".srow")[2];if(r&&r.animate&&!RM())r.animate([{opacity:0,transform:"translateY(-8px)"},{opacity:1,transform:"none"}],{duration:420,easing:"cubic-bezier(.2,.85,.25,1)"});if(v&&!pfSel().length)pfPage();},220);},
+    pfsw:()=>{
+      const v=!pfOn();pfSet(v);
+      const bt=document.querySelector('[data-act="pfsw"]'),sw=bt&&bt.querySelector(".sw");
+      if(sw)sw.classList.toggle("on",v);if(bt)bt.setAttribute("aria-checked",String(v));
+      const box=$("sg_pf");if(!box)return;
+      const fast=RM()||!box.animate,E="cubic-bezier(.2,.85,.25,1)";
+      const kf=(h,bt)=>({height:h+"px",minHeight:h+"px",borderTopWidth:bt+"px",opacity:h?1:0,transform:h?"none":"translateY(-10px)"});
+      let row=box.querySelector('[data-act="pfpick"]');
+      if(v){
+        if(row&&row._out){row._out=false;if(row._an)row._an.cancel();row.style.overflow="";}
+        else if(!row){
+          box.insertAdjacentHTML("beforeend",pfPickRow());row=box.querySelector('[data-act="pfpick"]');
+          if(!fast){const h=row.offsetHeight;row.style.overflow="hidden";row._an=row.animate([kf(0,0),kf(h,1)],{duration:440,easing:E});row._an.onfinish=()=>{row.style.overflow="";};}
+        }
+        if(!pfSel().length)setTimeout(()=>{if(pfOn())pfPage();},fast?0:400);
+      }else if(row){
+        if(fast){row.remove();return;}
+        const h=row.offsetHeight;row._out=true;row.style.overflow="hidden";
+        row._an=row.animate([kf(h,1),kf(0,0)],{duration:300,easing:"cubic-bezier(.4,0,.2,1)",fill:"forwards"});
+        row._an.onfinish=()=>{if(row._out)row.remove();};
+      }
+    },
     seenp:()=>seenPage(),starsw:()=>{const v=!starsOn();setSet("stars",v);S.seen=[];S.cands=[];const bt=document.querySelector('[data-act="starsw"]');if(bt){bt.setAttribute("aria-checked",String(v));const sw=bt.querySelector(".sw");if(sw)sw.classList.toggle("on",v);}},
     pfpick:()=>pfPage(),reg:()=>regionPage(),acuser:()=>accountPage("user"),acpass:()=>accountPage("pass")}});
   const th=$("thseg"),pr=window.themePref();
