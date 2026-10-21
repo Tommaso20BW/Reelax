@@ -131,6 +131,8 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .brand .fx b{font:inherit;letter-spacing:inherit;background:linear-gradient(90deg,#ff3d52 0%,#ff3d52 22%,#c13bd9 55%,#8f62f8 100%) 0 50%/120% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
 .mark{width:22px;height:22px;border-radius:7px;background:#2a1240 var(--logo) center/cover no-repeat;display:grid;place-items:center;box-shadow:0 3px 12px rgba(255,61,82,.45)}
 .prog{height:3px;margin:2px var(--gut) 8px;border-radius:3px;background:var(--soft);overflow:hidden;transition:opacity .3s}
+/* linea gradiente del tasto Reelax: sta sopra la barra di progresso, visibile solo durante l'effetto */
+.bline{position:absolute;left:var(--gut);right:var(--gut);bottom:8px;height:3px;border-radius:3px;background:var(--grad);box-shadow:0 0 10px rgba(255,61,82,.6);transform:scaleX(0);opacity:0;pointer-events:none;z-index:6}
 .prog.off{opacity:0}
 .prog b{display:block;height:100%;width:0;border-radius:inherit;background:var(--grad);box-shadow:0 0 10px rgba(255,61,82,.6);transition:width .65s cubic-bezier(.45,.05,.2,1)}
 
@@ -1056,22 +1058,45 @@ let HGEN=0;
   const br=$("brand");if(!br)return;
   const idle=()=>!!stage.querySelector(".load")||(S.step===0&&!!stage.querySelector(".opts"));   // già in home o in caricamento: il tasto non fa nulla
   const clean=()=>!S.cat&&!S.fmt&&!S.mood&&!S.time&&!S.era&&!S.style&&!S.avoid.length&&S.step===0&&!!stage.querySelector(".opts");
+  /* effetto "D": striscia di colore sulla scritta + alone viola + linea gradiente sotto la barra.
+     Dura quanto la transizione di pagina (parte col tocco, la home arriva a effetto avviato) e poi si spegne: non resta nulla in giro. */
+  const FXD=900,FXNAV=300;
+  const brandFx=()=>{
+    let t=br.querySelector(".bt");
+    if(!t){const x=br.textContent.trim();br.textContent="";t=document.createElement("span");t.className="bt";t.textContent=x;br.appendChild(t);}
+    if(!t.animate)return;
+    t.getAnimations().forEach(x=>x.cancel());
+    const fg=getComputedStyle(br).color;
+    t.style.background="linear-gradient(100deg,"+fg+" 0 38%,#ff3d52 44%,#c13bd9 50%,#8f62f8 56%,"+fg+" 62% 100%) 95% 0/300% 100% no-repeat";
+    t.style.webkitBackgroundClip="text";t.style.backgroundClip="text";t.style.webkitTextFillColor="transparent";
+    const an=t.animate([{backgroundPosition:"95% 0"},{backgroundPosition:"5% 0"}],{duration:FXD,easing:"cubic-bezier(.4,0,.2,1)"});
+    const rs=()=>t.removeAttribute("style");an.finished.then(rs,rs);
+    br.getAnimations().forEach(x=>x.cancel());   // alone viola che pulsa e rientra
+    br.animate([{textShadow:"0 0 0 rgba(193,59,217,0)"},{textShadow:"0 0 14px rgba(193,59,217,.95)",offset:.45},{textShadow:"0 0 0 rgba(193,59,217,0)"}],{duration:FXD,easing:"ease-in-out"});
+    const top=document.querySelector(".top");   // linea gradiente: corre da sinistra a destra e si ritira, poi sparisce
+    if(top){
+      let ln=top.querySelector(".bline");
+      if(!ln){ln=document.createElement("div");ln.className="bline";top.appendChild(ln);}
+      ln.getAnimations().forEach(x=>x.cancel());
+      ln.animate([
+        {transform:"scaleX(0)",opacity:1,transformOrigin:"left"},
+        {transform:"scaleX(1)",opacity:1,transformOrigin:"left",offset:.6},
+        {transform:"scaleX(1)",opacity:1,transformOrigin:"right",offset:.6},
+        {transform:"scaleX(0)",opacity:1,transformOrigin:"right"}
+      ],{duration:FXD,easing:"cubic-bezier(.4,0,.2,1)"});
+    }
+  };
+  let BFX=0;
   const goHome=()=>{
-    if(document.body.classList.contains("locked")||LB||idle())return;
-    if(!RM()){   // striscia di colore (colori dei tasti) che attraversa la scritta da sinistra a destra
-      let t=br.querySelector(".bt");
-      if(!t){const x=br.textContent.trim();br.textContent="";t=document.createElement("span");t.className="bt";t.textContent=x;br.appendChild(t);}
-      if(t.animate){
-        t.getAnimations().forEach(x=>x.cancel());
-        const fg=getComputedStyle(br).color;
-        t.style.background="linear-gradient(100deg,"+fg+" 0 38%,#ff3d52 44%,#c13bd9 50%,#8f62f8 56%,"+fg+" 62% 100%) 95% 0/300% 100% no-repeat";
-        t.style.webkitBackgroundClip="text";t.style.backgroundClip="text";t.style.webkitTextFillColor="transparent";
-        const an=t.animate([{backgroundPosition:"95% 0"},{backgroundPosition:"5% 0"}],{duration:520,easing:"cubic-bezier(.4,0,.2,1)"});
-        const rs=()=>t.removeAttribute("style");an.finished.then(rs,rs);
-      }
-    }   // lampo di colore che svanisce (niente seconda animazione di scala: si sommava a quella del tocco)
+    if(document.body.classList.contains("locked")||LB||idle()||BFX)return;
+    const fx=!RM();
+    if(fx)brandFx();
     if(clean())return;
-    HGEN++;RUN++;SRUN++;restart();
+    const go=()=>{HGEN++;RUN++;SRUN++;restart();};
+    if(!fx){go();return;}
+    BFX=1;setTimeout(()=>{BFX=0;},FXD);
+    const c0=CURR;   // la home parte dopo FXNAV ms, solo se nel frattempo non si è già cambiato pagina
+    setTimeout(()=>{if(CURR!==c0||idle()||LB||document.body.classList.contains("locked"))return;go();},FXNAV);
   };
   br.addEventListener("click",goHome);
   br.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();goHome();}});
