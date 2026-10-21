@@ -1070,7 +1070,7 @@ let HGEN=0;
   const clean=()=>!S.cat&&!S.fmt&&!S.mood&&!S.time&&!S.era&&!S.style&&!S.avoid.length&&S.step===0&&!!stage.querySelector(".opts");
   /* effetto "D": striscia di colore sulla scritta + alone viola + linea gradiente sotto la barra.
      Dura quanto la transizione di pagina (parte col tocco, la home arriva a effetto avviato) e poi si spegne: non resta nulla in giro. */
-  const FXD=1500,FXNAV=550;   // durata effetto / ritardo prima che arrivi la home (ms)
+  const FXD=1200,FXNAV=420;   // durata effetto / ritardo prima che arrivi la home (ms)
   const brandFx=()=>{
     let t=br.querySelector(".bt");
     if(!t){const x=br.textContent.trim();br.textContent="";t=document.createElement("span");t.className="bt";t.textContent=x;br.appendChild(t);}
