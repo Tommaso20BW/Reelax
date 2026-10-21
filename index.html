@@ -55,22 +55,11 @@
     if(f){f.setAttribute("type","image/png");f.setAttribute("href",abs(I.fav));}
   }
   window.themePref=pref;
-  window.setTheme=function(v,x,y){
+  window.setTheme=function(v){
     var h=document.documentElement;
-    var run=function(d){try{if(v==="auto")localStorage.removeItem(K);else localStorage.setItem(K,v);}catch(e){}apply(d);};
-    var rm=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if(!document.startViewTransition||rm){run(false);return;}
-    try{if(window._vt)window._vt.skipTransition();}catch(e){}
-    var circ=typeof x==="number"&&typeof y==="number";
-    h.classList.add(circ?"vtc":"vt");
-    var t;try{t=document.startViewTransition(function(){run(true);});}catch(e){h.classList.remove("vt","vtc");run(false);return;}
-    window._vt=t;
-    t.ready.then(function(){
-      if(!circ)return;
-      var r=Math.hypot(Math.max(x,innerWidth-x),Math.max(y,innerHeight-y));
-      h.animate({clipPath:["circle(0px at "+x+"px "+y+"px)","circle("+r+"px at "+x+"px "+y+"px)"]},{duration:700,easing:"cubic-bezier(.4,0,.2,1)",pseudoElement:"::view-transition-new(root)"});
-    }).catch(function(){});
-    t.finished.then(function(){},function(){}).then(function(){h.classList.remove("vt","vtc");meta();});
+    h.classList.add("tt");clearTimeout(window._tt);window._tt=setTimeout(function(){h.classList.remove("tt");},800);
+    try{if(v==="auto")localStorage.removeItem(K);else localStorage.setItem(K,v);}catch(e){}
+    apply();
   };
   if(mq){if(mq.addEventListener)mq.addEventListener("change",apply);else if(mq.addListener)mq.addListener(apply);}
   apply();
@@ -689,11 +678,23 @@ body.pre #app{opacity:0}
 .castbtn .cs{display:block;font-size:.92rem}
 /* ripple al tocco e cambio tema morbido */
 .rpl{position:absolute;border-radius:50%;pointer-events:none;opacity:0;transform:scale(0);z-index:0;background:radial-gradient(circle,currentColor 0,currentColor 30%,transparent 70%)}
-/* cambio tema: istantanea intera della pagina (testi, gradienti, immagini cambiano insieme), rivelata a cerchio dal tocco */
-::view-transition-group(root){animation-duration:.4s}
-html.vtc::view-transition-old(root),html.vtc::view-transition-new(root){animation:none;mix-blend-mode:normal;display:block}
-html.vtc::view-transition-old(root){z-index:1}
-html.vtc::view-transition-new(root){z-index:2}
+/* cambio tema: le variabili colore sono animabili, quindi testi, sfondi, bordi e gradienti sfumano tutti insieme, in modo continuo */
+@property --bg{syntax:"<color>";inherits:true;initial-value:#09070f}
+@property --s1{syntax:"<color>";inherits:true;initial-value:#13101d}
+@property --s2{syntax:"<color>";inherits:true;initial-value:#1a1627}
+@property --s3{syntax:"<color>";inherits:true;initial-value:#262036}
+@property --line{syntax:"<color>";inherits:true;initial-value:rgba(255,255,255,.09)}
+@property --line2{syntax:"<color>";inherits:true;initial-value:rgba(255,255,255,.18)}
+@property --fg{syntax:"<color>";inherits:true;initial-value:#f5f1fb}
+@property --mut{syntax:"<color>";inherits:true;initial-value:#a29bb5}
+@property --dim{syntax:"<color>";inherits:true;initial-value:#6f6885}
+@property --soft{syntax:"<color>";inherits:true;initial-value:rgba(255,255,255,.1)}
+@property --soft2{syntax:"<color>";inherits:true;initial-value:rgba(255,255,255,.06)}
+@property --shade{syntax:"<number>#";inherits:true;initial-value:0,0,0}
+@property --bgrgb{syntax:"<number>#";inherits:true;initial-value:9,7,15}
+@property --bdb{syntax:"<number>";inherits:true;initial-value:.6}
+html.tt{transition:--bg .55s ease,--s1 .55s ease,--s2 .55s ease,--s3 .55s ease,--line .55s ease,--line2 .55s ease,--fg .55s ease,--mut .55s ease,--dim .55s ease,--soft .55s ease,--soft2 .55s ease,--shade .55s ease,--bgrgb .55s ease,--bdb .55s ease}
+@media (prefers-reduced-motion:reduce){html.tt{transition:none}}
 /* ingresso più calmo */
 .poster::before{display:none}
 .in .res>*{animation-duration:1s;animation-delay:calc(var(--k,0)*45ms + 60ms)}
