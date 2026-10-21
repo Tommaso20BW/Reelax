@@ -1549,7 +1549,18 @@ function wallOn(){
 function loading(){
   ROUTED=false;setBd(null);
   const t=["Cerco un titolo adatto a te...","Controllo i tuoi gusti...","Ci siamo quasi..."];
-  const cancel=()=>{RUN++;home();};
+  let canc=false;
+  const cancel=()=>{   // Annulla: si interrompe la ricerca, tutto torna deselezionato e si riparte dalla home; scritta, tasti e muro di locandine escono insieme, senza sovrapporsi alla home
+    if(canc)return;canc=true;RUN++;
+    const fast=RM(),T=fast?0:300;
+    if(!fast){
+      const fo=el=>{if(el&&el.animate)el.animate([{opacity:1},{opacity:0}],{duration:200,easing:"ease-in",fill:"forwards"});};
+      fo(document.querySelector(".load p"));[...$("dockin").children].forEach(fo);fo($("tl").firstElementChild);
+    }
+    const w=$("ldw");
+    if(w){w.removeAttribute("id");const wl=w.querySelector("#wall");if(wl)wl.removeAttribute("id");w.style.transition=fast?"none":"opacity .32s ease";w.classList.remove("on");setTimeout(()=>w.remove(),fast?0:420);}
+    setTimeout(()=>{NAV=0;TDX=0;clearTimeout(NAVT);restart();},T);
+  };
   ui({l:tbtn('cancel','x','Annulla'),r:'',d:bb('cancel','Annulla'),p:[1,1],a:{cancel,back:cancel}});
   swap('<div class="load"><p id="lt">'+esc(t[0])+'</p></div>');wallOn();
   if(!RM()){   // la scheda precedente esce per prima: scritta e tasto Annulla entrano un attimo dopo, senza sovrapporsi
