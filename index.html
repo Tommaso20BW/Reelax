@@ -125,10 +125,10 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 #stage{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch;padding:10px var(--gut) 20px;
   -webkit-mask-image:linear-gradient(transparent,#000 14px,#000 calc(100% - 22px),transparent);mask-image:linear-gradient(transparent,#000 14px,#000 calc(100% - 22px),transparent)}
 #stage::-webkit-scrollbar{display:none}
-/* Impostazioni: "Esci" quasi sul bordo, sopra la home-indicator */
-#app.onset #stage{padding-bottom:14px;-webkit-mask-image:linear-gradient(transparent,#000 14px,#000 calc(100% - 14px),transparent);mask-image:linear-gradient(transparent,#000 14px,#000 calc(100% - 14px),transparent)}
+/* Impostazioni: "Esci" e' un tasto normale in fondo alla pagina (scorre col contenuto) */
+#app.onset #stage{padding-bottom:24px;-webkit-mask-image:linear-gradient(transparent,#000 14px,#000 calc(100% - 14px),transparent);mask-image:linear-gradient(transparent,#000 14px,#000 calc(100% - 14px),transparent)}
 #app.onset #dock{padding-top:0;padding-bottom:max(14px,var(--sab))}
-#app.onset .srow.out{position:sticky;bottom:0;z-index:2;flex:none}
+#app.onset .srow.out{margin-top:auto;flex:none}
 .ghost{position:absolute;z-index:1;box-sizing:border-box;overflow:hidden;padding:10px var(--gut) 20px;pointer-events:none;will-change:transform,opacity}
 
 /* dock inferiore: resta SOPRA la zona della home-indicator, così i tasti si toccano sempre */
