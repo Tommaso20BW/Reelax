@@ -1014,7 +1014,7 @@ document.addEventListener("click",e=>{
   if(y){openYt(e,y.dataset.yt);return;}
   const b=e.target.closest&&e.target.closest("[data-act]");
   if(!b||b.disabled)return;
-  const f=ACT[b.dataset.act];if(f){tap();const an=b.dataset.act;if(an==="back"||an==="cancel")BTAP=Date.now();NAV=0;const onHome=!!stage.querySelector(".opts");if(an==="settings"&&onHome)NAV=-1;else if(an==="search"&&onHome)NAV=1;else if(FWD[an])NAV=1;else if(an==="back"||an==="cancel"){NAV=stage.querySelector(".srow.out")?1:-1;}clearTimeout(NAVT);NAVT=setTimeout(()=>{NAV=0;},700);try{if(an==="back")goBack(f);else f();}catch(x){}}
+  const f=ACT[b.dataset.act];if(f){tap();const an=b.dataset.act;if(an==="back"||an==="cancel")BTAP=Date.now();NAV=0;const onHome=!!stage.querySelector(".opts");if(an==="settings"&&onHome)NAV=-1;else if(an==="search"&&onHome)NAV=1;else if(FWD[an])NAV=1;else if(an==="back"||an==="cancel"){NAV=stage.querySelector(".srow.out")?1:-1;}clearTimeout(NAVT);NAVT=setTimeout(()=>{NAV=0;},700);try{if(an==="back"){if(f.pre)f.pre();goBack(f);}else f();}catch(x){}}
 });
 const tap=()=>{};   // vibrazione al tocco rimossa
 /* ripple: ogni pulsante, riga o scelta "risponde" al tocco con un'onda che parte dal punto toccato */
@@ -1051,7 +1051,17 @@ const steps=()=>STEPS.filter(s=>!(s.skip&&s.skip()));
 function gkey(cat,a){cat=cat==="cartoni"?(a&&a.fmt==="movie"?"film":"serie"):cat; return cat==="film"?"film":cat==="anime"?"anime":"serie";}
 
 function opt(g,o,on,i){const sub=(g==="time"||g==="era")&&o[3]?'<span class="s">'+esc(o[3])+'</span>':'';return '<button type="button" class="opt'+(on?' on':'')+'" style="--i:'+i+'" data-g="'+g+'" data-v="'+o[0]+'" aria-pressed="'+(on?'true':'false')+'"><span class="em">'+o[1]+'</span><span class="tx"><span class="t">'+esc(o[2])+'</span>'+sub+'</span></button>';}
-function restart(){Object.assign(S,{cat:"",fmt:"",mood:"",time:"",era:"",style:"",step:0,seen:[],cands:[],cur:null,avoid:[]});home();}
+const resetAnswers=()=>Object.assign(S,{cat:"",fmt:"",mood:"",time:"",era:"",style:"",step:0,seen:[],cands:[],cur:null,avoid:[]});
+function restart(){resetAnswers();home();}
+/* indietro dal risultato: torna alla home con tutto deselezionato (pre = pulizia che gira sempre, anche quando si torna indietro tramite la cronologia del browser) */
+const backToHome=()=>restart();backToHome.pre=resetAnswers;
+/* indietro da una domanda: torna alla precedente e ne cancella la risposta */
+function clearStep(i){
+  const st=steps()[i];if(!st)return;
+  if(st.k==="avoid")S.avoid=[];
+  else{S[st.k]="";if(st.k==="cat"){S.fmt="";S.time="";}}
+  S.style="";
+}
 /* tocco sul nome "Reelax" in alto: torna alla home con tutto deselezionato (se è già così, solo l'effetto al tocco) */
 let HGEN=0;
 (function(){
@@ -1139,8 +1149,8 @@ function home(anim){
   const seg=st.k==="cat"?'<div class="segw'+(isAnim()?' show':'')+'" id="segw"><div class="segi"><span class="segq">Film o serie?</span><div class="seg">'+FMT.map(f=>'<button type="button" class="'+(S.fmt===f[0]?'on':'')+'" data-f="'+f[0]+'">'+({movie:"Film",tv:"Serie",any:"Indifferente"})[f[0]]+'</button>').join('')+'</div></div></div>':'';
   TDX=(stage.querySelector(".opts")&&LASTSTEP>=0&&S.step!==LASTSTEP)?(S.step>LASTSTEP?1:-1):0;LASTSTEP=S.step;
   swap('<div class="page"><h1>'+esc(q)+'</h1>'+(st.multi?'<p class="sub">Puoi sceglierne più di una</p>':'')+'<div class="opts g2 n'+n+(st.multi?' av':'')+'" role="group" aria-label="'+esc(q)+'">'+items.map((o,i)=>opt(st.k,o,st.multi?S.avoid.indexOf(o[0])>=0:S[st.k]===o[0],i)).join('')+'</div>'+seg+'</div>',anim);
-  const acts={back:()=>{if(S.step>0){S.step--;home();}},sur:surpriseAll,tp:tasteAll,logout:doLogout,search:searchPage,settings:()=>settingsPage(),go:()=>{S.seen=[];S.cands=[];run(false,true);}};
-  if(S.step===0)delete acts.back;
+  const acts={back:()=>{if(S.step>0){S.step--;clearStep(S.step);home();}},sur:surpriseAll,tp:tasteAll,logout:doLogout,search:searchPage,settings:()=>settingsPage(),go:()=>{S.seen=[];S.cands=[];run(false,true);}};
+  if(S.step===0)delete acts.back;else acts.back.pre=()=>{if(S.step>0)clearStep(S.step-1);};
   ui({
     l:S.step>0?tbtn('back','back','Indietro'):tbtn('settings','gear','Impostazioni'),
     r:(S.step===0&&tmdbOn())?tbtn('search','search','Cerca un titolo'):'',
@@ -3176,7 +3186,7 @@ function show(r,sur,man,quiet){
     l:tbtn('back','back','Modifica risposte'),
     r:trTb(d),
     d:bb('re',IC.restart+'Ricomincia','v')+bb('sur',IC.dice+'Sorprendimi','v')+bb('oth',IC.next+'Un altro','v primary'),
-    a:{back:home,share,seen:seenToggle,re:restart,sur:()=>run(true,false),oth:()=>run(!!sur,false),cast:()=>castPage(d),seasons:()=>seasonsPage(d),saga:()=>sagaPage(d)}
+    a:{back:backToHome,share,seen:seenToggle,re:restart,sur:()=>run(true,false),oth:()=>run(!!sur,false),cast:()=>castPage(d),seasons:()=>seasonsPage(d),saga:()=>sagaPage(d)}
   });
 }
 
