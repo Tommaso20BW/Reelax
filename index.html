@@ -1372,7 +1372,7 @@ async function personPage(p,backFn){
    Ogni muro ne consuma WN=36: quelle usate vengono buttate e al loro posto se ne scaricano altre, in background,
    piano piano e MAI durante il caricamento. Così le locandine sono sempre pronte e sempre nuove. */
 const WN=36,WRN=108,WRES="rx_res",WSEEN="rx_seen",WCACHE="rx-wall-v2",PU="https://image.tmdb.org/t/p/w154";
-let WRS=[],WSN=[],WURL={},WQ=[],WUSED=[],WPOOL=[],WFILL=null,WLOAD=false,WINIT=false,WPG=0;
+let WRQ=0,WRS=[],WSN=[],WURL={},WQ=[],WUSED=[],WPOOL=[],WFILL=null,WLOAD=false,WINIT=false,WPG=0;
 try{WRS=JSON.parse(localStorage.getItem(WRES)||"[]");WSN=JSON.parse(localStorage.getItem(WSEEN)||"[]");localStorage.removeItem("rx_wall");localStorage.removeItem("rx_wall2");if(window.caches)caches.delete("rx-wall-v1");}catch(e){}
 const shuf=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=rand(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;};
 const wnap=ms=>new Promise(r=>setTimeout(r,ms));
@@ -1408,7 +1408,7 @@ async function wallPrep(){   // rende pronte (URL locale) le prossime WN locandi
     const p=WRS[i];
     if(!WURL[p]){
       try{const r=c&&await c.match(PU+p);
-        if(r)WURL[p]=URL.createObjectURL(await r.blob());
+        if(r){const bl=await r.blob();if(!WURL[p])WURL[p]=URL.createObjectURL(bl);}   // controllo dopo l'attesa: chiamate in parallelo non creano due URL per la stessa locandina
         else if(c){WRS.splice(i,1);continue;}
         else WURL[p]=PU+p;
       }catch(e){WURL[p]=PU+p;}
@@ -1420,7 +1420,9 @@ function wallTake(){   // le prossime WN escono subito dalla riserva: il muro do
   const t=WRS.slice(0,WN);WRS=WRS.filter(p=>t.indexOf(p)<0);t.forEach(p=>WSN.push(p));WUSED.push(...t);wsave();return t;
 }
 async function wallRelease(){   // a transizione finita: butta le usate, prepara le prossime, rifornisce la riserva
-  const u=WUSED.splice(0),c=await wcache();
+  if(document.querySelector(".ldw")){if(!WRQ){WRQ=1;setTimeout(()=>{WRQ=0;wallRelease();},1500);}return;}   // un muro è ancora a schermo (o ne è partito un altro): le sue locandine non si toccano
+  const keep=WPOOL,u=WUSED.filter(p=>keep.indexOf(p)<0);WUSED=WUSED.filter(p=>keep.indexOf(p)>=0);   // il pool in uso resta valido finché non viene sostituito
+  const c=await wcache();
   u.forEach(p=>{if(WURL[p]&&WURL[p].indexOf("blob:")===0)URL.revokeObjectURL(WURL[p]);delete WURL[p];if(c)c.delete(PU+p);});
   await wallPrep();wallFill().then(wallPrep);
 }
@@ -1436,7 +1438,8 @@ function pcHtml(k,hue,d){
   return '<i class="pc" data-k="'+k+'" style="--h:'+hue+';--d:'+d+'ms">'+(u?'<img src="'+esc(u)+'" alt="" decoding="async" fetchpriority="low" referrerpolicy="no-referrer" onload="this.classList.add(\'ld\')" onerror="this.remove()">':'')+'</i>';
 }
 function wallHtml(){
-  WPOOL=shuf(wallTake());
+  {const rdy=WRS.length>=WN&&WRS.slice(0,WN).every(p=>WURL[p]);   // nuovo lotto solo se completo e già pronto; altrimenti si riusano le locandine già disponibili (clic rapidi, rete lenta o assente)
+   if(rdy||!WPOOL.length)WPOOL=shuf(wallTake());}
   const D=wallDims(),base=rand(2),hue0=rand(360);let k=0,h='<div class="wall" id="wall" aria-hidden="true">';
   for(let r=0;r<D.rows;r++){
     const t=((8+Math.random()*6)*D.per/9).toFixed(2),dir=((r+base)%2)?"reverse":"normal",o=(-Math.random()*t).toFixed(2);
