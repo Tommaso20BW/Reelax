@@ -279,6 +279,7 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .sr .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .sr .t{font-weight:700;font-size:1rem;line-height:1.2}
 .sr .s{font-size:.8rem;color:var(--mut)}
+.nt .sr{min-height:62px;padding:12px 18px}
 .sres.lib{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px 12px;align-items:start}
 .lib .smsg{grid-column:1/-1}
 .lib .trl{grid-column:1/-1;margin:2px 0 -2px;font-size:.78rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
@@ -1265,9 +1266,10 @@ function seasonsPage(d,snap){
   if((d.seasonList||[]).length===1){episodesPage(d,d.seasonList[0],snap);return;}   // una sola stagione: niente elenco, si va diretti agli episodi (vale anche per la route /stagioni senza numero)
   {const k=snap.r&&snap.r.m&&snap.r.m.id!=null?String(snap.r.m.id):"";if(k)setRoute("/t/"+enc(k)+"/stagioni");else ROUTED=false;}
   const list=d.seasonList||[];
+  const th=list.length>0&&list.every(x=>x.img);   // miniature solo se TUTTE le stagioni hanno l'immagine; altrimenti lista solo testo
   const row=(x,i)=>{const nm=x.name||("Stagione "+x.n),sub=[x.date?String(x.date).slice(0,4):"",x.ep?x.ep+" ep.":""].filter(Boolean).join(" · ");
-    return '<button type="button" class="sr" data-i="'+i+'">'+(x.img?'<span class="th"><img src="'+PIMG+esc(x.img)+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"></span>':'')+'<span class="tx"><span class="t">'+esc(nm)+'</span>'+(sub?'<span class="s">'+esc(sub)+'</span>':'')+'</span></button>';};
-  subSwap('<div class="page lst"><h1>Stagioni</h1><div class="sres" id="sns">'+list.map(row).join('')+'</div></div>',true);
+    return '<button type="button" class="sr" data-i="'+i+'">'+(th?'<span class="th"><img src="'+PIMG+esc(x.img)+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"></span>':'')+'<span class="tx"><span class="t">'+esc(nm)+'</span>'+(sub?'<span class="s">'+esc(sub)+'</span>':'')+'</span></button>';};
+  subSwap('<div class="page lst"><h1>Stagioni</h1><div class="sres'+(th?'':' nt')+'" id="sns">'+list.map(row).join('')+'</div></div>',true);
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>{show(snap.r,snap.sur,snap.man,"fade");}}});
   $("sns").onclick=e=>{const b=e.target.closest&&e.target.closest("[data-i]");if(!b)return;tap();TDX=1;episodesPage(d,list[+b.dataset.i],snap);};
 }
