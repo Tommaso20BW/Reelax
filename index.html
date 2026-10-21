@@ -2919,12 +2919,12 @@ function show(r,sur,man,quiet){
   addRecent(r);S.cur=r;S.curSur=sur;S.curMan=man;const d=r.d,rnd=S.style==="surprise";const p=man?0:compat(r);
   const poster=d.poster
     ?'<div class="poster" role="button" tabindex="0" aria-label="Ingrandisci la locandina"><img'+(quiet?' class="ld"':'')+' src="'+esc(d.poster)+'" alt="Locandina di '+esc(d.title)+'" referrerpolicy="no-referrer"></div>'
-    :fbPoster(d.title,d.year);
+    :fbPoster(d.title,sur?'':d.year);
   const posterR=d.rv?poster.replace(/<\/div>$/,'<span class="rate">★ '+(+d.rv).toFixed(1)+'</span></div>'):poster;
   /* una sola riga: anno, stagioni (o Film/Serie per anime e cartoni), durata e classificazione stanno in un unico chip;
      se non c'è spazio, fitChips() toglie prima la classificazione, poi la durata, e riduce il trailer alla sola icona */
   const kindTxt=(man?r.m.src==="anime":(S.cat==='anime'||S.cat==='cartoni'))?(d.movie?'Film':'Serie'):'';
-  const parts=[d.year?String(d.year):'',d.seasons?d.seasons+(d.seasons>1?' stagioni':' stagione'):kindTxt,d.runtime?d.runtime+' min'+(d.movie===false?'/ep.':''):'',d.cert?String(d.cert):''].filter(Boolean);
+  const parts=[d.year&&!sur?String(d.year):'',d.seasons?d.seasons+(d.seasons>1?' stagioni':' stagione'):kindTxt,d.runtime&&!sur?d.runtime+' min'+(d.movie===false?'/ep.':''):'',d.cert?String(d.cert):''].filter(Boolean);
   const chips=parts.map((x,i)=>'<span class="chip'+(d.cert&&i===parts.length-1&&x===String(d.cert)?' cert':'')+'">'+esc(x)+'</span>');
   const long=(d.overview||'').length>220;
   const h='<div class="res">'+
@@ -2978,7 +2978,7 @@ function show(r,sur,man,quiet){
     l:tbtn('back','back','Modifica risposte'),
     r:trTb(d),
     d:bb('re',IC.restart+'Ricomincia','v')+bb('sur',IC.dice+'Sorprendimi','v')+bb('oth',IC.next+'Un altro','v primary'),
-    a:{back:home,share,seen:seenToggle,re:restart,sur:()=>run(true,false),oth:()=>run(false,false),cast:()=>castPage(d),seasons:()=>seasonsPage(d),saga:()=>sagaPage(d)}
+    a:{back:home,share,seen:seenToggle,re:restart,sur:()=>run(true,false),oth:()=>run(!!sur,false),cast:()=>castPage(d),seasons:()=>seasonsPage(d),saga:()=>sagaPage(d)}
   });
 }
 
