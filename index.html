@@ -568,7 +568,7 @@ body.pre #app{opacity:0}
 
 /* ===== Impostazioni: grafica ===== */
 .page h1+.sblock{margin-top:6px}
-#app.onset .page{--pg:24px}
+.page.sp{--pg:24px}
 .sblock{gap:8px}
 .sblock .sh{font-size:.72rem;letter-spacing:.16em;padding:0 6px}
 .sgrp{border-radius:20px;contain:paint}
@@ -1949,7 +1949,7 @@ async function revokeAll(){
 function settingsPage(){
   RUN++;SRUN++;setBd(null);setRoute("/impostazioni");
   const sec=(t,h)=>'<div class="sblock"><div class="sh">'+t+'</div>'+h+'</div>';
-  swap('<div class="page"><h1>Impostazioni</h1>'+
+  swap('<div class="page sp"><h1>Impostazioni</h1>'+
     sec('Ricerca','<div class="sgrp" id="sg_pf">'+pfGroup()+'</div>')+
     sec('Suggerimenti','<div class="sgrp" id="sg_sn">'+seenGroup()+'</div>')+
     sec('Aspetto','<div class="seg" id="thseg">'+[["auto","Auto"],["light","Chiaro"],["dark","Scuro"]].map(x=>'<button type="button" data-t="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>')+
