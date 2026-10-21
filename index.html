@@ -571,7 +571,7 @@ body.pre #app{opacity:0}
 #app.onset .page{--pg:24px}
 .sblock{gap:8px}
 .sblock .sh{font-size:.72rem;letter-spacing:.16em;padding:0 6px}
-.sgrp{border-radius:20px;box-shadow:0 8px 24px rgba(0,0,0,.14)}
+.sgrp{border-radius:20px;contain:paint}
 .sgrp .srow{min-height:60px;gap:14px}
 .sgrp .srow>svg:first-child{width:34px;height:34px;padding:7px;border-radius:10px;background:var(--soft);color:var(--fg)}
 .sgrp .srow+.srow{border-top:1px solid var(--line);position:relative}
@@ -872,12 +872,16 @@ let TDX=0,LASTSTEP=-1,NAV=0,NAVT=0;
    #/ e #/domanda/N (domande) · #/cerca[/testo] · #/recenti · #/impostazioni[/piattaforme|regione|username|password]
    #/r/ID (risultato) · #/t/ID (scheda titolo) · #/t/ID/cast · #/p/ID (persona) */
 let CURR="",REPL=false,ROUTED=false,PENDCAST="",PD=0;
+const SCR={};let BKN=false,BKT=0;   // posizione di scorrimento per pagina: tornando indietro si riprende da dove eri
+function restoreScroll(y){const go=()=>{stage.scrollTop=y;};go();requestAnimationFrame(go);[120,350].forEach(t=>setTimeout(()=>{if(stage.scrollTop<y-2)go();},t));}
 const RCACHE=new Map();
 const enc=encodeURIComponent,nrm=x=>{try{return decodeURIComponent(x);}catch(e){return x;}};
 const curHash=()=>{const h=location.hash.replace(/^#/,"");return h===""?"/":h;};
 function setRoute(path,o){
   const rep=REPL||!!(o&&o.replace);REPL=false;ROUTED=true;
+  try{if(CURR&&CURR!==path)SCR[CURR]=stage.scrollTop;}catch(e){}
   if(nrm(curHash())===nrm(path)){CURR=path;return;}
+  delete SCR[path];
   try{
     const d=(history.state&&history.state.d)||0;
     if(rep){history.replaceState({d:d},"","#"+path);PD=d;}else{history.pushState({d:d+1},"","#"+path);PD=d+1;}
@@ -936,6 +940,7 @@ function swap(h,anim){
   app.classList.toggle("onset",h.indexOf('srow out')>-1);
   if(anim===false)return;
   stage.classList.remove("in");void stage.offsetWidth;stage.classList.add("in");stage.scrollTop=0;
+  if(h.indexOf('class="load"')<0){const sy=BKN?SCR[CURR]:0;BKN=false;if(sy>0)restoreScroll(sy);}
   const E="cubic-bezier(.22,1,.36,1)";
   if(FIRST){   // prima pagina all'apertura: nessuno scorrimento, solo sfocatura incrociata
     FIRST=false;
@@ -3071,7 +3076,7 @@ function show(r,sur,man,quiet){
 
 
 addEventListener("popstate",()=>{if(LB){doCloseLb();return;}if(document.body.classList.contains("locked"))return;
-  if(history.state&&typeof history.state.d==="number"){const dd=history.state.d;if(!NAV&&!TDX){NAV=dd<PD?-1:dd>PD?1:0;clearTimeout(NAVT);NAVT=setTimeout(()=>{NAV=0;},700);}PD=dd;}
+  if(history.state&&typeof history.state.d==="number"){const dd=history.state.d;if(!NAV&&!TDX){NAV=dd<PD?-1:dd>PD?1:0;clearTimeout(NAVT);NAVT=setTimeout(()=>{NAV=0;},700);}if(dd<PD){BKN=true;clearTimeout(BKT);BKT=setTimeout(()=>{BKN=false;},1500);}PD=dd;}
   routeFromHash();});
 
 /* ---------- Altezza reale dell'app (iOS: a volte la pagina finisce sopra il bordo basso) ---------- */
