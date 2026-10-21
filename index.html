@@ -840,7 +840,7 @@ async function restoreTitle(k,sub,num){
   if(sub&&S.cur&&S.cur.d&&S.cur.m&&String(S.cur.m.id)===k){sp(S.cur.d);return;}
   const c=RCACHE.get(k);
   PENDCAST=sub?k:"";   // sottopagina (cast, stagioni): la scheda sotto si disegna senza cambiare indirizzo, poi arriva la sottopagina
-  if(c){const fromSub=!sub&&!!stage.querySelector('.page.lst');show(c.r,c.sur,c.man,fromSub?true:"fade");if(fromSub)stage.scrollTop=SY0;PENDCAST="";if(sub&&c.r&&c.r.d)sp(c.r.d);return;}
+  if(c){const fromSub=!sub&&!!stage.querySelector('.page.lst,.res.ses');show(c.r,c.sur,c.man,fromSub?true:"fade");if(fromSub)stage.scrollTop=SY0;PENDCAST="";if(sub&&c.r&&c.r.d)sp(c.r.d);return;}
   let it=RECENT.find(x=>String(x.k)===k);
   const m=/^tm(film|tv)(\d+)$/.exec(k);
   if(!it&&m)it={k:k,t:"",y:"",p:"",mv:m[1]==="film",sr:"tmdb",ti:+m[2]};
@@ -1243,7 +1243,7 @@ function castPage(d,snap){
 }
 let SY0=0;   // posizione di scorrimento della scheda, per ritrovarla uscendo dalle sottopagine
 function subSwap(h){
-  if(stage.querySelector('.res'))SY0=stage.scrollTop;
+  if(stage.querySelector('.res:not(.ses)'))SY0=stage.scrollTop;   // solo la scheda del titolo: la pagina episodi con miniatura (.res.ses) non deve sovrascrivere la posizione di ritorno
   swap(h);
   stage.classList.remove('q');
 }
@@ -1278,7 +1278,11 @@ async function episodesPage(d,se,snap){
   snap=snap||{r:S.cur,sur:S.curSur,man:S.curMan};
   {const k=snap.r&&snap.r.m&&snap.r.m.id!=null?String(snap.r.m.id):(S.cur&&S.cur.m?String(S.cur.m.id):"");if(k)setRoute("/t/"+enc(k)+"/stagioni/"+se.n);else ROUTED=false;}
   const nm=se.name||("Stagione "+se.n);
-  subSwap('<div class="page lst"><h1>'+esc(nm)+'</h1><div class="sres eplist" id="eps"><p class="smsg">Carico gli episodi...</p></div></div>',true);
+  if(se.img){   // stagione con miniatura: stessa struttura della scheda film (.res > .hero > .poster), quindi stessi stile, caricamento, errori e lightbox (w500: bigUrl() lo porta a w780)
+    const cp=[se.date?String(se.date).slice(0,4):"",se.ep?se.ep+" ep.":""].filter(Boolean);
+    subSwap('<div class="res ses"><div class="hero" style="--k:0"><div class="poster" role="button" tabindex="0" aria-label="Ingrandisci la locandina"><img src="'+TMDB_IMG+esc(se.img)+'" alt="Locandina di '+esc(nm)+'" referrerpolicy="no-referrer"></div><h2>'+esc(nm)+'</h2>'+(cp.length?'<div class="chips">'+cp.map((c,i)=>'<span class="chip" style="--c:'+i+'">'+esc(c)+'</span>').join('')+'</div>':'')+'</div><div class="sres eplist" id="eps" style="--k:1"><p class="smsg">Carico gli episodi...</p></div></div>',true);
+    polish(0);
+  }else subSwap('<div class="page lst"><h1>'+esc(nm)+'</h1><div class="sres eplist" id="eps"><p class="smsg">Carico gli episodi...</p></div></div>',true);
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>{RUN++;if((d.seasonList||[]).length===1)show(snap.r,snap.sur,snap.man,"fade");else seasonsPage(d,snap);}}});   // con una sola stagione l'elenco non esiste: Indietro torna alla scheda
   const ck=d.tid+"|"+se.n+"|"+LANG();
   let eps=EPC.get(ck);
