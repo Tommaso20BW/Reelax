@@ -2577,7 +2577,12 @@ function jwLink(d,g,k){
     if(/(^|\.)tv\.apple\.com$/.test(h))return k!=="appletv";
     return false;};
   const m=a.filter(o=>o&&typeof o.u==="string"&&/^https:\/\//.test(o.u)&&!CH_RE.test(o.n||"")&&provKey(o.n)===k&&!viaOther(o.u));if(!m.length)return"";
-  return (m.find(o=>(JW_T[g]||[]).indexOf(o.t)>=0)||m[0]).u;
+  return hbomaxFix((m.find(o=>(JW_T[g]||[]).indexOf(o.t)>=0)||m[0]).u);
+}
+/* HBO Max: https://www.hbomax.com/it/it/movie/ID  ->  https://play.hbomax.com/movie/ID (apre l'app su iPhone). L'ID resta identico; qualunque altro indirizzo non si tocca */
+function hbomaxFix(u){
+  const x=/^https:\/\/www\.hbomax\.com\/it\/it\/movie\/([A-Za-z0-9-]+)\/?(?:[?#].*)?$/.exec(String(u||""));
+  return x?"https://play.hbomax.com/movie/"+x[1]:u;
 }
 function jwApply(d){   // i link arrivano dopo che la scheda e' gia' visibile: si aggiungono ai loghi senza ridisegnare nulla
   const sec=stage.querySelector('section[data-jw="'+String(d.tid)+'"]');if(!sec)return;
