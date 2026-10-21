@@ -110,9 +110,10 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .tb{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:var(--fg);transition:transform .1s,background .2s}
 .tb:active{transform:scale(.88);background:var(--soft)}
 .tb svg{width:24px;height:24px}
-.brand{position:relative;cursor:pointer;user-select:none;-webkit-user-select:none;transition:transform .14s cubic-bezier(.22,1,.36,1),opacity .2s}
+.brand{position:relative;cursor:pointer;user-select:none;-webkit-user-select:none;transition:transform .25s cubic-bezier(.22,1,.36,1),opacity .25s ease}
 .brand::after{content:"";position:absolute;inset:-6px -8px}
-.brand:active{transform:scale(.9);opacity:.7}
+@media (hover:hover){.brand:hover{opacity:.78}}
+.brand:active{transform:scale(.96);opacity:.6;transition-duration:.08s}
 .brand:focus-visible{outline:2px solid var(--red);outline-offset:4px;border-radius:6px}
 .brand{display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-weight:800;font-size:.86rem;letter-spacing:.2em;text-transform:uppercase;padding-left:.2em}
 .mark{width:22px;height:22px;border-radius:7px;background:#2a1240 var(--logo) center/cover no-repeat;display:grid;place-items:center;box-shadow:0 3px 12px rgba(255,61,82,.45)}
@@ -998,7 +999,7 @@ let HGEN=0;
   const clean=()=>!S.cat&&!S.fmt&&!S.mood&&!S.time&&!S.era&&!S.style&&!S.avoid.length&&S.step===0&&!!stage.querySelector(".opts");
   const goHome=()=>{
     if(document.body.classList.contains("locked")||LB)return;
-    if(!RM()&&br.animate)br.animate([{transform:"scale(1)"},{transform:"scale(.88)",offset:.35},{transform:"scale(1)"}],{duration:300,easing:"cubic-bezier(.22,1,.36,1)"});
+    if(!RM()&&br.animate){const c0=getComputedStyle(br).color;br.animate([{color:getComputedStyle(document.documentElement).getPropertyValue("--red").trim()||c0},{color:c0}],{duration:650,easing:"cubic-bezier(.22,1,.36,1)"});}   // lampo di colore che svanisce (niente seconda animazione di scala: si sommava a quella del tocco)
     if(clean())return;
     HGEN++;RUN++;SRUN++;restart();
   };
