@@ -110,6 +110,10 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .tb{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:var(--fg);transition:transform .1s,background .2s}
 .tb:active{transform:scale(.88);background:var(--soft)}
 .tb svg{width:24px;height:24px}
+.brand{position:relative;cursor:pointer;user-select:none;-webkit-user-select:none;transition:transform .14s cubic-bezier(.22,1,.36,1),opacity .2s}
+.brand::after{content:"";position:absolute;inset:-6px -8px}
+.brand:active{transform:scale(.9);opacity:.7}
+.brand:focus-visible{outline:2px solid var(--red);outline-offset:4px;border-radius:6px}
 .brand{display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-weight:800;font-size:.86rem;letter-spacing:.2em;text-transform:uppercase;padding-left:.2em}
 .mark{width:22px;height:22px;border-radius:7px;background:#2a1240 var(--logo) center/cover no-repeat;display:grid;place-items:center;box-shadow:0 3px 12px rgba(255,61,82,.45)}
 .prog{height:3px;margin:2px var(--gut) 8px;border-radius:3px;background:var(--soft);overflow:hidden;transition:opacity .3s}
@@ -669,7 +673,7 @@ body.pre #app{opacity:0}
   <header class="top">
     <div class="top-in">
       <div class="slot" id="tl"></div>
-      <div class="brand">Reelax</div>
+      <div class="brand" id="brand" role="button" tabindex="0" aria-label="Torna alla home">Reelax</div>
       <div class="slot r" id="tr"></div>
     </div>
     <div class="prog off" id="prog"></div>
@@ -987,6 +991,20 @@ function gkey(cat,a){cat=cat==="cartoni"?(a&&a.fmt==="movie"?"film":"serie"):cat
 
 function opt(g,o,on,i){const sub=(g==="time"||g==="era")&&o[3]?'<span class="s">'+esc(o[3])+'</span>':'';return '<button type="button" class="opt'+(on?' on':'')+'" style="--i:'+i+'" data-g="'+g+'" data-v="'+o[0]+'" aria-pressed="'+(on?'true':'false')+'"><span class="em">'+o[1]+'</span><span class="tx"><span class="t">'+esc(o[2])+'</span>'+sub+'</span></button>';}
 function restart(){Object.assign(S,{cat:"",fmt:"",mood:"",time:"",era:"",style:"",step:0,seen:[],cands:[],cur:null,avoid:[]});home();}
+/* tocco sul nome "Reelax" in alto: torna alla home con tutto deselezionato (se è già così, solo l'effetto al tocco) */
+let HGEN=0;
+(function(){
+  const br=$("brand");if(!br)return;
+  const clean=()=>!S.cat&&!S.fmt&&!S.mood&&!S.time&&!S.era&&!S.style&&!S.avoid.length&&S.step===0&&!!stage.querySelector(".opts");
+  const goHome=()=>{
+    if(document.body.classList.contains("locked")||LB)return;
+    if(!RM()&&br.animate)br.animate([{transform:"scale(1)"},{transform:"scale(.88)",offset:.35},{transform:"scale(1)"}],{duration:300,easing:"cubic-bezier(.22,1,.36,1)"});
+    if(clean())return;
+    HGEN++;RUN++;SRUN++;restart();
+  };
+  br.addEventListener("click",goHome);
+  br.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();goHome();}});
+})();
 function surpriseAll(){
   /* nessuna categoria scelta (schermata iniziale, senza selezioni): tutto a caso, categoria compresa.
      Altrimenti le risposte già date restano e si sceglie a caso solo ciò che manca. */
@@ -1021,7 +1039,7 @@ function home(anim){
   });
   let lock=false;
   const mark=el=>{stage.querySelectorAll('.opt').forEach(x=>{const on=x===el;x.classList.toggle('on',on);x.setAttribute('aria-pressed',on?'true':'false');});};
-  const go=d=>{lock=true;const oo=stage.querySelector(".opts");if(oo)oo.classList.add("sel");setTimeout(()=>{if(S.step<steps().length-1){S.step++;home();}else{S.seen=[];S.cands=[];run(false,true);}},d||210);};
+  const go=d=>{lock=true;const hg=HGEN;const oo=stage.querySelector(".opts");if(oo)oo.classList.add("sel");setTimeout(()=>{if(hg!==HGEN)return;if(S.step<steps().length-1){S.step++;home();}else{S.seen=[];S.cands=[];run(false,true);}},d||210);};
   stage.querySelectorAll('.opt').forEach(b=>{b.onclick=()=>{
     if(lock)return;tap();
     const g=b.dataset.g,v=b.dataset.v;
