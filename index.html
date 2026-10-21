@@ -2568,7 +2568,15 @@ function dedupeProv(arr){const m=new Map();arr.forEach(p=>{const k=provKey(p.pro
 const JW_T={flat:["FLATRATE","FLATRATE_AND_BUY","CINEMA"],ads:["ADS","FREE","FAST"],rent:["RENT"],buy:["BUY","FLATRATE_AND_BUY"]};
 function jwLink(d,g,k){
   const a=d&&d.jw;if(!a||!a.length)return"";
-  const m=a.filter(o=>o&&typeof o.u==="string"&&/^https:\/\//.test(o.u)&&provKey(o.n)===k);if(!m.length)return"";
+  /* i "canali" (es. "HBO Max Amazon Channel") hanno lo stesso nome del servizio una volta tolta la parola Channel, ma il link porta ad Amazon/Apple:
+     li scarto, cosi' il logo HBO apre HBO e mai Amazon. Se per quel servizio c'e' solo il canale, il logo resta statico */
+  /* regola di sicurezza sull'indirizzo: un link che va su Amazon/Prime Video vale solo per il logo Amazon, uno che va su Apple TV solo per il logo Apple TV */
+  const host=u=>{try{return new URL(u).hostname.toLowerCase();}catch(e){return"";}};
+  const viaOther=(u)=>{const h=host(u);
+    if(/(^|\.)(amazon\.[a-z.]+|primevideo\.com|amzn\.[a-z]+)$/.test(h))return k!=="primevideo";
+    if(/(^|\.)tv\.apple\.com$/.test(h))return k!=="appletv";
+    return false;};
+  const m=a.filter(o=>o&&typeof o.u==="string"&&/^https:\/\//.test(o.u)&&!CH_RE.test(o.n||"")&&provKey(o.n)===k&&!viaOther(o.u));if(!m.length)return"";
   return (m.find(o=>(JW_T[g]||[]).indexOf(o.t)>=0)||m[0]).u;
 }
 function jwApply(d){   // i link arrivano dopo che la scheda e' gia' visibile: si aggiungono ai loghi senza ridisegnare nulla
