@@ -1865,11 +1865,14 @@ async function syncPull(){
     const m=mergeSettings(j);
     if((+j.ts||0)<(+L.ts||0)){if(m.ch.length)afterSettings(m.ch);syncPush();return;}
     const keep=RECENT,seen0=L.seen||[];let need=m.push;
-    L.recent=Array.isArray(j.recent)?j.recent:[];
+    L.recent=Array.isArray(j.recent)?j.recent.slice():[];
+    {const c=+getSet("rclr",0),have=new Set(L.recent.map(x=>x&&String(x.k)));   // se il server ne tiene meno, le mie locali che mancano restano (fino a RCAP)
+     (keep||[]).forEach(x=>{if(x&&x.ts&&!(c&&x.ts<=c)&&!have.has(String(x.k))){L.recent.push(x);have.add(String(x.k));}});
+     L.recent.sort((a,b)=>(+b.ts||0)-(+a.ts||0));if(L.recent.length>RCAP)L.recent.length=RCAP;
+     if(L.recent.length>(Array.isArray(j.recent)?j.recent.length:0))need=true;}   // niente più "ripristino" cieco: un altro dispositivo che aveva svuotato non viene annullato da uno rimasto indietro
     if(Array.isArray(j.seen))L.seen=j.seen;else{L.seen=seen0;if(seen0.length)need=true;}
     if(typeof j.ts==="number")L.ts=j.ts;
     sbuild();RECENT=L.recent;pruneRecent();
-    if(!RECENT.length&&keep.length){RECENT=L.recent=keep;need=true;}
     try{localStorage.setItem(LKEY,JSON.stringify(L));}catch(e){}
     if(m.ch.length)afterSettings(m.ch);
     if(need)lsave();
@@ -1969,7 +1972,8 @@ if(!RECENT.length){try{const j=JSON.parse(localStorage.getItem(RKEY)||"[]");if(A
 function pruneRecent(){
   const n=Date.now();let ch=false;
   (L.recent||[]).forEach(x=>{if(x&&!x.ts){x.ts=n;ch=true;}});
-  const k=(L.recent||[]).filter(x=>x&&n-x.ts<RWEEK);
+  const cl=+getSet("rclr",0);   // data dell'ultimo "Svuota": tutto ciò che è più vecchio sparisce, anche se il server lo rimanda
+  const k=(L.recent||[]).filter(x=>x&&n-x.ts<RWEEK&&!(cl&&x.ts<=cl));
   if(k.length!==(L.recent||[]).length)ch=true;
   L.recent=k;RECENT=k;
   if(ch)lsave();
@@ -1989,7 +1993,7 @@ function clearRecent(){
   e.classList.add("on");void e.offsetWidth;e.classList.add("show");
 }
 function doClearRecent(){
-  RECENT=L.recent=[];try{localStorage.removeItem(RKEY);}catch(e){}lsave();
+  RECENT=L.recent=[];try{localStorage.removeItem(RKEY);}catch(e){}setSet("rclr",Date.now());
   const tr=$("tr");if(tr){tr.innerHTML="";tr._h="";}
   const box=$("lres");
   if(box){const fill=()=>{box.innerHTML='<div class="lemp">'+IC.clock+'<span>Ancora vuota</span></div>';if(box.animate&&!RM())box.animate([{opacity:0},{opacity:1}],{duration:320,easing:"ease-out"});};
@@ -2122,8 +2126,10 @@ async function revokeAll(){
    - modifica media (nuova funzione o schermata) -> seconda cifra: 2.2 -> 2.3
    - modifica molto grande (cambiamenti profondi) -> prima cifra: 2.x -> 3.0
    Ogni voce: v (versione), d (data), t (elenco di novità in italiano, brevi). La pagina Impostazioni > Novità le mostra da sola. */
-const APP_VER="2.4.2";
+const APP_VER="2.4.4";
 const CHANGELOG=[
+  {v:"2.4.4",d:"22 ottobre 2026",t:["Svuota la cronologia: i titoli non ricompaiono più se li avevi ancora su un altro dispositivo rimasto indietro"]},
+  {v:"2.4.3",d:"22 ottobre 2026",t:["Trovati di recente: «Svuota la cronologia» ora cancella davvero, anche dopo la sincronizzazione con gli altri dispositivi","I titoli recenti restano fino a 100 su questo dispositivo, anche se il server ne conserva meno"]},
   {v:"2.4.2",d:"22 ottobre 2026",t:["Su PC tutte le pagine usano tutta la larghezza dello schermo, senza fasce vuote ai lati","Domande, risultato, ricerca, regione e piattaforme più ampi, con più titoli in griglia sugli schermi grandi"]},
   {v:"2.4.1",d:"22 ottobre 2026",t:["Impostazioni su PC a tutta larghezza: via le fasce vuote ai lati, menu laterale più largo e contenuto più ampio"]},
   {v:"2.4",d:"22 ottobre 2026",t:["Impostazioni su PC: menu laterale a sinistra e una sezione alla volta a destra, senza dover scorrere tutto","Esci resta sotto il menu, sempre a portata","Su telefono resta la lista unica di sezioni"]},
