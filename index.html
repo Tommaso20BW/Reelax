@@ -2358,12 +2358,10 @@ async function pfPage(){
     stT().platforms=Date.now();lsave();const on=i<0;b.classList.toggle("on",on);b.setAttribute("aria-pressed",on?"true":"false");
   };
 }
-let outT=null;
-function confirmLogout(){   // primo tocco chiede conferma, secondo tocco esce
-  const b=document.querySelector('.srow.out');if(!b)return doLogout();
-  if(b.classList.contains('ask')){clearTimeout(outT);return doLogout();}
-  b.classList.add('ask');b.querySelector('.sl').textContent='Tocca ancora per uscire';
-  outT=setTimeout(()=>{b.classList.remove('ask');b.querySelector('.sl').textContent='Esci';},3000);
+function confirmLogout(){   // apre il popup di conferma (stesso di Condividi / Svuota cronologia)
+  const e=shEl();e.setAttribute("aria-label","Esci");
+  $("shg").innerHTML='<button type="button" class="srow rd" data-sh="out">'+IC.out+'<span class="sl">Esci</span></button>'+shRow("clrno",IC.x,"Annulla");
+  e.classList.add("on");void e.offsetWidth;e.classList.add("show");
 }
 
 const TM_FILM={35:"comedy film",10751:"family film",10749:"romance film",18:"drama film",27:"horror film",28:"action film",53:"thriller film",12:"adventure film",9648:"mystery film",878:"science fiction film",14:"fantasy film",10752:"war film"};
@@ -3028,6 +3026,7 @@ const shToPng=bl=>createImageBitmap(bl).then(bm=>{const c=document.createElement
 async function shAct(k,b){
   if(k==="clr"){shClose();doClearRecent();return;}
   if(k==="clrno"){shClose();return;}
+  if(k==="out"){shClose();doLogout();return;}
   const d=S.cur&&S.cur.d;if(!d)return;
   const say=t=>{const l=b.querySelector(".sl");if(l)l.textContent=t;};
   if(k==="more"){shClose();setTimeout(shareNative,250);return;}
