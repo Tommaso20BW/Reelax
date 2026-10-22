@@ -1872,12 +1872,19 @@ const tm=(path,params)=>isTest()?Promise.reject(new Error("modalità test")):fjr
   LASTERR=(e&&(e.name==="AbortError"?"timeout":e.message))||"errore";throw e;});
 /* ---------- Liste personali: già visto / da vedere (locale + sincronizzate dal Worker) ---------- */
 const LKEY="reelax_lists",LDIRTY="reelax_lists_dirty";
-let L={platforms:[],recent:[],seen:[]};
-try{const j=JSON.parse(localStorage.getItem(LKEY)||"null");if(j){L.platforms=Array.isArray(j.platforms)?j.platforms:[];L.recent=Array.isArray(j.recent)?j.recent:[];L.seen=Array.isArray(j.seen)?j.seen:[];if(typeof j.pf==="boolean")L.pf=j.pf;if(typeof j.rg==="string")L.rg=j.rg;if(j.st&&typeof j.st==="object"&&!Array.isArray(j.st))L.st=j.st;if(typeof j.ts==="number")L.ts=j.ts;}}catch(e){}
+/* L parte vuota; i dati salvati su questo dispositivo si leggono SOLO se non sei nell'account test (che non legge e non scrive mai nulla di salvato) */
+function readL(){
+  const o={platforms:[],recent:[],seen:[]};
+  if(isTest())return o;
+  try{const j=JSON.parse(localStorage.getItem(LKEY)||"null");if(j){o.platforms=Array.isArray(j.platforms)?j.platforms:[];o.recent=Array.isArray(j.recent)?j.recent:[];o.seen=Array.isArray(j.seen)?j.seen:[];if(typeof j.pf==="boolean")o.pf=j.pf;if(typeof j.rg==="string")o.rg=j.rg;if(j.st&&typeof j.st==="object"&&!Array.isArray(j.st))o.st=j.st;if(typeof j.ts==="number")o.ts=j.ts;}}catch(e){}
+  return o;
+}
+let L=readL();
 const PX=()=>TMDB_PROXY.replace(/\/+$/,"");
 const AUTHH=()=>({Authorization:"Bearer "+getTok(),"Content-Type":"application/json"});
 let pushT=null;
-function lsave(){L.ts=Date.now();try{localStorage.setItem(LKEY,JSON.stringify(L));localStorage.setItem(LDIRTY,"1");}catch(e){}clearTimeout(pushT);pushT=setTimeout(syncPush,900);}
+function lsave(){L.ts=Date.now();if(isTest())return;   // account test: niente salvataggio né sincronizzazione
+  try{localStorage.setItem(LKEY,JSON.stringify(L));localStorage.setItem(LDIRTY,"1");}catch(e){}clearTimeout(pushT);pushT=setTimeout(syncPush,900);}
 /* Impostazioni generiche: getSet(chiave,predefinito) / setSet(chiave,valore). Si salvano su questo dispositivo e nel Worker (L.st), quindi vale anche per quelle future. */
 const getSet=(k,d)=>{const v=L.st&&L.st[k];return v===undefined?d:v;};
 const stT=()=>{if(!L.st||typeof L.st!=="object"||Array.isArray(L.st))L.st={};if(!L.st._t||typeof L.st._t!=="object")L.st._t={};return L.st._t;};   // data dell'ultima modifica di ogni impostazione
@@ -2044,7 +2051,7 @@ sbuild();
 /* ---------- Trovati di recente (solo su questo dispositivo) ---------- */
 const RKEY="reelax_recent",RCAP=100,RWEEK=7*864e5;
 let RECENT=L.recent;
-if(!RECENT.length){try{const j=JSON.parse(localStorage.getItem(RKEY)||"[]");if(Array.isArray(j)&&j.length)RECENT=L.recent=j;}catch(e){}}   // dalla vecchia versione solo-locale
+if(!RECENT.length&&!isTest()){try{const j=JSON.parse(localStorage.getItem(RKEY)||"[]");if(Array.isArray(j)&&j.length)RECENT=L.recent=j;}catch(e){}}   // dalla vecchia versione solo-locale
 function pruneRecent(){
   const n=Date.now();let ch=false;
   (L.recent||[]).forEach(x=>{if(x&&!x.ts){x.ts=n;ch=true;}});
@@ -2097,10 +2104,10 @@ const LANG=()=>REGLANG[REG()]||"it-IT";
 const FLAGS={IT:'<rect x="0" y="0" width="20.05" height="40" fill="#009246"/><rect x="20.0" y="0" width="20.05" height="40" fill="#fff"/><rect x="40.0" y="0" width="20.05" height="40" fill="#ce2b37"/>',FR:'<rect x="0" y="0" width="20.05" height="40" fill="#0055a4"/><rect x="20.0" y="0" width="20.05" height="40" fill="#fff"/><rect x="40.0" y="0" width="20.05" height="40" fill="#ef4135"/>',DE:'<rect x="0" y="0" width="60" height="13.38" fill="#000"/><rect x="0" y="13.33" width="60" height="13.38" fill="#dd0000"/><rect x="0" y="26.67" width="60" height="13.38" fill="#ffce00"/>',ES:'<rect x="0" y="0" width="60" height="10.05" fill="#aa151b"/><rect x="0" y="10" width="60" height="20.05" fill="#f1bf00"/><rect x="0" y="30" width="60" height="10.05" fill="#aa151b"/>',PT:'<rect x="0" y="0" width="24.05" height="40" fill="#006600"/><rect x="24" y="0" width="36.05" height="40" fill="#ff0000"/><circle cx="24" cy="20" r="6" fill="#ffcc00"/><circle cx="24" cy="20" r="3.2" fill="#fff"/>',NL:'<rect x="0" y="0" width="60" height="13.38" fill="#ae1c28"/><rect x="0" y="13.33" width="60" height="13.38" fill="#fff"/><rect x="0" y="26.67" width="60" height="13.38" fill="#21468b"/>',PL:'<rect x="0" y="0" width="60" height="20.05" fill="#fff"/><rect x="0" y="20.0" width="60" height="20.05" fill="#dc143c"/>',RU:'<rect x="0" y="0" width="60" height="13.38" fill="#fff"/><rect x="0" y="13.33" width="60" height="13.38" fill="#0039a6"/><rect x="0" y="26.67" width="60" height="13.38" fill="#d52b1e"/>',MX:'<rect x="0" y="0" width="20.05" height="40" fill="#006847"/><rect x="20.0" y="0" width="20.05" height="40" fill="#fff"/><rect x="40.0" y="0" width="20.05" height="40" fill="#ce1126"/><circle cx="30" cy="20" r="4.5" fill="#8c6a2f" opacity=".85"/>',AR:'<rect x="0" y="0" width="60" height="13.38" fill="#74acdf"/><rect x="0" y="13.33" width="60" height="13.38" fill="#fff"/><rect x="0" y="26.67" width="60" height="13.38" fill="#74acdf"/><circle cx="30" cy="20" r="4" fill="#f6b40e"/>',BR:'<rect x="0" y="0" width="60" height="40" fill="#009c3b"/><polygon points="30,4 56,20 30,36 4,20" fill="#ffdf00"/><circle cx="30" cy="20" r="9" fill="#002776"/>',JP:'<rect x="0" y="0" width="60" height="40" fill="#fff"/><circle cx="30" cy="20" r="11" fill="#bc002d"/>',KR:'<rect x="0" y="0" width="60" height="40" fill="#fff"/><circle cx="30" cy="20" r="10" fill="#cd2e3a"/><path d="M20 20a10 10 0 0 0 20 0z" fill="#0047a0"/><circle cx="25" cy="20" r="5" fill="#cd2e3a"/><circle cx="35" cy="20" r="5" fill="#0047a0"/>',TR:'<rect x="0" y="0" width="60" height="40" fill="#e30a17"/><circle cx="25" cy="20" r="10" fill="#fff"/><circle cx="28" cy="20" r="8" fill="#e30a17"/><polygon points="37.0,15.5 38.0,18.6 41.3,18.6 38.6,20.5 39.6,23.6 37.0,21.7 34.4,23.6 35.4,20.5 32.7,18.6 36.0,18.6" fill="#fff"/>',IN:'<rect x="0" y="0" width="60" height="13.38" fill="#ff9933"/><rect x="0" y="13.33" width="60" height="13.38" fill="#fff"/><rect x="0" y="26.67" width="60" height="13.38" fill="#138808"/><circle cx="30" cy="20" r="4" fill="none" stroke="#000080" stroke-width="1.2"/>',GB:'<rect width="60" height="40" fill="#012169"/><path d="M0 0L60 40M60 0L0 40" stroke="#fff" stroke-width="8"/><path d="M0 0L60 40M60 0L0 40" stroke="#c8102e" stroke-width="3"/><path d="M30 0V40M0 20H60" stroke="#fff" stroke-width="13"/><path d="M30 0V40M0 20H60" stroke="#c8102e" stroke-width="8"/>',US:'<rect x="0" y="0.0" width="60" height="3.13" fill="#b22234"/><rect x="0" y="3.08" width="60" height="3.13" fill="#fff"/><rect x="0" y="6.15" width="60" height="3.13" fill="#b22234"/><rect x="0" y="9.23" width="60" height="3.13" fill="#fff"/><rect x="0" y="12.31" width="60" height="3.13" fill="#b22234"/><rect x="0" y="15.38" width="60" height="3.13" fill="#fff"/><rect x="0" y="18.46" width="60" height="3.13" fill="#b22234"/><rect x="0" y="21.54" width="60" height="3.13" fill="#fff"/><rect x="0" y="24.62" width="60" height="3.13" fill="#b22234"/><rect x="0" y="27.69" width="60" height="3.13" fill="#fff"/><rect x="0" y="30.77" width="60" height="3.13" fill="#b22234"/><rect x="0" y="33.85" width="60" height="3.13" fill="#fff"/><rect x="0" y="36.92" width="60" height="3.13" fill="#b22234"/><rect x="0" y="0" width="26" height="21.6" fill="#3c3b6e"/><circle cx="3.0" cy="3.0" r="1" fill="#fff"/><circle cx="3.0" cy="7.6" r="1" fill="#fff"/><circle cx="3.0" cy="12.2" r="1" fill="#fff"/><circle cx="3.0" cy="16.8" r="1" fill="#fff"/><circle cx="7.6" cy="3.0" r="1" fill="#fff"/><circle cx="7.6" cy="7.6" r="1" fill="#fff"/><circle cx="7.6" cy="12.2" r="1" fill="#fff"/><circle cx="7.6" cy="16.8" r="1" fill="#fff"/><circle cx="12.2" cy="3.0" r="1" fill="#fff"/><circle cx="12.2" cy="7.6" r="1" fill="#fff"/><circle cx="12.2" cy="12.2" r="1" fill="#fff"/><circle cx="12.2" cy="16.8" r="1" fill="#fff"/><circle cx="16.8" cy="3.0" r="1" fill="#fff"/><circle cx="16.8" cy="7.6" r="1" fill="#fff"/><circle cx="16.8" cy="12.2" r="1" fill="#fff"/><circle cx="16.8" cy="16.8" r="1" fill="#fff"/><circle cx="21.4" cy="3.0" r="1" fill="#fff"/><circle cx="21.4" cy="7.6" r="1" fill="#fff"/><circle cx="21.4" cy="12.2" r="1" fill="#fff"/><circle cx="21.4" cy="16.8" r="1" fill="#fff"/>',AU:'<rect width="60" height="40" fill="#012169"/><g transform="scale(.5)"><rect width="60" height="40" fill="#012169"/><path d="M0 0L60 40M60 0L0 40" stroke="#fff" stroke-width="8"/><path d="M0 0L60 40M60 0L0 40" stroke="#c8102e" stroke-width="3"/><path d="M30 0V40M0 20H60" stroke="#fff" stroke-width="13"/><path d="M30 0V40M0 20H60" stroke="#c8102e" stroke-width="8"/></g><polygon points="15.0,25.5 16.4,29.1 20.2,29.3 17.3,31.7 18.2,35.4 15.0,33.4 11.8,35.4 12.7,31.7 9.8,29.3 13.6,29.1" fill="#fff"/><polygon points="42.0,6.6 42.6,8.1 44.3,8.3 43.0,9.3 43.4,10.9 42.0,10.1 40.6,10.9 41.0,9.3 39.7,8.3 41.4,8.1" fill="#fff"/><polygon points="48.0,13.6 48.6,15.1 50.3,15.3 49.0,16.3 49.4,17.9 48.0,17.1 46.6,17.9 47.0,16.3 45.7,15.3 47.4,15.1" fill="#fff"/><polygon points="42.0,28.6 42.6,30.1 44.3,30.3 43.0,31.3 43.4,32.9 42.0,32.1 40.6,32.9 41.0,31.3 39.7,30.3 41.4,30.1" fill="#fff"/><polygon points="35.0,16.6 35.6,18.1 37.3,18.3 36.0,19.3 36.4,20.9 35.0,20.1 33.6,20.9 34.0,19.3 32.7,18.3 34.4,18.1" fill="#fff"/><polygon points="46.0,20.6 46.6,22.1 48.3,22.3 47.0,23.3 47.4,24.9 46.0,24.1 44.6,24.9 45.0,23.3 43.7,22.3 45.4,22.1" fill="#fff"/>',CA:'<rect x="0" y="0" width="15.05" height="40" fill="#d52b1e"/><rect x="15" y="0" width="30.05" height="40" fill="#fff"/><rect x="45" y="0" width="15.05" height="40" fill="#d52b1e"/><polygon points="30,9 32.5,15 37,13.5 35.5,21 40,19.5 38.5,25 33,25.5 33.8,31 30.8,30.4 30.8,34 29.2,34 29.2,30.4 26.2,31 27,25.5 21.5,25 20,19.5 24.5,21 23,13.5 27.5,15" fill="#d52b1e"/>'};
 const flagIc=c=>'<span class="fl" aria-hidden="true"><svg viewBox="0 0 60 40" preserveAspectRatio="xMidYMid slice">'+(FLAGS[c]||'')+'</svg></span>';
 
-const REG=()=>{if(L&&REGIONS.indexOf(L.rg)>=0)return L.rg;try{const v=localStorage.getItem(RGKEY);if(v&&REGIONS.indexOf(v)>=0)return v;}catch(e){}return "IT";};
+const REG=()=>{if(L&&REGIONS.indexOf(L.rg)>=0)return L.rg;if(isTest())return "IT";try{const v=localStorage.getItem(RGKEY);if(v&&REGIONS.indexOf(v)>=0)return v;}catch(e){}return "IT";};
 let RGN=null,RGNL="";
 const regName=c=>{try{const l=UIL();if(!RGN||RGNL!==l){RGN=new Intl.DisplayNames([l],{type:"region"});RGNL=l;}return RGN.of(c)||c;}catch(e){return c;}};
-function setRegion(c){if(REGIONS.indexOf(c)<0||c===REG())return;try{localStorage.setItem(RGKEY,c);}catch(e){}L.rg=c;stT().rg=Date.now();S.seen=[];S.cands=[];lsave();i18nRefresh();}
+function setRegion(c){if(REGIONS.indexOf(c)<0||c===REG())return;if(!isTest())try{localStorage.setItem(RGKEY,c);}catch(e){}L.rg=c;stT().rg=Date.now();S.seen=[];S.cands=[];lsave();i18nRefresh();}
 
 /* ---------- Lingua dell'interfaccia, in base alla regione ---------- */
 const UIMAP={IT:"it",ES:"es",MX:"es",AR:"es",FR:"fr",DE:"de",PT:"pt",BR:"pt"};   // tutte le altre regioni: inglese
@@ -2260,8 +2267,8 @@ function i18nRefresh(){try{document.documentElement.lang=UIL();}catch(e){}if(!do
 setTimeout(i18nRefresh,0);
 
 const PFKEY="reelax_pf_on";
-const pfOn=()=>{if(typeof L.pf==="boolean")return L.pf;try{return localStorage.getItem(PFKEY)==="1";}catch(e){return false;}};   // sincronizzato col Worker; se manca, valore vecchio di questo dispositivo
-const pfSet=v=>{L.pf=!!v;stT().pf=Date.now();try{localStorage.setItem(PFKEY,v?"1":"0");}catch(e){}lsave();};
+const pfOn=()=>{if(typeof L.pf==="boolean")return L.pf;if(isTest())return false;try{return localStorage.getItem(PFKEY)==="1";}catch(e){return false;}};   // sincronizzato col Worker; se manca, valore vecchio di questo dispositivo
+const pfSet=v=>{L.pf=!!v;stT().pf=Date.now();if(!isTest())try{localStorage.setItem(PFKEY,v?"1":"0");}catch(e){}lsave();};
 const pfSel=()=>L.platforms.filter(x=>x&&typeof x==="object"&&Array.isArray(x.ids));
 const pfIds=()=>pfOn()?[].concat(...pfSel().map(x=>x.ids)):[];
 function pfNorm(){   // selezioni salvate con nomi doppi (es. Amazon Video + Amazon Prime Video): le unisco
@@ -2306,7 +2313,7 @@ async function revokeAll(){
    Ogni voce: v (versione), d (data), t (elenco di novità in italiano, brevi). La pagina Impostazioni > Novità le mostra da sola. */
 const APP_VER="2.2.1";
 const CHANGELOG=[
-  {v:"2.2.1",d:"22 ottobre 2026",t:["Nuova animazione di accesso e uscita: un'onda circolare parte dal tasto e rivela la schermata successiva, ora più fluida","Schermata di accesso rinnovata: scritta REELAX animata con i colori sfumati dell'app e lo stesso sfondo dell'app, nel tema chiaro e in quello scuro","Su smartphone l'app resta in verticale: ruotando il telefono compare l'invito a raddrizzarlo","Conferma di uscita più chiara: il tasto ora dice «Sì, esci dall'account»","Traduzioni completate: intestazioni delle schede, condivisione, errori, impostazioni e frasi di «Perché fa per te» ora seguono la lingua della regione"]},
+  {v:"2.2.1",d:"22 ottobre 2026",t:["Nuova animazione di accesso e uscita: un'onda circolare parte dal tasto e rivela la schermata successiva, ora più fluida","Schermata di accesso rinnovata: scritta REELAX animata con i colori sfumati dell'app e lo stesso sfondo dell'app, nel tema chiaro e in quello scuro","Su smartphone l'app resta in verticale: ruotando il telefono compare l'invito a raddrizzarlo","Account di prova isolato: non vede né modifica liste, «Già visti», cronologia, paese e piattaforme dell'account vero, e nelle Impostazioni non mostra più username, password e dispositivi","Conferma di uscita più chiara: il tasto ora dice «Sì, esci dall'account»","Traduzioni completate: intestazioni delle schede, condivisione, errori, impostazioni e frasi di «Perché fa per te» ora seguono la lingua della regione"]},
   {v:"2.2",d:"22 ottobre 2026",t:["Nuova pagina Novità con la versione dell'app","Impostazioni rifatte: sezioni più chiare, su PC menu laterale con pannello e anteprime del tema","Su PC tutte le pagine usano tutta la larghezza dello schermo","Tema chiaro e scuro neutri, con accento rosso Reelax","Cronologia fino a 100 titoli, ogni titolo scade dopo 7 giorni; svuotarla ora cancella davvero, anche tra dispositivi"]},
   {v:"2.1.2",d:"21 ottobre 2026",t:["Il logo Reelax in alto ora si può toccare e ha una nuova animazione con una linea sfumata","Cambio tema più fluido, con transizione e interruttore rifatti","Il caricamento si può annullare e la posizione di scorrimento viene ricordata","Migliorie e correzioni"]},
   {v:"2.1.1",d:"20 ottobre 2026",t:["Animazioni più fluide nel passaggio tra le pagine","Migliorie e correzioni"]},
@@ -2327,7 +2334,7 @@ function newsPage(){
 }
 function settingsPage(){
   RUN++;SRUN++;setBd(null);setRoute("/impostazioni");
-  const SEC=[['sug','Suggerimenti',IC.star],['dove','Dove guardare',IC.globe],['asp','Aspetto',IC.sun],['acc','Account',IC.user],['inf','Informazioni',IC.info]];
+  const SEC=[['sug','Suggerimenti',IC.star],['dove','Dove guardare',IC.globe],['asp','Aspetto',IC.sun],['acc','Account',IC.user],['inf','Informazioni',IC.info]].filter(x=>!(isTest()&&x[0]==='acc'));
   if(!SEC.some(x=>x[0]===window._ssec))window._ssec='sug';
   const sec=(id,t,d,h)=>'<div class="sblock'+(id==='inf'?' pcx':'')+(window._ssec===id?' on':'')+'" data-s="'+id+'"><div class="sh">'+t+'</div>'+(d?'<div class="sd">'+d+'</div>':'')+h+'</div>';
   const row=(act,ic,lab,extra)=>'<button type="button" class="srow" data-act="'+act+'">'+ic+'<span class="sl">'+lab+'</span>'+(extra||'')+'</button>';
@@ -2337,7 +2344,7 @@ function settingsPage(){
       sec('sug','Suggerimenti','Come Reelax sceglie i titoli e cosa ricorda per te.','<div class="sgrp" id="sg_sn">'+seenGroup()+'</div>')+
       sec('dove','Dove guardare','Paese e piattaforme di streaming che usi.','<div class="sgrp" id="sg_pf">'+pfGroup()+'</div>')+
       sec('asp','Aspetto','Tema chiaro, scuro o in base al dispositivo.','<div class="seg tp" id="thseg">'+[["auto","Auto","half"],["light","Chiaro","sun"],["dark","Scuro","moon"]].map(x=>{const m='<i class="m %c"><b></b><u></u><s></s></i>';return '<button type="button" data-t="'+x[0]+'"><span class="tpv'+(x[0]==="auto"?' a':'')+'">'+(x[0]==="auto"?m.replace('%c','d')+m.replace('%c','l'):m.replace('%c',x[0]==="light"?'l':'d'))+'</span><span class="tl">'+IC[x[2]]+'<span>'+x[1]+'</span></span></button>';}).join('')+'</div>')+
-      sec('acc','Account','Dati di accesso e dispositivi collegati.','<div class="sgrp">'+row('acuser',IC.user,'Cambia username',IC.chev)+row('acpass',IC.lock,'Cambia password',IC.chev)+row('acall',IC.devs,'Esci da tutti i dispositivi')+'</div>')+
+      (isTest()?'':sec('acc','Account','Dati di accesso e dispositivi collegati.','<div class="sgrp">'+row('acuser',IC.user,'Cambia username',IC.chev)+row('acpass',IC.lock,'Cambia password',IC.chev)+row('acall',IC.devs,'Esci da tutti i dispositivi')+'</div>'))+
       sec('inf','Informazioni','Versione '+APP_VER+' · cosa c\'è di nuovo.',CHANGELOG.map(c=>'<div class="vh">Versione '+esc(c.v)+' · '+esc(c.d)+'</div><div class="sgrp"><ul class="nws">'+c.t.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div>').join(''))+
       '<div class="sblock pho"><div class="sh">Informazioni</div><div class="sgrp">'+row('news',IC.spark,'Versione e novità','<span class="sv">'+APP_VER+'</span>'+IC.chev)+'</div></div>'+
     '</div>'+
@@ -2411,6 +2418,7 @@ function regionPage(){
 }
 /* ---------- Cambio username / password ---------- */
 function accountPage(mode){
+  if(isTest())return settingsPage();
   RUN++;SRUN++;setBd(null);setRoute("/impostazioni/"+(mode==="user"?"username":"password"));
   const u=mode==="user";
   const f=(id,ph,type,ac)=>'<input class="lgi sin" id="'+id+'" type="'+type+'" placeholder="'+ph+'" autocomplete="'+ac+'" autocapitalize="none" autocorrect="off" spellcheck="false" aria-label="'+ph+'">';
@@ -3639,8 +3647,13 @@ function unlockApp(o){
   else lg.hidden=true;
   syncPull();
 }
+function resetL(){   // dopo login o logout: ricarico i dati dell'account giusto (test = vuoto, mai quelli veri)
+  L=readL();RECENT=L.recent;try{sbuild();}catch(e){}
+  S.seen=[];S.cands=[];setTimeout(i18nRefresh,0);
+}
 function doLogout(o){
   try{localStorage.removeItem(AUTH_KEY);}catch(e){}
+  resetL();
   Object.assign(S,{cat:"",fmt:"",mood:"",time:"",era:"",style:"",step:0,seen:[],cands:[],cur:null,avoid:[]});
   FIRST=true;
   try{sessionStorage.removeItem("reelax_s");}catch(e){}
@@ -3660,7 +3673,7 @@ $("lgf").addEventListener("submit",async e=>{
   }catch(x){fail="Impossibile contattare il server. Controlla la connessione.";}
   await sleep(Math.max(0,1300-(Date.now()-t0)));
   lgBusy=false;
-  if(tok){try{localStorage.setItem(AUTH_KEY,tok);}catch(x){}unlockApp(org);return;}
+  if(tok){try{localStorage.setItem(AUTH_KEY,tok);}catch(x){}resetL();unlockApp(org);return;}
   c.classList.remove("busy");btn.disabled=false;er.textContent=fail||"Nome utente o password non corretti.";
   void c.offsetWidth;c.classList.add("bad");$("lgp").value="";try{$("lgp").focus();}catch(x){}
 });
