@@ -5,8 +5,10 @@
      1. PRIMA di toccare il codice: leggi "VERSIONE E NOVITÀ" (cerca questa scritta, sta sopra settingsPage) e guarda APP_VER e la prima voce di CHANGELOG.
      2. DOPO la modifica: aggiorna APP_VER e CHANGELOG così:
         - una voce per RILASCIO, non per ritocco. Stesso lavoro / stessa giornata della voce in cima -> aggiorna QUELLA, non aggiungerne una nuova.
-        - correzione o ritocco piccolo -> terza cifra (2.2 -> 2.2.1) | nuova funzione o schermata -> seconda cifra (2.2 -> 2.3) | cambiamento molto grande -> prima cifra.
-        - ogni voce ha v (versione), d (data), t (elenco di novità in italiano, brevi, solo cose che l'utente vede).
+        - LA VERSIONE NON SI SCRIVE A MANO: si calcola da sola dalle novità di ogni voce (cerca "VERSIONE AUTOMATICA" sotto CHANGELOG). Tu aggiungi solo la riga in t; APP_VER e v escono dal calcolo.
+        - il livello della versione dipende da QUANTE novità ha la voce (righe di t): 1-2 novità = piccola -> terza cifra (2.2 -> 2.2.1) | 3-5 novità = media -> seconda cifra (2.2 -> 2.3) | più di 5 novità = grande -> prima cifra (2.x -> 3.0).
+        - se aggiungi righe alla voce in cima (stessa giornata), ricontale e alza la versione se superi una soglia: la voce non resta mai di livello più basso del suo contenuto.
+        - ogni voce ha d (data) e t (elenco di novità in italiano, brevi, solo cose che l'utente vede). Non scrivere v: la mette il calcolo.
      3. NELLA RISPOSTA scrivi sempre una riga: «Versione: X, motivo: …». Anche se non cambi nulla (es. solo commenti): scrivi «Versione invariata, motivo: …».
      4. Non consegnare il file senza aver fatto i punti 1-3. Se non sei sicuro di averli fatti, non hai finito.
      Le stesse regole sono in AGENTS.md / CLAUDE.md nella cartella del progetto. -->
@@ -2317,27 +2319,40 @@ async function doRevokeAll(){   // dopo la conferma nel popup: l'esito si legge 
 }
 /* ---------- VERSIONE E NOVITÀ ----------
    REGOLA (per chi modifica questo file, anche in una nuova chat): una voce di CHANGELOG per ogni RILASCIO, non per ogni ritocco. Se la modifica riguarda lo stesso lavoro già in cima (stessa giornata, stessa funzione), NON aggiungere una voce nuova: aggiorna quella in cima (e solo se serve APP_VER). Una voce nuova solo per novità davvero nuove per l'utente. Mai 20 voci per la stessa cosa.
-   - modifica piccola (ritocco, correzione)      -> terza cifra: 2.2 -> 2.2.1
-   - modifica media (nuova funzione o schermata) -> seconda cifra: 2.2 -> 2.3
-   - modifica molto grande (cambiamenti profondi) -> prima cifra: 2.x -> 3.0
+   Il livello dipende da QUANTE novità (righe di t) ha la voce:
+   - 1-2 novità   = piccola -> terza cifra:  2.2 -> 2.2.1
+   - 3-5 novità   = media   -> seconda cifra: 2.2 -> 2.3
+   - più di 5     = grande  -> prima cifra:   2.x -> 3.0
+   Aggiungendo righe alla voce in cima, ricontale: se superi una soglia la versione sale (mai più bassa del contenuto).
    NELLA RISPOSTA scrivi sempre «Versione: X, motivo: …» (anche se invariata).
-   Ogni voce: v (versione), d (data), t (elenco di novità in italiano, brevi). La pagina Impostazioni > Novità le mostra da sola. */
-const APP_VER="2.2.1";
+   Ogni voce: d (data), t (elenco di novità in italiano, brevi). La versione (v) e APP_VER si calcolano da sole: vedi "VERSIONE AUTOMATICA" sotto CHANGELOG. La pagina Impostazioni > Novità le mostra da sola. */
+let APP_VER="";   // si calcola da sola dal CHANGELOG (vedi sotto): non va scritta a mano
 const CHANGELOG=[
-  {v:"2.2.1",d:"22 ottobre 2026",t:["Nuova animazione di accesso e uscita: un'onda circolare parte dal tasto e rivela la schermata successiva, ora più fluida","Schermata di accesso rinnovata: scritta REELAX animata con i colori sfumati dell'app e lo stesso sfondo dell'app, nel tema chiaro e in quello scuro","Su smartphone l'app resta in verticale: ruotando il telefono compare l'invito a raddrizzarlo","Account di prova isolato: non vede né modifica liste, «Già visti», cronologia, paese e piattaforme dell'account vero, e nelle Impostazioni non mostra più username, password e dispositivi","Lista «Le mie piattaforme» più viva: le righe entrano a cascata e la selezione ha una piccola animazione con segno di spunta che rimbalza","Conferma di uscita più chiara: il tasto ora dice «Sì, esci dall'account»; anche «Esci da tutti i dispositivi» apre lo stesso popup di conferma","Traduzioni completate: intestazioni delle schede, condivisione, errori, impostazioni e frasi di «Perché fa per te» ora seguono la lingua della regione"]},
-  {v:"2.2",d:"22 ottobre 2026",t:["Nuova pagina Novità con la versione dell'app","Impostazioni rifatte: sezioni più chiare, su PC menu laterale con pannello e anteprime del tema","Su PC tutte le pagine usano tutta la larghezza dello schermo","Tema chiaro e scuro neutri, con accento rosso Reelax","Cronologia fino a 100 titoli, ogni titolo scade dopo 7 giorni; svuotarla ora cancella davvero, anche tra dispositivi"]},
-  {v:"2.1.2",d:"21 ottobre 2026",t:["Il logo Reelax in alto ora si può toccare e ha una nuova animazione con una linea sfumata","Cambio tema più fluido, con transizione e interruttore rifatti","Il caricamento si può annullare e la posizione di scorrimento viene ricordata","Migliorie e correzioni"]},
-  {v:"2.1.1",d:"20 ottobre 2026",t:["Animazioni più fluide nel passaggio tra le pagine","Migliorie e correzioni"]},
-  {v:"2.1",d:"19 ottobre 2026",t:["Condivisione dei titoli: pannello per salvare l'immagine o copiarla","Titoli simili e saghe: dalla scheda si scoprono gli altri film della saga","Stelle di valutazione e nuove animazioni","Layout adattato anche agli schermi grandi","Effetto ripple nel cambio tema, carosello e gesti al tocco più fluidi","Migliorie e correzioni"]},
-  {v:"2.0.1",d:"19 ottobre 2026",t:["Immagini spostate in una cartella dedicata: la pagina si carica più leggera","Regione con le bandiere e tema chiaro curato in tutte le schermate","L'app si aggiorna da sola quando esce una nuova versione","Locandine e sfondo della scheda che si adattano meglio allo schermo","Elenco dei titoli già visti esteso fino a 5000","Migliorie e correzioni"]},
-  {v:"2.0",d:"18 ottobre 2026",t:["Nuova pagina Impostazioni","Tema chiaro e scuro con scelta manuale","Account: cambio username e password, uscita con conferma","Filtro per piattaforme di streaming e scelta della regione","Liste dei titoli recenti","Nuove icone dell'app e schermata di avvio","I titoli selezionati vengono mostrati in cima alla lista","Navigazione con indirizzo proprio per ogni pagina, sessione più affidabile"]},
-  {v:"1.5",d:"18 ottobre 2026",t:["Messaggio dei titoli di tendenza","Migliorie e correzioni"]},
-  {v:"1.4",d:"17 ottobre 2026",t:["Nuove domande per affinare i suggerimenti: stile, durata e altre categorie","Tasto Indietro tra le domande","Muro di locandine durante il caricamento"]},
-  {v:"1.3",d:"17 ottobre 2026",t:["Accesso con login","Pagina di ricerca con risultati più chiari e messaggi d'errore","Stato dell'app su iPhone con barra di stato trasparente"]},
-  {v:"1.2",d:"17 ottobre 2026",t:["Schermo intero su smartphone, senza zoom accidentali","Apertura della scheda con animazione dalla locandina","Tasti arrotondati e dock senza riquadro nero"]},
-  {v:"1.1",d:"17 ottobre 2026",t:["Scelta rapida in una sola schermata, pensata per smartphone","Link diretti alle piattaforme dove guardare il titolo","Animazioni di caricamento e nuovo aspetto","Migliorie e correzioni"]},
-  {v:"1.0",d:"16 ottobre 2026",t:["Prima versione di Reelax: scopri film e anime in base ai tuoi gusti, con dati TMDB","Schede con immagini e dettagli di film e anime"]}
+  {d:"22 ottobre 2026",t:["Nuova animazione di accesso e uscita: un'onda circolare parte dal tasto e rivela la schermata successiva, ora più fluida","Schermata di accesso rinnovata: scritta REELAX animata con i colori sfumati dell'app e lo stesso sfondo dell'app, nel tema chiaro e in quello scuro","Su smartphone l'app resta in verticale: ruotando il telefono compare l'invito a raddrizzarlo","Account di prova isolato: non vede né modifica liste, «Già visti», cronologia, paese e piattaforme dell'account vero, e nelle Impostazioni non mostra più username, password e dispositivi","Lista «Le mie piattaforme» più viva: le righe entrano a cascata e la selezione ha una piccola animazione con segno di spunta che rimbalza","Conferma di uscita più chiara: il tasto ora dice «Sì, esci dall'account»; anche «Esci da tutti i dispositivi» apre lo stesso popup di conferma","Traduzioni completate: intestazioni delle schede, condivisione, errori, impostazioni e frasi di «Perché fa per te» ora seguono la lingua della regione"]},
+  {d:"22 ottobre 2026",t:["Nuova pagina Novità con la versione dell'app","Impostazioni rifatte: sezioni più chiare, su PC menu laterale con pannello e anteprime del tema","Su PC tutte le pagine usano tutta la larghezza dello schermo","Tema chiaro e scuro neutri, con accento rosso Reelax","Cronologia fino a 100 titoli, ogni titolo scade dopo 7 giorni; svuotarla ora cancella davvero, anche tra dispositivi"]},
+  {d:"21 ottobre 2026",t:["Il logo Reelax in alto ora si può toccare e ha una nuova animazione con una linea sfumata","Cambio tema più fluido, con transizione e interruttore rifatti","Il caricamento si può annullare e la posizione di scorrimento viene ricordata","Migliorie e correzioni"]},
+  {d:"20 ottobre 2026",t:["Animazioni più fluide nel passaggio tra le pagine","Migliorie e correzioni"]},
+  {d:"19 ottobre 2026",t:["Condivisione dei titoli: pannello per salvare l'immagine o copiarla","Titoli simili e saghe: dalla scheda si scoprono gli altri film della saga","Stelle di valutazione e nuove animazioni","Layout adattato anche agli schermi grandi","Effetto ripple nel cambio tema, carosello e gesti al tocco più fluidi","Migliorie e correzioni"]},
+  {d:"19 ottobre 2026",t:["Immagini spostate in una cartella dedicata: la pagina si carica più leggera","Regione con le bandiere e tema chiaro curato in tutte le schermate","L'app si aggiorna da sola quando esce una nuova versione","Locandine e sfondo della scheda che si adattano meglio allo schermo","Elenco dei titoli già visti esteso fino a 5000","Migliorie e correzioni"]},
+  {d:"18 ottobre 2026",t:["Nuova pagina Impostazioni","Tema chiaro e scuro con scelta manuale","Account: cambio username e password, uscita con conferma","Filtro per piattaforme di streaming e scelta della regione","Liste dei titoli recenti","Nuove icone dell'app e schermata di avvio","I titoli selezionati vengono mostrati in cima alla lista","Navigazione con indirizzo proprio per ogni pagina, sessione più affidabile"]},
+  {d:"18 ottobre 2026",t:["Messaggio dei titoli di tendenza","Migliorie e correzioni"]},
+  {d:"17 ottobre 2026",t:["Nuove domande per affinare i suggerimenti: stile, durata e altre categorie","Tasto Indietro tra le domande","Muro di locandine durante il caricamento"]},
+  {d:"17 ottobre 2026",t:["Accesso con login","Pagina di ricerca con risultati più chiari e messaggi d'errore","Stato dell'app su iPhone con barra di stato trasparente"]},
+  {d:"17 ottobre 2026",t:["Schermo intero su smartphone, senza zoom accidentali","Apertura della scheda con animazione dalla locandina","Tasti arrotondati e dock senza riquadro nero"]},
+  {d:"17 ottobre 2026",t:["Scelta rapida in una sola schermata, pensata per smartphone","Link diretti alle piattaforme dove guardare il titolo","Animazioni di caricamento e nuovo aspetto","Migliorie e correzioni"]},
+  {d:"16 ottobre 2026",t:["Prima versione di Reelax: scopri film e anime in base ai tuoi gusti, con dati TMDB","Schede con immagini e dettagli di film e anime"]}
 ];
+/* VERSIONE AUTOMATICA: ogni voce prende il suo numero da quante novità contiene (la riga generica «Migliorie e correzioni» non conta).
+   Si parte da 1.0 con la voce più vecchia e si va verso l'alto: 1-2 novità = terza cifra | 3-5 = seconda cifra | più di 5 = prima cifra. */
+(function(){
+  let M=1,m=0,p=0;
+  for(let i=CHANGELOG.length-1;i>=0;i--){
+    const c=CHANGELOG[i],n=c.t.filter(x=>!/^Migliorie e correzioni\.?$/i.test(x)).length;
+    if(i<CHANGELOG.length-1){if(n>5){M++;m=0;p=0;}else if(n>=3){m++;p=0;}else p++;}
+    c.v=p?M+"."+m+"."+p:M+"."+m;
+  }
+  APP_VER=CHANGELOG[0].v;
+})();
 function newsPage(){
   RUN++;SRUN++;setBd(null);setRoute("/impostazioni/novita");
   swap('<div class="page"><h1>Novità</h1>'+CHANGELOG.map(c=>'<div class="sblock"><div class="sh">Versione '+esc(c.v)+' · '+esc(c.d)+'</div><div class="sgrp"><ul class="nws">'+c.t.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div></div>').join('')+'</div>',true);
