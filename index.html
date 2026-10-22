@@ -1,4 +1,5 @@
 <!doctype html>
+<!-- VERSIONI: a ogni modifica aggiorna APP_VER e CHANGELOG (regola scritta sopra settingsPage: cerca "VERSIONE E NOVITÀ"). -->
 <html lang="it">
 <head>
 <meta charset="utf-8">
@@ -566,6 +567,8 @@ body.pre #app{opacity:0}
 .srow.rd svg{color:var(--red)}
 .srow.sm{min-height:52px;font-size:.95rem}
 .sblock .sh+.seg,.sblock .seg+.sh{margin-top:6px}
+.nws{margin:0;padding:14px 18px 14px 36px;font-size:.92rem;line-height:1.4}
+.nws li+li{margin-top:8px}
 .srow .sn{color:var(--mut);font-weight:600;font-size:.9rem}
 .fl{display:block;flex:none;width:26px;height:26px;border-radius:50%;overflow:hidden;box-shadow:0 0 0 1px var(--line2)}
 .srow .fl svg,.fl svg{display:block;width:100%;height:100%;color:inherit}
@@ -879,7 +882,7 @@ let TDX=0,LASTSTEP=-1,NAV=0,NAVT=0;
 /* scorrimento solo tra home e impostazioni (da sinistra, dov'è il tasto) o ricerca (da destra); indietro fa il contrario */
 /* ---------- Indirizzi delle pagine (#/...) ----------
    Ogni pagina ha il suo indirizzo: aggiornando la pagina (o aprendo il link) si torna lì; il tasto Indietro del browser funziona.
-   #/ e #/domanda/N (domande) · #/cerca[/testo] · #/recenti · #/impostazioni[/piattaforme|regione|username|password]
+   #/ e #/domanda/N (domande) · #/cerca[/testo] · #/recenti · #/impostazioni[/piattaforme|regione|novita|username|password]
    #/r/ID (risultato) · #/t/ID (scheda titolo) · #/t/ID/cast · #/p/ID (persona) */
 let CURR="",REPL=false,ROUTED=false,PENDCAST="",PD=0;
 const SCR={};let EDGET=0,IGN=0,BTAP=0;let BKN=false,BKT=0;   // posizione di scorrimento per pagina: tornando indietro si riprende da dove eri
@@ -920,7 +923,7 @@ function routeFromHash(force){
   RUN++;SRUN++;REPL=true;
   const seg=curHash().split("/").filter(Boolean).map(nrm),a=seg[0]||"",b=seg[1]||"";
   try{
-    if(a==="impostazioni"){if(b==="piattaforme")return pfPage();if(b==="regione")return regionPage();if(b==="gia-visti")return seenPage();if(b==="username")return accountPage("user");if(b==="password")return accountPage("pass");return settingsPage();}
+    if(a==="impostazioni"){if(b==="piattaforme")return pfPage();if(b==="regione")return regionPage();if(b==="novita")return newsPage();if(b==="gia-visti")return seenPage();if(b==="username")return accountPage("user");if(b==="password")return accountPage("pass");return settingsPage();}
     if(a==="recenti")return recentPage();
     if(a==="cerca"){SQ=b;return searchPage();}
     if(a==="t"||a==="r")return restoreTitle(b,seg[2]==="cast"?"cast":seg[2]==="saga"?"saga":seg[2]==="stagioni"?"stagioni":"",seg[3]);
@@ -979,7 +982,7 @@ function swap(h,anim){
   }else if(ghost)ghost.remove();
 }
 let ACT={};
-const FWD={cast:1,seasons:1,saga:1,recent:1,seenp:1,pfpick:1,reg:1,acuser:1,acpass:1};   // azioni che aprono una pagina "più in profondità": entra da destra
+const FWD={news:1,cast:1,seasons:1,saga:1,recent:1,seenp:1,pfpick:1,reg:1,acuser:1,acpass:1};   // azioni che aprono una pagina "più in profondità": entra da destra
 const trTb=d=>d&&d.ytKey?'<a class="tb" href="https://www.youtube.com/watch?v='+esc(d.ytKey)+'" data-yt="'+esc(d.ytKey)+'" target="_blank" rel="noopener" aria-label="Trailer">'+IC.play+'</a>':'';
 const tbtn=(act,ic,label)=>'<button type="button" class="tb" data-act="'+act+'" aria-label="'+label+'">'+IC[ic]+'</button>';
 const bb=(act,label,cls)=>'<button type="button" class="btn'+(cls?' '+cls:'')+'" data-act="'+act+'">'+label+'</button>';
@@ -2075,6 +2078,21 @@ async function revokeAll(){
   }catch(e){sl.textContent="Impossibile contattare il server";}
   b.disabled=false;reset(3500);
 }
+/* ---------- VERSIONE E NOVITÀ ----------
+   REGOLA (per chi modifica questo file, anche in una nuova chat): a OGNI modifica si aggiorna APP_VER e si aggiunge una voce IN CIMA a CHANGELOG.
+   - modifica piccola (ritocco, correzione)      -> terza cifra: 2.2 -> 2.2.1
+   - modifica media (nuova funzione o schermata) -> seconda cifra: 2.2 -> 2.3
+   - modifica molto grande (cambiamenti profondi) -> prima cifra: 2.x -> 3.0
+   Ogni voce: v (versione), d (data), t (elenco di novità in italiano, brevi). La pagina Impostazioni > Novità le mostra da sola. */
+const APP_VER="2.2";
+const CHANGELOG=[
+  {v:"2.2",d:"22 ottobre 2026",t:["Nuova pagina Novità con la versione dell'app","Tema chiaro e scuro neutri, senza oro e senza toni viola: accento rosso Reelax","Cronologia fino a 100 titoli, ogni titolo scade dopo 7 giorni","Svuota la cronologia: ora è un cestino in alto a destra, con pannello di conferma"]}
+];
+function newsPage(){
+  RUN++;SRUN++;setBd(null);setRoute("/impostazioni/novita");
+  swap('<div class="page"><h1>Novità</h1>'+CHANGELOG.map(c=>'<div class="sblock"><div class="sh">Versione '+esc(c.v)+' · '+esc(c.d)+'</div><div class="sgrp"><ul class="nws">'+c.t.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div></div>').join('')+'</div>',true);
+  ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>settingsPage()}});
+}
 function settingsPage(){
   RUN++;SRUN++;setBd(null);setRoute("/impostazioni");
   const sec=(t,h)=>'<div class="sblock"><div class="sh">'+t+'</div>'+h+'</div>';
@@ -2082,6 +2100,7 @@ function settingsPage(){
     sec('Ricerca','<div class="sgrp" id="sg_pf">'+pfGroup()+'</div>')+
     sec('Suggerimenti','<div class="sgrp" id="sg_sn">'+seenGroup()+'</div>')+
     sec('Aspetto','<div class="seg" id="thseg">'+[["auto","Auto"],["light","Chiaro"],["dark","Scuro"]].map(x=>'<button type="button" data-t="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>')+
+    sec('Novità','<div class="sgrp"><button type="button" class="srow" data-act="news">'+IC.list+'<span class="sl">Versione '+APP_VER+'</span>'+IC.chev+'</button></div>')+
     sec('Account','<div class="sgrp"><button type="button" class="srow" data-act="acuser">'+IC.user+'<span class="sl">Cambia username</span>'+IC.chev+'</button><button type="button" class="srow" data-act="acpass">'+IC.lock+'<span class="sl">Cambia password</span>'+IC.chev+'</button><button type="button" class="srow" data-act="acall">'+IC.devs+'<span class="sl">Esci da tutti i dispositivi</span></button></div>')+
     '<button type="button" class="srow out" data-act="logout">'+IC.out+'<span class="sl">Esci</span></button></div>',true);
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>home(),recent:()=>recentPage(),logout:confirmLogout,acall:revokeAll,
@@ -2108,7 +2127,7 @@ function settingsPage(){
       }
     },
     seenp:()=>seenPage(),starsw:()=>{const v=!starsOn();setSet("stars",v);S.seen=[];S.cands=[];const bt=document.querySelector('[data-act="starsw"]');if(bt){bt.setAttribute("aria-checked",String(v));const sw=bt.querySelector(".sw");if(sw)sw.classList.toggle("on",v);}},
-    pfpick:()=>pfPage(),reg:()=>regionPage(),acuser:()=>accountPage("user"),acpass:()=>accountPage("pass")}});
+    pfpick:()=>pfPage(),reg:()=>regionPage(),news:()=>newsPage(),acuser:()=>accountPage("user"),acpass:()=>accountPage("pass")}});
   const th=$("thseg"),pr=window.themePref();
   th.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.t===pr));
   th.onclick=e=>{const b=e.target.closest&&e.target.closest("button[data-t]");if(!b)return;tap();{const r=b.getBoundingClientRect(),cx=(e.clientX||e.clientY)?e.clientX:r.left+r.width/2,cy=(e.clientX||e.clientY)?e.clientY:r.top+r.height/2;window.setTheme(b.dataset.t,cx,cy);}th.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));};
