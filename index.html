@@ -400,6 +400,21 @@ body.locked #app,body.locked #bd{visibility:hidden}
 .lgbrand{position:relative;isolation:isolate}
 .lgc>*:not(.lgbrand){position:relative;z-index:1}
 .lgbrand .mark{position:relative;z-index:-1;box-shadow:none}
+/* accesso in corso: onde che escono dal logo, campi smorzati, spinner nel tasto */
+@keyframes lgRing{0%{transform:scale(1);opacity:.8}100%{transform:scale(2.6);opacity:0}}
+@keyframes lgPulse{50%{transform:scale(1.09)}}
+@keyframes lgSpin{to{transform:rotate(360deg)}}
+.lgbrand::before,.lgbrand::after,.lgflash{content:"";position:absolute;top:0;left:50%;width:64px;height:64px;margin-left:-32px;border-radius:20px;border:2px solid #ff3d52;z-index:-2;opacity:0;pointer-events:none}
+.lgbrand::after{border-color:#8f62f8}
+.lgflash{border:3px solid #fff;box-shadow:0 0 40px 6px rgba(255,61,82,.7),inset 0 0 24px rgba(143,98,248,.8)}
+.lgc.busy .lgbrand::before{animation:lgRing 1.3s cubic-bezier(.2,.6,.3,1) infinite}
+.lgc.busy .lgbrand::after{animation:lgRing 1.3s .65s cubic-bezier(.2,.6,.3,1) infinite}
+.lgc.busy .lgbrand .mark{animation:lgPulse 1.3s ease-in-out infinite}
+.lgc .lgi{transition:opacity .3s,border-color .2s,box-shadow .2s}
+.lgc.busy .lgi{opacity:.4;pointer-events:none}
+#lgb::before{content:"";position:absolute;width:22px;height:22px;border-radius:50%;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;opacity:0;transition:opacity .2s;animation:lgSpin .7s linear infinite}
+.lgc.busy #lgb::before{opacity:1}
+.lgc.busy #lgb{color:transparent}
 /* sfondo dell'app: le due luci si muovono piano */
 /* aloni di sfondo fermi: animarli rallentava tutto il sito */
 body.pre #app{opacity:0}
@@ -3444,30 +3459,73 @@ const isAuthed=()=>{
   }catch(e){return false;}
 };
 const lg=$("lg");
-function lockApp(){
-  document.body.classList.add("locked");lg.hidden=false;lg.style.top=lg.style.bottom=lg.style.height="";
+/* animazioni accesso/uscita: "iris" circolare che parte dal logo */
+const lgA=[],IRIS=(x,y,r)=>"circle("+r+"px at "+x+"px "+y+"px)",IEASE="cubic-bezier(.65,0,.25,1)";
+const lgPlay=(el,kf,o)=>{const a=el.animate(kf,o);lgA.push(a);return a;};
+const lgClear=()=>{while(lgA.length){try{lgA.pop().cancel();}catch(e){}}try{lg.getAnimations().forEach(x=>x.cancel());}catch(e){}};
+const lgParts=()=>[...$("lgf").children].filter(el=>!el.classList.contains("lgbrand"));
+function lgCenter(){
+  const m=lg.querySelector(".mark").getBoundingClientRect(),b=lg.getBoundingClientRect();
+  const x=m.left+m.width/2-b.left,y=m.top+m.height/2-b.top;
+  return [x,y,Math.hypot(Math.max(x,b.width-x),Math.max(y,b.height-y))+40];
+}
+function lockApp(anim,cb){
+  lgClear();
+  lg.hidden=false;lg.style.top=lg.style.bottom=lg.style.height="";
   $("lgu").value="";$("lgp").value="";$("lge").textContent="";$("lgb").disabled=false;
   const c=$("lgf");c.classList.remove("bad","busy");
+  if(anim&&!RM()&&lg.animate){
+    // uscita: il login si apre come un cerchio dal logo sopra l'app, i campi salgono uno dopo l'altro
+    const [x,y,R]=lgCenter();
+    lgPlay(lg,[{clipPath:IRIS(x,y,0)},{clipPath:IRIS(x,y,R)}],{duration:850,easing:IEASE}).onfinish=()=>{
+      document.body.classList.add("locked");cb&&cb();
+      try{$("lgu").focus();}catch(e){}
+    };
+    [lg.querySelector(".lgbrand"),...lgParts()].forEach((el,i)=>lgPlay(el,[{opacity:0,transform:"translateY(28px) scale(.95)"},{opacity:1,transform:"none"}],{duration:700,delay:380+i*80,easing:"cubic-bezier(.22,1,.36,1)",fill:"backwards"}));
+    lgPlay(lg.querySelector(".mark"),[{transform:"scale(.3) rotate(-90deg)",opacity:0},{transform:"scale(1.15) rotate(8deg)",opacity:1,offset:.7},{transform:"none",opacity:1}],{duration:850,delay:250,easing:"cubic-bezier(.34,1.4,.64,1)",fill:"backwards"});
+    return;
+  }
+  document.body.classList.add("locked");cb&&cb();
   if(!RM()&&lg.animate)lg.animate([{opacity:0,filter:"blur(14px)"},{opacity:1,filter:"blur(0)"}],{duration:600,easing:"cubic-bezier(.22,1,.36,1)"});
   setTimeout(()=>{try{$("lgu").focus();}catch(e){}},50);
 }
 function resetScroll(){try{scrollTo(0,0);document.documentElement.scrollTop=0;document.body.scrollTop=0;}catch(e){}}
+function lgWin(){   // accesso riuscito: campi giù, logo che esplode in un lampo
+  if(RM()||!lg.animate)return Promise.resolve();
+  const br=lg.querySelector(".lgbrand"),m=lg.querySelector(".mark");
+  lgParts().forEach((el,i)=>lgPlay(el,[{opacity:0,transform:"translateY(24px) scale(.94)"}],{duration:340,delay:i*50,easing:"cubic-bezier(.4,0,1,1)",fill:"forwards"}));
+  lgPlay(m,[{transform:"scale(1)"},{transform:"scale(1.35)",offset:.55},{transform:"scale(1.2)"}],{duration:460,easing:"ease-out",fill:"forwards"});
+  const f=document.createElement("i");f.className="lgflash";br.appendChild(f);
+  lgPlay(f,[{opacity:.95,transform:"scale(1)"},{opacity:0,transform:"scale(6)"}],{duration:650,easing:"cubic-bezier(.2,.7,.3,1)",fill:"forwards"}).onfinish=()=>f.remove();
+  return sleep(420);
+}
 function unlockApp(){
   document.body.classList.remove("locked");
   try{document.activeElement&&document.activeElement.blur();}catch(e){}
   resetScroll();[100,300,600,1000].forEach(t=>setTimeout(()=>{resetScroll();fit();},t));
-  if(!RM()&&lg.animate){lg.animate([{opacity:1,filter:"blur(0)"},{opacity:0,filter:"blur(16px)"}],{duration:600,easing:"cubic-bezier(.4,0,.6,1)",fill:"forwards"}).onfinish=()=>{lg.hidden=true;lg.getAnimations().forEach(x=>x.cancel());};setTimeout(()=>{lg.hidden=true;},900);}
-  else lg.hidden=true;
-  routeFromHash(true);   // la prima pagina compare con la sfocatura incrociata mentre il login svanisce
+  if(!RM()&&lg.animate){
+    // il login si richiude verso il logo come un iris e scopre l'app
+    const [x,y,R]=lgCenter();
+    lgPlay(lg,[{clipPath:IRIS(x,y,R)},{clipPath:IRIS(x,y,0)}],{duration:850,easing:IEASE,fill:"forwards"}).onfinish=()=>{lg.hidden=true;lgClear();};
+    setTimeout(()=>{lg.hidden=true;},1300);
+  }else lg.hidden=true;
+  routeFromHash(true);
   syncPull();
 }
+let outBusy=false;
 function doLogout(){
+  if(outBusy)return;
   try{localStorage.removeItem(AUTH_KEY);}catch(e){}
-  Object.assign(S,{cat:"",fmt:"",mood:"",time:"",era:"",style:"",step:0,seen:[],cands:[],cur:null,avoid:[]});
-  stage.innerHTML="";FIRST=true;
-  try{sessionStorage.removeItem("reelax_s");}catch(e){}
-  CURR="";ROUTED=false;try{history.replaceState({d:0},"","#/");}catch(e){}
-  lockApp();
+  const wipe=()=>{
+    Object.assign(S,{cat:"",fmt:"",mood:"",time:"",era:"",style:"",step:0,seen:[],cands:[],cur:null,avoid:[]});
+    stage.innerHTML="";FIRST=true;
+    try{sessionStorage.removeItem("reelax_s");}catch(e){}
+    CURR="";ROUTED=false;try{history.replaceState({d:0},"","#/");}catch(e){}
+    outBusy=false;
+  };
+  if(document.body.classList.contains("locked")){wipe();lockApp();return;}
+  outBusy=true;
+  lockApp(true,wipe);
 }
 let lgBusy=false;
 $("lgf").addEventListener("submit",async e=>{
@@ -3481,7 +3539,7 @@ $("lgf").addEventListener("submit",async e=>{
   }catch(x){fail="Impossibile contattare il server. Controlla la connessione.";}
   await sleep(Math.max(0,1300-(Date.now()-t0)));
   lgBusy=false;
-  if(tok){try{localStorage.setItem(AUTH_KEY,tok);}catch(x){}unlockApp();return;}
+  if(tok){try{localStorage.setItem(AUTH_KEY,tok);}catch(x){}await lgWin();unlockApp();return;}
   c.classList.remove("busy");btn.disabled=false;er.textContent=fail||"Nome utente o password non corretti.";
   void c.offsetWidth;c.classList.add("bad");$("lgp").value="";try{$("lgp").focus();}catch(x){}
 });
