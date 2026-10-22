@@ -19,7 +19,7 @@
 <link rel="apple-touch-startup-image" media="(device-width:414px) and (device-height:896px) and (-webkit-device-pixel-ratio:2) and (orientation:portrait)" href="img/splash-414x896@2x.jpg?v=1">
 <link rel="apple-touch-startup-image" media="(device-width:375px) and (device-height:667px) and (-webkit-device-pixel-ratio:2) and (orientation:portrait)" href="img/splash-375x667@2x.jpg?v=1">
 <link rel="apple-touch-startup-image" media="(device-width:320px) and (device-height:568px) and (-webkit-device-pixel-ratio:2) and (orientation:portrait)" href="img/splash-320x568@2x.jpg?v=1">
-<meta name="theme-color" content="#09070f">
+<meta name="theme-color" content="#0f1419">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="color-scheme" content="dark">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -43,7 +43,7 @@
   function pref(){try{var v=localStorage.getItem(K);return v==="light"||v==="dark"?v:"auto";}catch(e){return"auto";}}
   function meta(){
     var t=document.documentElement.getAttribute("data-theme");
-    var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute("content",t==="light"?"#f6f3fb":"#09070f");
+    var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute("content",t==="light"?"#ffffff":"#0f1419");
     var c=document.querySelector('meta[name="color-scheme"]');if(c)c.setAttribute("content",t);
   }
   function apply(defer){
@@ -67,10 +67,10 @@
 </script>
 <style>
 :root{
-  --bg:#09070f;--s1:#13101d;--s2:#1a1627;--s3:#262036;
+  --bg:#0f1419;--s1:#161d24;--s2:#1e2730;--s3:#2a3642;
   --line:rgba(255,255,255,.09);--line2:rgba(255,255,255,.18);
-  --fg:#f5f1fb;--mut:#a29bb5;--dim:#6f6885;
-  --soft:rgba(255,255,255,.1);--soft2:rgba(255,255,255,.06);--shade:0,0,0;--bgrgb:9,7,15;--bdb:.6;
+  --fg:#eef3f7;--mut:#9aabb9;--dim:#6b7c8a;
+  --soft:rgba(255,255,255,.1);--soft2:rgba(255,255,255,.06);--shade:0,0,0;--bgrgb:15,20,25;--bdb:.6;
   --red:#ff3d52;--vio:#8f62f8;--gold:#f6c653;
   --grad:linear-gradient(135deg,#ff3d52,#c13bd9 62%,#8f62f8);
   --r2:20px;--r3:26px;--gut:18px;
@@ -81,10 +81,10 @@
   color-scheme:dark;
 }
 :root[data-theme="light"]{
-  --bg:#f6f3fb;--s1:#efe9f8;--s2:#ffffff;--s3:#e4dcf1;
+  --bg:#ffffff;--s1:#f3f3f5;--s2:#ffffff;--s3:#e6e6ea;
   --line:rgba(30,20,60,.1);--line2:rgba(30,20,60,.2);
-  --fg:#1a1526;--mut:#675f7d;--dim:#948ba8;
-  --soft:rgba(30,20,60,.08);--soft2:rgba(30,20,60,.05);--shade:246,243,251;--bgrgb:246,243,251;--bdb:1.05;
+  --fg:#141418;--mut:#60606b;--dim:#9a9aa6;
+  --soft:rgba(30,20,60,.08);--soft2:rgba(30,20,60,.05);--shade:255,255,255;--bgrgb:255,255,255;--bdb:1.05;
   color-scheme:light;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -688,19 +688,19 @@ body.pre #app{opacity:0}
 /* ripple al tocco e cambio tema morbido */
 .rpl{position:absolute;border-radius:50%;pointer-events:none;opacity:0;transform:scale(0);z-index:0;background:radial-gradient(circle,currentColor 0,currentColor 30%,transparent 70%)}
 /* cambio tema: le variabili colore sono animabili, quindi testi, sfondi, bordi e gradienti sfumano tutti insieme, in modo continuo */
-@property --bg{syntax:"<color>";inherits:true;initial-value:#09070f}
-@property --s1{syntax:"<color>";inherits:true;initial-value:#13101d}
-@property --s2{syntax:"<color>";inherits:true;initial-value:#1a1627}
-@property --s3{syntax:"<color>";inherits:true;initial-value:#262036}
+@property --bg{syntax:"<color>";inherits:true;initial-value:#0f1419}
+@property --s1{syntax:"<color>";inherits:true;initial-value:#161d24}
+@property --s2{syntax:"<color>";inherits:true;initial-value:#1e2730}
+@property --s3{syntax:"<color>";inherits:true;initial-value:#2a3642}
 @property --line{syntax:"<color>";inherits:true;initial-value:rgba(255,255,255,.09)}
 @property --line2{syntax:"<color>";inherits:true;initial-value:rgba(255,255,255,.18)}
-@property --fg{syntax:"<color>";inherits:true;initial-value:#f5f1fb}
-@property --mut{syntax:"<color>";inherits:true;initial-value:#a29bb5}
-@property --dim{syntax:"<color>";inherits:true;initial-value:#6f6885}
+@property --fg{syntax:"<color>";inherits:true;initial-value:#eef3f7}
+@property --mut{syntax:"<color>";inherits:true;initial-value:#9aabb9}
+@property --dim{syntax:"<color>";inherits:true;initial-value:#6b7c8a}
 @property --soft{syntax:"<color>";inherits:true;initial-value:rgba(255,255,255,.1)}
 @property --soft2{syntax:"<color>";inherits:true;initial-value:rgba(255,255,255,.06)}
 @property --shade{syntax:"<number>#";inherits:true;initial-value:0,0,0}
-@property --bgrgb{syntax:"<number>#";inherits:true;initial-value:9,7,15}
+@property --bgrgb{syntax:"<number>#";inherits:true;initial-value:15,20,25}
 @property --bdb{syntax:"<number>";inherits:true;initial-value:.6}
 html.tt{transition:--bg .55s ease,--s1 .55s ease,--s2 .55s ease,--s3 .55s ease,--line .55s ease,--line2 .55s ease,--fg .55s ease,--mut .55s ease,--dim .55s ease,--soft .55s ease,--soft2 .55s ease,--shade .55s ease,--bgrgb .55s ease,--bdb .55s ease}
 @media (prefers-reduced-motion:reduce){html.tt{transition:none}}
@@ -2791,12 +2791,12 @@ async function shBuild(d){
   try{await Promise.race([document.fonts.load('800 80px "Bricolage Grotesque"'),sleep(1500)]);}catch(e){}
   const FD='"Bricolage Grotesque","Arial Narrow",Arial,sans-serif',FB='"Instrument Sans",Arial,sans-serif';
   const img=await shLoad(d.poster);
-  let g=x.createLinearGradient(0,0,W,H);g.addColorStop(0,"#1b1030");g.addColorStop(.55,"#0d0914");g.addColorStop(1,"#09070f");x.fillStyle=g;x.fillRect(0,0,W,H);
+  let g=x.createLinearGradient(0,0,W,H);g.addColorStop(0,"#1a2430");g.addColorStop(.55,"#0b1014");g.addColorStop(1,"#0f1419");x.fillStyle=g;x.fillRect(0,0,W,H);
   const glow=(cx,cy,r,col)=>{const q=x.createRadialGradient(cx,cy,0,cx,cy,r);q.addColorStop(0,col);q.addColorStop(1,"rgba(0,0,0,0)");x.fillStyle=q;x.fillRect(0,0,W,H);};
   glow(W*.1,H*.08,W*.95,"rgba(193,59,217,.36)");glow(W*.98,H*.6,W*.85,"rgba(255,61,82,.2)");glow(W*.2,H*.98,W*.8,"rgba(143,98,248,.22)");
   // locandina
   const pw=560,ph=840,px=(W-pw)/2,py=120,R=34;
-  x.save();x.shadowColor="rgba(0,0,0,.6)";x.shadowBlur=70;x.shadowOffsetY=30;x.fillStyle="#1a1627";x.beginPath();x.roundRect(px,py,pw,ph,R);x.fill();x.restore();
+  x.save();x.shadowColor="rgba(0,0,0,.6)";x.shadowBlur=70;x.shadowOffsetY=30;x.fillStyle="#1e2730";x.beginPath();x.roundRect(px,py,pw,ph,R);x.fill();x.restore();
   x.save();x.beginPath();x.roundRect(px,py,pw,ph,R);x.clip();
   if(img&&img.w){const s=Math.max(pw/img.w,ph/img.h),w=img.w*s,hh=img.h*s;x.drawImage(img.s,px+(pw-w)/2,py+(ph-hh)/2,w,hh);}
   else{const q=x.createLinearGradient(px,py,px+pw,py+ph);q.addColorStop(0,"#ff3d52");q.addColorStop(.62,"#c13bd9");q.addColorStop(1,"#8f62f8");x.fillStyle=q;x.fillRect(px,py,pw,ph);x.fillStyle="rgba(255,255,255,.9)";x.font="800 260px "+FD;x.textAlign="center";x.textBaseline="middle";x.fillText((d.title||"?").trim().charAt(0).toUpperCase(),W/2,py+ph/2);}
