@@ -562,8 +562,8 @@ body.pre #app{opacity:0}
 .srow.out svg{color:var(--red)}
 .srow.out.ask{border-color:var(--red)}
 .srow.ask{border-color:var(--red)}
-.srow.dng{margin-top:auto;color:var(--red);position:sticky;bottom:2px;z-index:2}
-.srow.dng svg{color:var(--red)}
+.srow.rd{color:var(--red)}
+.srow.rd svg{color:var(--red)}
 .srow.sm{min-height:52px;font-size:.95rem}
 .sblock .sh+.seg,.sblock .seg+.sh{margin-top:6px}
 .srow .sn{color:var(--mut);font-weight:600;font-size:.9rem}
@@ -1941,22 +1941,23 @@ function addRecent(r){
     L.recent=RECENT;lsave();
   }catch(e){}
 }
-let clrT=null;
 function clearRecent(){
-  const b=document.querySelector('[data-act="clr"]');if(!b)return;
-  const sl=b.querySelector(".sl");
-  if(!b.classList.contains("ask")){b.classList.add("ask");sl.textContent="Tocca ancora per svuotare";clearTimeout(clrT);clrT=setTimeout(()=>{if(b.isConnected){b.classList.remove("ask");sl.textContent="Svuota la cronologia";}},3000);return;}
-  clearTimeout(clrT);
+  if(!RECENT.length)return;
+  const e=shEl();e.setAttribute("aria-label","Svuota la cronologia");
+  $("shg").innerHTML='<button type="button" class="srow rd" data-sh="clr">'+IC.trash+'<span class="sl">Svuota la cronologia</span></button>'+shRow("clrno",IC.x,"Annulla");
+  e.classList.add("on");void e.offsetWidth;e.classList.add("show");
+}
+function doClearRecent(){
   RECENT=L.recent=[];try{localStorage.removeItem(RKEY);}catch(e){}lsave();
+  const tr=$("tr");if(tr){tr.innerHTML="";tr._h="";}
   const box=$("lres");
   if(box){const fill=()=>{box.innerHTML='<div class="lemp">'+IC.clock+'<span>Ancora vuota</span></div>';if(box.animate&&!RM())box.animate([{opacity:0},{opacity:1}],{duration:320,easing:"ease-out"});};
     if(box.animate&&!RM())box.animate([{opacity:1,transform:"none"},{opacity:0,transform:"translateY(6px)"}],{duration:240,easing:"ease-in",fill:"forwards"}).onfinish=()=>{fill();box.getAnimations().forEach(x=>x.cancel());};else fill();}
-  b.classList.remove("ask");sl.textContent="Svuota la cronologia";
 }
 function recentPage(){
   pruneRecent();RUN++;SRUN++;setBd(null);setRoute("/recenti");
-  swap('<div class="page"><h1>Trovati di recente</h1><div class="sres lib" id="lres"></div>'+'<button type="button" class="srow dng" data-act="clr" style="flex:none">'+IC.trash+'<span class="sl">Svuota la cronologia</span></button>'+'</div>',true);
-  ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>settingsPage(),clr:clearRecent}});
+  swap('<div class="page"><h1>Trovati di recente</h1><div class="sres lib" id="lres"></div></div>',true);
+  ui({l:tbtn('back','back','Indietro'),r:RECENT.length?tbtn('clr','trash','Svuota la cronologia'):'',d:'',p:null,a:{back:()=>settingsPage(),clr:clearRecent}});
   const box=$("lres");
   box.innerHTML=RECENT.length?RECENT.map(bkItem).join(""):'<div class="lemp">'+IC.clock+'<span>Ancora vuota</span></div>';
   if(RECENT.length)bkReveal(box);
@@ -2865,10 +2866,13 @@ function share(){
 }
 function shClose(){
   const e=$("shs");if(!e)return;
+  e.setAttribute("aria-label","Condividi");
   e.classList.remove("show");setTimeout(()=>{if(!e.classList.contains("show"))e.classList.remove("on");},650);
 }
 const shToPng=bl=>createImageBitmap(bl).then(bm=>{const c=document.createElement("canvas");c.width=bm.width;c.height=bm.height;c.getContext("2d").drawImage(bm,0,0);return new Promise(r=>c.toBlob(r,"image/png"));});
 async function shAct(k,b){
+  if(k==="clr"){shClose();doClearRecent();return;}
+  if(k==="clrno"){shClose();return;}
   const d=S.cur&&S.cur.d;if(!d)return;
   const say=t=>{const l=b.querySelector(".sl");if(l)l.textContent=t;};
   if(k==="more"){shClose();setTimeout(shareNative,250);return;}
