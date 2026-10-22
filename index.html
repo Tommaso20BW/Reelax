@@ -568,13 +568,16 @@ body.pre #app{opacity:0}
 .srow.sm{min-height:52px;font-size:.95rem}
 .sblock .sh+.seg,.sblock .seg+.sh{margin-top:6px}
 .srow .sv{flex:none;font-size:.85rem;font-weight:600;color:var(--mut);font-variant-numeric:tabular-nums}
-/* Impostazioni su PC: sezioni su due colonne, Esci a tutta larghezza */
+/* Impostazioni: telefono = una colonna di sezioni; PC = due colonne (preferenze | account e app), Esci a tutta larghezza */
+.sgrid{display:flex;flex-direction:column;gap:var(--pg)}
+.scol{display:flex;flex-direction:column;gap:var(--pg)}
+.sblock .sd{font-size:.82rem;line-height:1.35;color:var(--mut);padding:0 6px;margin-top:-2px}
+.sblock .sd+.sgrp,.sblock .sd+.seg{margin-top:2px}
 @media (min-width:900px) and (min-height:560px){
-  .page.sp{display:block;max-width:1040px;column-count:2;column-gap:40px}
-  .page.sp h1{column-span:all;margin-bottom:28px}
-  .page.sp .sblock{break-inside:avoid;margin-bottom:28px}
-  .page.sp h1+.sblock{margin-top:0}
-  .page.sp .srow.out{column-span:all;margin-top:28px}
+  .page.sp{max-width:1040px;justify-content:flex-start;gap:28px}
+  .sgrid{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start}
+  .scol{gap:30px}
+  .page.sp .srow.out{margin-top:6px}
 }
 /* Regione e Piattaforme su PC: liste lunghe in griglia a 3 colonne, sottotitolo allineato al titolo */
 @media (min-width:900px) and (min-height:560px){
@@ -2104,8 +2107,9 @@ async function revokeAll(){
    - modifica media (nuova funzione o schermata) -> seconda cifra: 2.2 -> 2.3
    - modifica molto grande (cambiamenti profondi) -> prima cifra: 2.x -> 3.0
    Ogni voce: v (versione), d (data), t (elenco di novità in italiano, brevi). La pagina Impostazioni > Novità le mostra da sola. */
-const APP_VER="2.2.4";
+const APP_VER="2.3";
 const CHANGELOG=[
+  {v:"2.3",d:"22 ottobre 2026",t:["Impostazioni rifatte da zero: sezioni più chiare (Suggerimenti, Dove guardare, Aspetto, Account, Informazioni), ognuna con una breve spiegazione","Su PC due colonne ordinate: preferenze a sinistra, account e informazioni a destra","Esci sempre ben visibile in fondo"]},
   {v:"2.2.4",d:"22 ottobre 2026",t:["Versione e novità è ora un tasto in Impostazioni, sopra Esci","Aggiunto lo storico completo delle versioni, dalla 1.0 in poi"]},
   {v:"2.2.3",d:"22 ottobre 2026",t:["Su PC, Regione e Piattaforme mostrano le liste in griglia a 3 colonne, senza scorrere una colonna lunghissima"]},
   {v:"2.2.2",d:"22 ottobre 2026",t:["Impostazioni su PC: le sezioni si dispongono su due colonne invece di una sola colonna stretta"]},
@@ -2130,13 +2134,17 @@ function newsPage(){
 }
 function settingsPage(){
   RUN++;SRUN++;setBd(null);setRoute("/impostazioni");
-  const sec=(t,h)=>'<div class="sblock"><div class="sh">'+t+'</div>'+h+'</div>';
-  swap('<div class="page sp"><h1>Impostazioni</h1>'+
-    sec('Ricerca','<div class="sgrp" id="sg_pf">'+pfGroup()+'</div>')+
-    sec('Suggerimenti','<div class="sgrp" id="sg_sn">'+seenGroup()+'</div>')+
-    sec('Aspetto','<div class="seg" id="thseg">'+[["auto","Auto"],["light","Chiaro"],["dark","Scuro"]].map(x=>'<button type="button" data-t="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>')+
-    sec('Account','<div class="sgrp"><button type="button" class="srow" data-act="acuser">'+IC.user+'<span class="sl">Cambia username</span>'+IC.chev+'</button><button type="button" class="srow" data-act="acpass">'+IC.lock+'<span class="sl">Cambia password</span>'+IC.chev+'</button><button type="button" class="srow" data-act="acall">'+IC.devs+'<span class="sl">Esci da tutti i dispositivi</span></button></div>')+
-    sec('Reelax','<div class="sgrp"><button type="button" class="srow" data-act="news">'+IC.spark+'<span class="sl">Versione e novità</span><span class="sv">'+APP_VER+'</span>'+IC.chev+'</button></div>')+
+  const sec=(t,d,h)=>'<div class="sblock"><div class="sh">'+t+'</div>'+(d?'<div class="sd">'+d+'</div>':'')+h+'</div>';
+  const row=(act,ic,lab,extra)=>'<button type="button" class="srow" data-act="'+act+'">'+ic+'<span class="sl">'+lab+'</span>'+(extra||'')+'</button>';
+  swap('<div class="page sp"><h1>Impostazioni</h1><div class="sgrid">'+
+    '<div class="scol">'+
+      sec('Suggerimenti','Come Reelax sceglie i titoli e cosa ricorda per te.','<div class="sgrp" id="sg_sn">'+seenGroup()+'</div>')+
+      sec('Dove guardare','Paese e piattaforme di streaming che usi.','<div class="sgrp" id="sg_pf">'+pfGroup()+'</div>')+
+    '</div><div class="scol">'+
+      sec('Aspetto','','<div class="seg" id="thseg">'+[["auto","Auto"],["light","Chiaro"],["dark","Scuro"]].map(x=>'<button type="button" data-t="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>')+
+      sec('Account','','<div class="sgrp">'+row('acuser',IC.user,'Cambia username',IC.chev)+row('acpass',IC.lock,'Cambia password',IC.chev)+row('acall',IC.devs,'Esci da tutti i dispositivi')+'</div>')+
+      sec('Informazioni','','<div class="sgrp">'+row('news',IC.spark,'Versione e novità','<span class="sv">'+APP_VER+'</span>'+IC.chev)+'</div>')+
+    '</div></div>'+
     '<button type="button" class="srow out" data-act="logout">'+IC.out+'<span class="sl">Esci</span></button></div>',true);
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>home(),recent:()=>recentPage(),logout:confirmLogout,acall:revokeAll,
     pfsw:()=>{
