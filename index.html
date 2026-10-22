@@ -393,6 +393,14 @@ body.locked #app,body.locked #bd{visibility:hidden}
 .lgc{width:100%;max-width:360px;display:flex;flex-direction:column;gap:14px}
 .lgc>*{animation:btnIn .7s cubic-bezier(.22,1,.36,1) backwards}
 .lgc>:nth-child(2){animation-delay:.08s}.lgc>:nth-child(3){animation-delay:.14s}.lgc>:nth-child(4){animation-delay:.2s}.lgc>:nth-child(5){animation-delay:.26s}
+/* scritta REELAX del login: stesso carattere/spaziatura di quella in alto; ogni lettera entra a turno, poi il gradiente dell'app scorre sulle lettere (sfasato lettera per lettera = onda di colore) */
+.lgword{display:flex;justify-content:center;margin-bottom:22px;padding-left:.2em;font-family:var(--fd);font-weight:800;font-size:1.7rem;letter-spacing:.2em;text-transform:uppercase;line-height:1.2;-webkit-user-select:none;user-select:none}
+.lgword b{display:inline-block;font:inherit;letter-spacing:inherit;color:transparent;-webkit-text-fill-color:transparent;
+  background:linear-gradient(90deg,#ff3d52 0%,#c13bd9 25%,#8f62f8 50%,#c13bd9 75%,#ff3d52 100%) 0 50%/200% 100% repeat-x;-webkit-background-clip:text;background-clip:text;
+  animation:lgwIn .8s var(--ease) backwards,lgwFlow 4.5s linear infinite;
+  animation-delay:calc(.1s + var(--i)*.07s),calc(var(--i)*-.45s)}
+@keyframes lgwIn{from{opacity:0;transform:translate3d(0,12px,0) scale(.88)}}
+@keyframes lgwFlow{to{background-position:200% 50%}}
 .lgi{display:block;width:100%;height:56px;border-radius:18px;border:1px solid var(--line2);background:var(--s2);color:var(--fg);font:600 16px var(--fb);padding:0 18px;outline:none;transition:border-color .2s,box-shadow .2s}
 .lgi:focus{border-color:var(--vio);box-shadow:0 0 0 3px rgba(143,98,248,.25)}
 .lgi::placeholder{color:var(--dim);font-weight:500}
@@ -846,6 +854,7 @@ html.tt .snav button,html.tt .sw,html.tt .sw i{transition-property:transform,wid
 <div id="lg" hidden>
   <div class="lgbg" aria-hidden="true"><i></i><i></i><i></i></div>
   <form class="lgc" id="lgf" autocomplete="on">
+    <div class="lgword" role="img" aria-label="Reelax"><b aria-hidden="true" style="--i:0">R</b><b aria-hidden="true" style="--i:1">E</b><b aria-hidden="true" style="--i:2">E</b><b aria-hidden="true" style="--i:3">L</b><b aria-hidden="true" style="--i:4">A</b><b aria-hidden="true" style="--i:5">X</b></div>
     <input class="lgi" id="lgu" name="username" type="text" placeholder="Nome utente" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required>
     <input class="lgi" id="lgp" name="password" type="password" placeholder="Password" autocomplete="current-password" required>
     <p class="lgerr" id="lge" role="alert"></p>
@@ -2297,7 +2306,7 @@ async function revokeAll(){
    Ogni voce: v (versione), d (data), t (elenco di novità in italiano, brevi). La pagina Impostazioni > Novità le mostra da sola. */
 const APP_VER="2.2.1";
 const CHANGELOG=[
-  {v:"2.2.1",d:"22 ottobre 2026",t:["Nuova animazione di accesso e uscita: un'onda circolare parte dal tasto e rivela la schermata successiva, ora più fluida","Schermata di accesso più pulita: senza logo e con lo stesso sfondo dell'app, nel tema chiaro e in quello scuro","Su smartphone l'app resta in verticale: ruotando il telefono compare l'invito a raddrizzarlo","Conferma di uscita più chiara: il tasto ora dice «Sì, esci dall'account»","Traduzioni completate: intestazioni delle schede, condivisione, errori, impostazioni e frasi di «Perché fa per te» ora seguono la lingua della regione"]},
+  {v:"2.2.1",d:"22 ottobre 2026",t:["Nuova animazione di accesso e uscita: un'onda circolare parte dal tasto e rivela la schermata successiva, ora più fluida","Schermata di accesso rinnovata: scritta REELAX animata con i colori sfumati dell'app e lo stesso sfondo dell'app, nel tema chiaro e in quello scuro","Su smartphone l'app resta in verticale: ruotando il telefono compare l'invito a raddrizzarlo","Conferma di uscita più chiara: il tasto ora dice «Sì, esci dall'account»","Traduzioni completate: intestazioni delle schede, condivisione, errori, impostazioni e frasi di «Perché fa per te» ora seguono la lingua della regione"]},
   {v:"2.2",d:"22 ottobre 2026",t:["Nuova pagina Novità con la versione dell'app","Impostazioni rifatte: sezioni più chiare, su PC menu laterale con pannello e anteprime del tema","Su PC tutte le pagine usano tutta la larghezza dello schermo","Tema chiaro e scuro neutri, con accento rosso Reelax","Cronologia fino a 100 titoli, ogni titolo scade dopo 7 giorni; svuotarla ora cancella davvero, anche tra dispositivi"]},
   {v:"2.1.2",d:"21 ottobre 2026",t:["Il logo Reelax in alto ora si può toccare e ha una nuova animazione con una linea sfumata","Cambio tema più fluido, con transizione e interruttore rifatti","Il caricamento si può annullare e la posizione di scorrimento viene ricordata","Migliorie e correzioni"]},
   {v:"2.1.1",d:"20 ottobre 2026",t:["Animazioni più fluide nel passaggio tra le pagine","Migliorie e correzioni"]},
