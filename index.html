@@ -568,16 +568,26 @@ body.pre #app{opacity:0}
 .srow.sm{min-height:52px;font-size:.95rem}
 .sblock .sh+.seg,.sblock .seg+.sh{margin-top:6px}
 .srow .sv{flex:none;font-size:.85rem;font-weight:600;color:var(--mut);font-variant-numeric:tabular-nums}
-/* Impostazioni: telefono = una colonna di sezioni; PC = due colonne (preferenze | account e app), Esci a tutta larghezza */
+/* Impostazioni: telefono = una colonna di sezioni; PC = menu a sinistra + una sezione alla volta a destra, Esci sotto il menu */
 .sgrid{display:flex;flex-direction:column;gap:var(--pg)}
-.scol{display:flex;flex-direction:column;gap:var(--pg)}
+.spanes{display:flex;flex-direction:column;gap:var(--pg)}
+.snav{display:none}
 .sblock .sd{font-size:.82rem;line-height:1.35;color:var(--mut);padding:0 6px;margin-top:-2px}
 .sblock .sd+.sgrp,.sblock .sd+.seg{margin-top:2px}
 @media (min-width:900px) and (min-height:560px){
-  .page.sp{max-width:1040px;justify-content:flex-start;gap:28px}
-  .sgrid{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start}
-  .scol{gap:30px}
-  .page.sp .srow.out{margin-top:6px}
+  .page.sp{max-width:960px;justify-content:flex-start;gap:28px}
+  .sgrid{display:grid;grid-template-columns:230px minmax(0,1fr);grid-template-areas:"nav panes" "out panes";grid-template-rows:auto 1fr;gap:14px 48px;align-items:start}
+  .snav{grid-area:nav;display:flex;flex-direction:column;gap:4px}
+  .snav button{display:flex;align-items:center;gap:12px;height:46px;padding:0 14px;border-radius:14px;font-weight:700;font-size:.95rem;color:var(--mut);text-align:left;transition:background .15s,color .15s}
+  .snav button svg{flex:none;width:20px;height:20px}
+  .snav button:hover{background:var(--soft2);color:var(--fg)}
+  .snav button.on{background:var(--soft);color:var(--fg)}
+  .spanes{grid-area:panes;max-width:580px}
+  .spanes .sblock{display:none}
+  .spanes .sblock.on{display:flex}
+  .spanes .sh{display:none}
+  .spanes .sd{font-size:.92rem;padding:0 4px 6px}
+  .page.sp .srow.out{grid-area:out;margin-top:12px}
 }
 /* Regione e Piattaforme su PC: liste lunghe in griglia a 3 colonne, sottotitolo allineato al titolo */
 @media (min-width:900px) and (min-height:560px){
@@ -846,6 +856,8 @@ const IC={
   plus:sv('<path d="M12 5v14M5 12h14"/>'),
   gear:sv('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/>'),
   spark:sv('<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 16v4M17 18h4"/>'),
+  sun:sv('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'),
+  info:sv('<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.8h.01"/>'),
   chev:sv('<path d="M9 5l7 7-7 7"/>'),
   user:sv('<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/>'),
   lock:sv('<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/>'),
@@ -2107,8 +2119,9 @@ async function revokeAll(){
    - modifica media (nuova funzione o schermata) -> seconda cifra: 2.2 -> 2.3
    - modifica molto grande (cambiamenti profondi) -> prima cifra: 2.x -> 3.0
    Ogni voce: v (versione), d (data), t (elenco di novità in italiano, brevi). La pagina Impostazioni > Novità le mostra da sola. */
-const APP_VER="2.3";
+const APP_VER="2.4";
 const CHANGELOG=[
+  {v:"2.4",d:"22 ottobre 2026",t:["Impostazioni su PC: menu laterale a sinistra e una sezione alla volta a destra, senza dover scorrere tutto","Esci resta sotto il menu, sempre a portata","Su telefono resta la lista unica di sezioni"]},
   {v:"2.3",d:"22 ottobre 2026",t:["Impostazioni rifatte da zero: sezioni più chiare (Suggerimenti, Dove guardare, Aspetto, Account, Informazioni), ognuna con una breve spiegazione","Su PC due colonne ordinate: preferenze a sinistra, account e informazioni a destra","Esci sempre ben visibile in fondo"]},
   {v:"2.2.4",d:"22 ottobre 2026",t:["Versione e novità è ora un tasto in Impostazioni, sopra Esci","Aggiunto lo storico completo delle versioni, dalla 1.0 in poi"]},
   {v:"2.2.3",d:"22 ottobre 2026",t:["Su PC, Regione e Piattaforme mostrano le liste in griglia a 3 colonne, senza scorrere una colonna lunghissima"]},
@@ -2134,18 +2147,20 @@ function newsPage(){
 }
 function settingsPage(){
   RUN++;SRUN++;setBd(null);setRoute("/impostazioni");
-  const sec=(t,d,h)=>'<div class="sblock"><div class="sh">'+t+'</div>'+(d?'<div class="sd">'+d+'</div>':'')+h+'</div>';
+  const SEC=[['sug','Suggerimenti',IC.star],['dove','Dove guardare',IC.globe],['asp','Aspetto',IC.sun],['acc','Account',IC.user],['inf','Informazioni',IC.info]];
+  if(!SEC.some(x=>x[0]===window._ssec))window._ssec='sug';
+  const sec=(id,t,d,h)=>'<div class="sblock'+(window._ssec===id?' on':'')+'" data-s="'+id+'"><div class="sh">'+t+'</div>'+(d?'<div class="sd">'+d+'</div>':'')+h+'</div>';
   const row=(act,ic,lab,extra)=>'<button type="button" class="srow" data-act="'+act+'">'+ic+'<span class="sl">'+lab+'</span>'+(extra||'')+'</button>';
   swap('<div class="page sp"><h1>Impostazioni</h1><div class="sgrid">'+
-    '<div class="scol">'+
-      sec('Suggerimenti','Come Reelax sceglie i titoli e cosa ricorda per te.','<div class="sgrp" id="sg_sn">'+seenGroup()+'</div>')+
-      sec('Dove guardare','Paese e piattaforme di streaming che usi.','<div class="sgrp" id="sg_pf">'+pfGroup()+'</div>')+
-    '</div><div class="scol">'+
-      sec('Aspetto','','<div class="seg" id="thseg">'+[["auto","Auto"],["light","Chiaro"],["dark","Scuro"]].map(x=>'<button type="button" data-t="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>')+
-      sec('Account','','<div class="sgrp">'+row('acuser',IC.user,'Cambia username',IC.chev)+row('acpass',IC.lock,'Cambia password',IC.chev)+row('acall',IC.devs,'Esci da tutti i dispositivi')+'</div>')+
-      sec('Informazioni','','<div class="sgrp">'+row('news',IC.spark,'Versione e novità','<span class="sv">'+APP_VER+'</span>'+IC.chev)+'</div>')+
-    '</div></div>'+
-    '<button type="button" class="srow out" data-act="logout">'+IC.out+'<span class="sl">Esci</span></button></div>',true);
+    '<div class="snav" id="snav">'+SEC.map(x=>'<button type="button" data-s="'+x[0]+'"'+(window._ssec===x[0]?' class="on"':'')+'>'+x[2]+'<span>'+x[1]+'</span></button>').join('')+'</div>'+
+    '<div class="spanes">'+
+      sec('sug','Suggerimenti','Come Reelax sceglie i titoli e cosa ricorda per te.','<div class="sgrp" id="sg_sn">'+seenGroup()+'</div>')+
+      sec('dove','Dove guardare','Paese e piattaforme di streaming che usi.','<div class="sgrp" id="sg_pf">'+pfGroup()+'</div>')+
+      sec('asp','Aspetto','Tema chiaro, scuro o in base al dispositivo.','<div class="seg" id="thseg">'+[["auto","Auto"],["light","Chiaro"],["dark","Scuro"]].map(x=>'<button type="button" data-t="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>')+
+      sec('acc','Account','Dati di accesso e dispositivi collegati.','<div class="sgrp">'+row('acuser',IC.user,'Cambia username',IC.chev)+row('acpass',IC.lock,'Cambia password',IC.chev)+row('acall',IC.devs,'Esci da tutti i dispositivi')+'</div>')+
+      sec('inf','Informazioni','','<div class="sgrp">'+row('news',IC.spark,'Versione e novità','<span class="sv">'+APP_VER+'</span>'+IC.chev)+'</div>')+
+    '</div>'+
+    '<button type="button" class="srow out" data-act="logout">'+IC.out+'<span class="sl">Esci</span></button></div></div>',true);
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>home(),recent:()=>recentPage(),logout:confirmLogout,acall:revokeAll,
     pfsw:()=>{
       const v=!pfOn();pfSet(v);
@@ -2171,6 +2186,7 @@ function settingsPage(){
     },
     seenp:()=>seenPage(),starsw:()=>{const v=!starsOn();setSet("stars",v);S.seen=[];S.cands=[];const bt=document.querySelector('[data-act="starsw"]');if(bt){bt.setAttribute("aria-checked",String(v));const sw=bt.querySelector(".sw");if(sw)sw.classList.toggle("on",v);}},
     pfpick:()=>pfPage(),reg:()=>regionPage(),news:()=>newsPage(),acuser:()=>accountPage("user"),acpass:()=>accountPage("pass")}});
+  const nv=$("snav");if(nv)nv.onclick=e=>{const b=e.target.closest&&e.target.closest("button[data-s]");if(!b)return;tap();window._ssec=b.dataset.s;nv.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));document.querySelectorAll(".spanes .sblock").forEach(x=>x.classList.toggle("on",x.dataset.s===b.dataset.s));};
   const th=$("thseg"),pr=window.themePref();
   th.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.t===pr));
   th.onclick=e=>{const b=e.target.closest&&e.target.closest("button[data-t]");if(!b)return;tap();{const r=b.getBoundingClientRect(),cx=(e.clientX||e.clientY)?e.clientX:r.left+r.width/2,cy=(e.clientX||e.clientY)?e.clientY:r.top+r.height/2;window.setTheme(b.dataset.t,cx,cy);}th.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));};
