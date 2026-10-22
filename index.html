@@ -89,6 +89,9 @@
   color-scheme:light;
 }
 :root[data-theme="light"] body::before,:root[data-theme="light"] body::after{opacity:.18}
+/* tema scuro: alone di sfondo neutro (grigio), niente colori */
+:root:not([data-theme="light"]) body::before{background:radial-gradient(closest-side,rgba(255,255,255,.05),transparent)}
+:root:not([data-theme="light"]) body::after{background:radial-gradient(closest-side,rgba(255,255,255,.035),transparent)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{height:100%;margin:0;background:var(--bg);-webkit-text-size-adjust:100%}
 html,body{overflow:hidden;overscroll-behavior:none;touch-action:pan-y}
@@ -101,7 +104,7 @@ img{display:block;max-width:100%}
 
 /* sfondo ambientale */
 body::before,body::after{content:"";position:absolute;z-index:-1;pointer-events:none;width:110vmax;height:110vmax;border-radius:50%;}
-body::before{left:-60vmax;top:-10vmax;background:radial-gradient(closest-side,rgba(143,98,248,.1),transparent)}
+body::before{left:-60vmax;top:-10vmax;background:radial-gradient(closest-side,rgba(255,61,82,.07),transparent)}
 body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side,rgba(255,61,82,.07),transparent)}
 
 /* backdrop sfocato (solo nel risultato) */
