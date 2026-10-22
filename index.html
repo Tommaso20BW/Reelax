@@ -1,4 +1,8 @@
 <!doctype html>
+<!-- ⚠️ ISTRUZIONI OBBLIGATORIE PER QUALSIASI IA / SVILUPPATORE CHE MODIFICA QUESTO FILE ⚠️
+     PRIMA di toccare il codice leggi la regola "VERSIONE E NOVITÀ" (cerca questa scritta sopra settingsPage) e la riga qui sotto.
+     DOPO ogni modifica aggiorna APP_VER e CHANGELOG secondo quella regola, e dichiara nella risposta quale versione hai scelto e perché.
+     Non consegnare il file senza aver fatto questo passaggio. -->
 <!-- VERSIONI: una voce per rilascio: se è lo stesso lavoro, aggiorna la voce in cima invece di aggiungerne (regola scritta sopra settingsPage: cerca "VERSIONE E NOVITÀ"). -->
 <html lang="it">
 <head>
@@ -372,6 +376,9 @@ body.locked #app,body.locked #bd{visibility:hidden}
   padding:calc(var(--sat) + 24px) var(--gut) calc(var(--sab) + 24px);
   background:radial-gradient(120% 55% at 50% 38%,rgba(143,98,248,.16),transparent 62%),radial-gradient(90% 50% at 100% 100%,rgba(255,61,82,.14),transparent 60%),var(--bg)}
 #lg[hidden]{display:none}
+@property --cr{syntax:'<length>';inherits:false;initial-value:0px}
+#lg.rv{-webkit-mask-image:radial-gradient(circle at var(--cx) var(--cy),transparent var(--cr),#000 calc(var(--cr) + 2px));mask-image:radial-gradient(circle at var(--cx) var(--cy),transparent var(--cr),#000 calc(var(--cr) + 2px))}
+
 .lgc{width:100%;max-width:360px;display:flex;flex-direction:column;gap:14px}
 .lgc>*{animation:btnIn .7s cubic-bezier(.22,1,.36,1) backwards}
 .lgc>:nth-child(2){animation-delay:.08s}.lgc>:nth-child(3){animation-delay:.14s}.lgc>:nth-child(4){animation-delay:.2s}.lgc>:nth-child(5){animation-delay:.26s}
@@ -2175,8 +2182,9 @@ async function revokeAll(){
    - modifica media (nuova funzione o schermata) -> seconda cifra: 2.2 -> 2.3
    - modifica molto grande (cambiamenti profondi) -> prima cifra: 2.x -> 3.0
    Ogni voce: v (versione), d (data), t (elenco di novità in italiano, brevi). La pagina Impostazioni > Novità le mostra da sola. */
-const APP_VER="2.2";
+const APP_VER="2.2.1";
 const CHANGELOG=[
+  {v:"2.2.1",d:"22 ottobre 2026",t:["Nuova animazione di accesso e uscita: un'onda circolare parte dal tasto e rivela la schermata successiva"]},
   {v:"2.2",d:"22 ottobre 2026",t:["Nuova pagina Novità con la versione dell'app","Impostazioni rifatte: sezioni più chiare, su PC menu laterale con pannello e anteprime del tema","Su PC tutte le pagine usano tutta la larghezza dello schermo","Tema chiaro e scuro neutri, con accento rosso Reelax","Cronologia fino a 100 titoli, ogni titolo scade dopo 7 giorni; svuotarla ora cancella davvero, anche tra dispositivi"]},
   {v:"2.1.2",d:"21 ottobre 2026",t:["Il logo Reelax in alto ora si può toccare e ha una nuova animazione con una linea sfumata","Cambio tema più fluido, con transizione e interruttore rifatti","Il caricamento si può annullare e la posizione di scorrimento viene ricordata","Migliorie e correzioni"]},
   {v:"2.1.1",d:"20 ottobre 2026",t:["Animazioni più fluide nel passaggio tra le pagine","Migliorie e correzioni"]},
@@ -3026,7 +3034,7 @@ const shToPng=bl=>createImageBitmap(bl).then(bm=>{const c=document.createElement
 async function shAct(k,b){
   if(k==="clr"){shClose();doClearRecent();return;}
   if(k==="clrno"){shClose();return;}
-  if(k==="out"){shClose();doLogout();return;}
+  if(k==="out"){shClose();doLogout(ptOf(b));return;}
   const d=S.cur&&S.cur.d;if(!d)return;
   const say=t=>{const l=b.querySelector(".sl");if(l)l.textContent=t;};
   if(k==="more"){shClose();setTimeout(shareNative,250);return;}
@@ -3443,35 +3451,67 @@ const isAuthed=()=>{
   }catch(e){return false;}
 };
 const lg=$("lg");
-function lockApp(){
-  document.body.classList.add("locked");lg.hidden=false;lg.style.top=lg.style.bottom=lg.style.height="";
+/* onda circolare: un cerchio luminoso parte dal tasto premuto e rivela la schermata successiva */
+const WAVE_E="cubic-bezier(.65,0,.25,1)",WAVE_D=950;
+const ptOf=el=>{try{const r=el.getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2};}catch(e){return{x:innerWidth/2,y:innerHeight/2};}};
+const waveR=o=>Math.hypot(Math.max(o.x,innerWidth-o.x),Math.max(o.y,innerHeight-o.y));
+function waveRing(o,R){
+  const g=document.createElement("div");
+  g.style.cssText="position:fixed;z-index:301;pointer-events:none;border-radius:50%;border:3px solid #ff5a6b;box-shadow:0 0 30px #c13bd9,inset 0 0 30px rgba(193,59,217,.5);left:"+o.x+"px;top:"+o.y+"px;width:"+2*R+"px;height:"+2*R+"px;transform:translate(-50%,-50%) scale(0)";
+  document.body.appendChild(g);
+  const rm=()=>g.remove();
+  g.animate([{transform:"translate(-50%,-50%) scale(0)",opacity:1},{transform:"translate(-50%,-50%) scale(1)",opacity:1,offset:.9},{transform:"translate(-50%,-50%) scale(1)",opacity:0}],{duration:WAVE_D,easing:WAVE_E,fill:"forwards"}).finished.then(rm,rm);
+  setTimeout(rm,WAVE_D+400);
+}
+function lockApp(o,after){
+  const anim=!!o&&!RM()&&!!lg.animate&&!document.body.classList.contains("locked");
+  if(!anim)document.body.classList.add("locked");
+  lg.hidden=false;lg.style.top=lg.style.bottom=lg.style.height="";
   $("lgu").value="";$("lgp").value="";$("lge").textContent="";$("lgb").disabled=false;
   const c=$("lgf");c.classList.remove("bad","busy");
+  if(anim){   // logout: il login si apre come un cerchio dal tasto Esci, mentre l'app dietro si sfoca e rimpicciolisce
+    const R=waveR(o),app=$("app");
+    lg.getAnimations().forEach(x=>x.cancel());
+    const done=()=>{document.body.classList.add("locked");lg.getAnimations().forEach(x=>x.cancel());app.getAnimations().forEach(x=>x.cancel());if(after)after();setTimeout(()=>{try{$("lgu").focus();}catch(e){}},50);};
+    app.animate([{transform:"none",filter:"blur(0)"},{transform:"scale(.94)",filter:"blur(5px)"}],{duration:WAVE_D,easing:WAVE_E,fill:"forwards"});
+    waveRing(o,R);
+    lg.animate([{clipPath:"circle(0px at "+o.x+"px "+o.y+"px)"},{clipPath:"circle("+R+"px at "+o.x+"px "+o.y+"px)"}],{duration:WAVE_D,easing:WAVE_E,fill:"forwards"}).finished.then(done,done);
+    return;
+  }
+  if(after)after();
   if(!RM()&&lg.animate)lg.animate([{opacity:0,filter:"blur(14px)"},{opacity:1,filter:"blur(0)"}],{duration:600,easing:"cubic-bezier(.22,1,.36,1)"});
   setTimeout(()=>{try{$("lgu").focus();}catch(e){}},50);
 }
 function resetScroll(){try{scrollTo(0,0);document.documentElement.scrollTop=0;document.body.scrollTop=0;}catch(e){}}
-function unlockApp(){
+function unlockApp(o){
   document.body.classList.remove("locked");
   try{document.activeElement&&document.activeElement.blur();}catch(e){}
   resetScroll();[100,300,600,1000].forEach(t=>setTimeout(()=>{resetScroll();fit();},t));
-  if(!RM()&&lg.animate){lg.animate([{opacity:1,filter:"blur(0)"},{opacity:0,filter:"blur(16px)"}],{duration:600,easing:"cubic-bezier(.4,0,.6,1)",fill:"forwards"}).onfinish=()=>{lg.hidden=true;lg.getAnimations().forEach(x=>x.cancel());};setTimeout(()=>{lg.hidden=true;},900);}
+  if(!RM()&&lg.animate&&o){   // login: un foro circolare si apre dal tasto Entra e mostra l'app
+    const R=waveR(o),end=()=>{lg.hidden=true;lg.classList.remove("rv");lg.getAnimations().forEach(x=>x.cancel());lg.style.removeProperty("--cx");lg.style.removeProperty("--cy");lg.style.removeProperty("--cr");};
+    lg.style.setProperty("--cx",o.x+"px");lg.style.setProperty("--cy",o.y+"px");lg.classList.add("rv");
+    waveRing(o,R);
+    $("lgf").animate([{transform:"none",filter:"blur(0)"},{transform:"scale(.94)",filter:"blur(5px)"}],{duration:WAVE_D,easing:WAVE_E,fill:"forwards"});
+    lg.animate([{"--cr":"0px"},{"--cr":R+"px"}],{duration:WAVE_D,easing:WAVE_E,fill:"forwards"}).finished.then(end,end);
+    setTimeout(end,WAVE_D+700);
+  }
+  else if(!RM()&&lg.animate){lg.animate([{opacity:1,filter:"blur(0)"},{opacity:0,filter:"blur(16px)"}],{duration:600,easing:"cubic-bezier(.4,0,.6,1)",fill:"forwards"}).onfinish=()=>{lg.hidden=true;lg.getAnimations().forEach(x=>x.cancel());};setTimeout(()=>{lg.hidden=true;},900);}
   else lg.hidden=true;
-  routeFromHash(true);   // la prima pagina compare con la sfocatura incrociata mentre il login svanisce
+  routeFromHash(true);   // la prima pagina compare mentre il cerchio si apre
   syncPull();
 }
-function doLogout(){
+function doLogout(o){
   try{localStorage.removeItem(AUTH_KEY);}catch(e){}
   Object.assign(S,{cat:"",fmt:"",mood:"",time:"",era:"",style:"",step:0,seen:[],cands:[],cur:null,avoid:[]});
-  stage.innerHTML="";FIRST=true;
+  FIRST=true;
   try{sessionStorage.removeItem("reelax_s");}catch(e){}
   CURR="";ROUTED=false;try{history.replaceState({d:0},"","#/");}catch(e){}
-  lockApp();
+  lockApp(o&&typeof o.x==="number"?o:null,()=>{stage.innerHTML="";});   // con l'onda la pagina resta visibile finché il cerchio non la copre
 }
 let lgBusy=false;
 $("lgf").addEventListener("submit",async e=>{
   e.preventDefault();if(lgBusy)return;lgBusy=true;
-  const c=$("lgf"),er=$("lge"),btn=$("lgb");btn.disabled=true;er.textContent="";c.classList.remove("bad");c.classList.add("busy");const t0=Date.now();
+  const c=$("lgf"),er=$("lge"),btn=$("lgb"),org=ptOf(btn);btn.disabled=true;er.textContent="";c.classList.remove("bad");c.classList.add("busy");const t0=Date.now();
   let tok="",fail="";
   try{
     const r=await fetch(TMDB_PROXY.replace(/\/+$/,"")+"/auth/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username:$("lgu").value,password:$("lgp").value})});
@@ -3480,7 +3520,7 @@ $("lgf").addEventListener("submit",async e=>{
   }catch(x){fail="Impossibile contattare il server. Controlla la connessione.";}
   await sleep(Math.max(0,1300-(Date.now()-t0)));
   lgBusy=false;
-  if(tok){try{localStorage.setItem(AUTH_KEY,tok);}catch(x){}unlockApp();return;}
+  if(tok){try{localStorage.setItem(AUTH_KEY,tok);}catch(x){}unlockApp(org);return;}
   c.classList.remove("busy");btn.disabled=false;er.textContent=fail||"Nome utente o password non corretti.";
   void c.offsetWidth;c.classList.add("bad");$("lgp").value="";try{$("lgp").focus();}catch(x){}
 });
