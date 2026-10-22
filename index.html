@@ -1090,6 +1090,7 @@ function ui(o){
     const bar=pg.firstChild,w=(o.p[1]/o.p[0]*100)+"%";
     if(RM()){bar.style.transition="none";bar.style.width=w;void bar.offsetWidth;bar.style.transition="";}
     else if(nb)requestAnimationFrame(()=>requestAnimationFrame(()=>{bar.style.width=w;}));
+    else if(window.__PJ){bar.style.transition="none";bar.style.width=w;void bar.offsetWidth;bar.style.transition="";}   // tocco su Reelax: la barra cambia di colpo, nascosta sotto la linea gradiente
     else bar.style.width=w;                                  // parte insieme allo scorrimento, avanti e indietro
   }else pg.classList.add("off");
   ACT=o.a||{};
@@ -1155,7 +1156,7 @@ let HGEN=0;
   const clean=()=>!S.cat&&!S.fmt&&!S.mood&&!S.time&&!S.era&&!S.style&&!S.avoid.length&&S.step===0&&!!stage.querySelector(".opts");
   /* effetto "D": striscia di colore sulla scritta + alone viola + linea gradiente sotto la barra.
      Dura quanto la transizione di pagina (parte col tocco, la home arriva a effetto avviato) e poi si spegne: non resta nulla in giro. */
-  const FXD=1200,FXNAV=420;   // durata effetto / ritardo prima che arrivi la home (ms)
+  const FXD=1200,FXNAV=720;   // durata effetto / ritardo prima che arrivi la home (ms)
   const brandFx=()=>{
     let t=br.querySelector(".bt");
     if(!t){const x=br.textContent.trim();br.textContent="";t=document.createElement("span");t.className="bt";t.textContent=x;br.appendChild(t);}
@@ -1187,7 +1188,7 @@ let HGEN=0;
     const fx=!RM();
     if(fx)brandFx();
     if(clean())return;
-    const go=()=>{HGEN++;RUN++;SRUN++;restart();};
+    const go=()=>{HGEN++;RUN++;SRUN++;window.__PJ=1;try{restart();}finally{window.__PJ=0;}};
     if(!fx){go();return;}
     BFX=1;setTimeout(()=>{BFX=0;},FXD);
     const c0=CURR;   // la home parte dopo FXNAV ms, solo se nel frattempo non si è già cambiato pagina
