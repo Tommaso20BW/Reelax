@@ -567,16 +567,14 @@ body.pre #app{opacity:0}
 .srow.rd svg{color:var(--red)}
 .srow.sm{min-height:52px;font-size:.95rem}
 .sblock .sh+.seg,.sblock .seg+.sh{margin-top:6px}
-.vfoot{flex:none;align-self:center;padding:6px 12px;font-size:.78rem;letter-spacing:.02em;color:var(--mut)}
-.vfoot:active{opacity:.6}
-/* Impostazioni su PC: sezioni su due colonne, Esci e versione a tutta larghezza */
+.srow .sv{flex:none;font-size:.85rem;font-weight:600;color:var(--mut);font-variant-numeric:tabular-nums}
+/* Impostazioni su PC: sezioni su due colonne, Esci a tutta larghezza */
 @media (min-width:900px) and (min-height:560px){
   .page.sp{display:block;max-width:1040px;column-count:2;column-gap:40px}
   .page.sp h1{column-span:all;margin-bottom:28px}
   .page.sp .sblock{break-inside:avoid;margin-bottom:28px}
   .page.sp h1+.sblock{margin-top:0}
   .page.sp .srow.out{column-span:all;margin-top:28px}
-  .page.sp .vfoot{column-span:all;display:block;margin:18px auto 0}
 }
 /* Regione e Piattaforme su PC: liste lunghe in griglia a 3 colonne, sottotitolo allineato al titolo */
 @media (min-width:900px) and (min-height:560px){
@@ -844,6 +842,7 @@ const IC={
   eye:sv('<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>'),
   plus:sv('<path d="M12 5v14M5 12h14"/>'),
   gear:sv('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/>'),
+  spark:sv('<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 16v4M17 18h4"/>'),
   chev:sv('<path d="M9 5l7 7-7 7"/>'),
   user:sv('<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/>'),
   lock:sv('<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/>'),
@@ -2105,12 +2104,24 @@ async function revokeAll(){
    - modifica media (nuova funzione o schermata) -> seconda cifra: 2.2 -> 2.3
    - modifica molto grande (cambiamenti profondi) -> prima cifra: 2.x -> 3.0
    Ogni voce: v (versione), d (data), t (elenco di novità in italiano, brevi). La pagina Impostazioni > Novità le mostra da sola. */
-const APP_VER="2.2.3";
+const APP_VER="2.2.4";
 const CHANGELOG=[
+  {v:"2.2.4",d:"22 ottobre 2026",t:["Versione e novità è ora un tasto in Impostazioni, sopra Esci","Aggiunto lo storico completo delle versioni, dalla 1.0 in poi"]},
   {v:"2.2.3",d:"22 ottobre 2026",t:["Su PC, Regione e Piattaforme mostrano le liste in griglia a 3 colonne, senza scorrere una colonna lunghissima"]},
   {v:"2.2.2",d:"22 ottobre 2026",t:["Impostazioni su PC: le sezioni si dispongono su due colonne invece di una sola colonna stretta"]},
   {v:"2.2.1",d:"22 ottobre 2026",t:["Impostazioni più ordinate: la versione è ora una scritta discreta in fondo, che apre le Novità"]},
-  {v:"2.2",d:"22 ottobre 2026",t:["Nuova pagina Novità con la versione dell'app","Tema chiaro e scuro neutri, senza oro e senza toni viola: accento rosso Reelax","Cronologia fino a 100 titoli, ogni titolo scade dopo 7 giorni","Svuota la cronologia: ora è un cestino in alto a destra, con pannello di conferma"]}
+  {v:"2.2",d:"22 ottobre 2026",t:["Nuova pagina Novità con la versione dell'app","Tema chiaro e scuro neutri, senza oro e senza toni viola: accento rosso Reelax","Cronologia fino a 100 titoli, ogni titolo scade dopo 7 giorni","Svuota la cronologia: ora è un cestino in alto a destra, con pannello di conferma"]},
+  {v:"2.1.2",d:"21 ottobre 2026",t:["Il logo Reelax in alto ora si può toccare e ha una nuova animazione con una linea sfumata","Cambio tema più fluido, con transizione e interruttore rifatti","Il caricamento si può annullare e la posizione di scorrimento viene ricordata","Migliorie e correzioni"]},
+  {v:"2.1.1",d:"20 ottobre 2026",t:["Animazioni più fluide nel passaggio tra le pagine","Migliorie e correzioni"]},
+  {v:"2.1",d:"19 ottobre 2026",t:["Condivisione dei titoli: pannello per salvare l'immagine o copiarla","Titoli simili e saghe: dalla scheda si scoprono gli altri film della saga","Stelle di valutazione e nuove animazioni","Layout adattato anche agli schermi grandi","Effetto ripple nel cambio tema, carosello e gesti al tocco più fluidi","Migliorie e correzioni"]},
+  {v:"2.0.1",d:"19 ottobre 2026",t:["Immagini spostate in una cartella dedicata: la pagina si carica più leggera","Regione con le bandiere e tema chiaro curato in tutte le schermate","L'app si aggiorna da sola quando esce una nuova versione","Locandine e sfondo della scheda che si adattano meglio allo schermo","Elenco dei titoli già visti esteso fino a 5000","Migliorie e correzioni"]},
+  {v:"2.0",d:"18 ottobre 2026",t:["Nuova pagina Impostazioni","Tema chiaro e scuro con scelta manuale","Account: cambio username e password, uscita con conferma","Filtro per piattaforme di streaming e scelta della regione","Liste dei titoli recenti","Nuove icone dell'app e schermata di avvio","I titoli selezionati vengono mostrati in cima alla lista","Navigazione con indirizzo proprio per ogni pagina, sessione più affidabile"]},
+  {v:"1.5",d:"18 ottobre 2026",t:["Messaggio dei titoli di tendenza","Migliorie e correzioni"]},
+  {v:"1.4",d:"17 ottobre 2026",t:["Nuove domande per affinare i suggerimenti: stile, durata e altre categorie","Tasto Indietro tra le domande","Muro di locandine durante il caricamento"]},
+  {v:"1.3",d:"17 ottobre 2026",t:["Accesso con login","Pagina di ricerca con risultati più chiari e messaggi d'errore","Stato dell'app su iPhone con barra di stato trasparente"]},
+  {v:"1.2",d:"17 ottobre 2026",t:["Schermo intero su smartphone, senza zoom accidentali","Apertura della scheda con animazione dalla locandina","Tasti arrotondati e dock senza riquadro nero"]},
+  {v:"1.1",d:"17 ottobre 2026",t:["Scelta rapida in una sola schermata, pensata per smartphone","Link diretti alle piattaforme dove guardare il titolo","Animazioni di caricamento e nuovo aspetto","Migliorie e correzioni"]},
+  {v:"1.0",d:"16 ottobre 2026",t:["Prima versione di Reelax: scopri film e anime in base ai tuoi gusti, con dati TMDB","Schede con immagini e dettagli di film e anime"]}
 ];
 function newsPage(){
   RUN++;SRUN++;setBd(null);setRoute("/impostazioni/novita");
@@ -2125,7 +2136,8 @@ function settingsPage(){
     sec('Suggerimenti','<div class="sgrp" id="sg_sn">'+seenGroup()+'</div>')+
     sec('Aspetto','<div class="seg" id="thseg">'+[["auto","Auto"],["light","Chiaro"],["dark","Scuro"]].map(x=>'<button type="button" data-t="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>')+
     sec('Account','<div class="sgrp"><button type="button" class="srow" data-act="acuser">'+IC.user+'<span class="sl">Cambia username</span>'+IC.chev+'</button><button type="button" class="srow" data-act="acpass">'+IC.lock+'<span class="sl">Cambia password</span>'+IC.chev+'</button><button type="button" class="srow" data-act="acall">'+IC.devs+'<span class="sl">Esci da tutti i dispositivi</span></button></div>')+
-    '<button type="button" class="srow out" data-act="logout">'+IC.out+'<span class="sl">Esci</span></button><button type="button" class="vfoot" data-act="news">Reelax · versione '+APP_VER+' · Novità</button></div>',true);
+    sec('Reelax','<div class="sgrp"><button type="button" class="srow" data-act="news">'+IC.spark+'<span class="sl">Versione e novità</span><span class="sv">'+APP_VER+'</span>'+IC.chev+'</button></div>')+
+    '<button type="button" class="srow out" data-act="logout">'+IC.out+'<span class="sl">Esci</span></button></div>',true);
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>home(),recent:()=>recentPage(),logout:confirmLogout,acall:revokeAll,
     pfsw:()=>{
       const v=!pfOn();pfSet(v);
