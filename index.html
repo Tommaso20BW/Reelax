@@ -425,18 +425,18 @@ body.pre #app{opacity:0}
 /* ================= VERSIONE DESKTOP ================= */
 @media (min-width:900px) and (min-height:560px){
   :root{--gut:40px}
-  #app{max-width:1180px}
-  .top-in{grid-template-columns:108px 1fr 108px;height:64px}
+  #app{max-width:none}
+  .top-in{grid-template-columns:108px 1fr 108px;height:64px;padding:0 calc(var(--gut) - 14px)}
   .brand{font-size:.95rem}
-  .prog{margin:2px var(--gut) 10px;max-width:1100px;align-self:center;width:calc(100% - var(--gut)*2)}
+  .prog{margin:2px var(--gut) 10px;max-width:none;align-self:center;width:calc(100% - var(--gut)*2)}
   #stage{padding:18px var(--gut) 28px}
   #dock{padding:14px var(--gut) 28px}
-  .dock-in{max-width:620px;margin:0 auto}
+  .dock-in{max-width:720px;margin:0 auto}
   .btn{height:60px}
   @media (hover:hover){.btn:hover{filter:brightness(1.15)}.tb:hover{background:var(--soft)}.poster:hover{transform:scale(1.02)}.card.tap:hover,.castbtn:hover{filter:brightness(1.1)}.sr:hover{border-color:var(--line2)}}
 
   /* domande: titolo centrato e opzioni in griglia larga */
-  .page{--pg:34px;justify-content:center;max-width:1040px;margin:0 auto;width:100%}
+  .page{--pg:34px;justify-content:center;max-width:1320px;margin:0 auto;width:100%}
   .page h1{text-align:center;font-size:clamp(2.6rem,4.2vw,3.6rem);margin:0}
   .opts{flex:none}
   .opts.g2{gap:18px;grid-auto-rows:minmax(168px,auto)}
@@ -450,17 +450,17 @@ body.pre #app{opacity:0}
   .seg{width:100%;max-width:520px}
 
   /* ricerca, cast e altre pagine senza opzioni: colonna centrata */
-  .page:not(:has(.opts)){max-width:760px;justify-content:flex-start}
+  .page:not(:has(.opts)){max-width:1100px;justify-content:flex-start}
   .page:not(:has(.opts)) h1{text-align:left}
-  .page:has(.lib){max-width:1040px}
+  .page:has(.lib){max-width:1600px}
 
   /* risultato: locandina a sinistra (fissa), schede a destra */
-  .res{display:grid;grid-template-columns:340px minmax(0,1fr);grid-template-rows:repeat(12,auto) 1fr;column-gap:48px;row-gap:0;align-items:start;max-width:1040px;margin:0 auto;padding-top:6px}
+  .res{display:grid;grid-template-columns:420px minmax(0,1fr);grid-template-rows:repeat(12,auto) 1fr;column-gap:64px;row-gap:0;align-items:start;max-width:1440px;margin:0 auto;padding-top:6px}
   .res>*{grid-column:2;margin-bottom:14px}
   .res>.hero{grid-column:1;grid-row:1/-1;position:sticky;top:6px;margin:0}
   /* la locandina si adatta all'altezza disponibile: locandina, titolo e chip restano sempre visibili senza scorrere (barra alta + dock + titolo + chip ≈ 450px, con margine per titoli lunghi) */
-  .poster{width:min(100%,320px,max(90px,calc((100vh - 260px)*2/3)))}
-  @supports (height:100dvh){.poster{width:min(100%,320px,max(90px,calc((100dvh - 260px)*2/3)))}}
+  .poster{width:min(100%,400px,max(90px,calc((100vh - 260px)*2/3)))}
+  @supports (height:100dvh){.poster{width:min(100%,400px,max(90px,calc((100dvh - 260px)*2/3)))}}
   /* titolo, tagline e chip a destra, in cima alla colonna delle schede; la locandina a sinistra usa tutta l'altezza */
   .hero{display:contents}
   .hero .poster{grid-column:1;grid-row:1/-1;position:sticky;top:6px;align-self:start;justify-self:center}
@@ -481,7 +481,7 @@ body.pre #app{opacity:0}
   .err{max-width:640px;margin:0 auto}
   #lg .lgc{max-width:400px}
 }
-@media (min-width:900px) and (max-height:559px){#app{max-width:1180px}.dock-in{max-width:620px;margin:0 auto}}
+@media (min-width:900px) and (max-height:559px){#app{max-width:none}.dock-in{max-width:720px;margin:0 auto}}
 @media (min-width:900px) and (max-height:559px){.poster{width:min(54vw,224px,max(96px,calc((100vh - 360px)*2/3)))}}
 
 /* ===== CARICAMENTO A TUTTO SCHERMO: il muro di locandine sta dietro l'app (barra alta e pulsanti restano sopra) ===== */
@@ -568,6 +568,7 @@ body.pre #app{opacity:0}
 .srow.sm{min-height:52px;font-size:.95rem}
 .sblock .sh+.seg,.sblock .seg+.sh{margin-top:6px}
 .srow .sv{flex:none;font-size:.85rem;font-weight:600;color:var(--mut);font-variant-numeric:tabular-nums}
+@media (min-width:1500px) and (min-height:560px){.sres.lib{grid-template-columns:repeat(8,minmax(0,1fr))}.page #rgl,.page #pfg{grid-template-columns:repeat(4,minmax(0,1fr))}}
 /* Impostazioni: telefono = una colonna di sezioni; PC = menu a sinistra + una sezione alla volta a destra, Esci sotto il menu */
 .sgrid{display:flex;flex-direction:column;gap:var(--pg)}
 .spanes{display:flex;flex-direction:column;gap:var(--pg)}
@@ -576,7 +577,7 @@ body.pre #app{opacity:0}
 .sblock .sd+.sgrp,.sblock .sd+.seg{margin-top:2px}
 @media (min-width:900px) and (min-height:560px){
   #app.onset{max-width:none}
-  #app .page.sp{max-width:1280px;width:100%;margin:0 auto;justify-content:flex-start;gap:30px}
+  #app .page.sp{max-width:1500px;width:100%;margin:0 auto;justify-content:flex-start;gap:30px}
   #app .page.sp h1{text-align:left;font-size:clamp(2.2rem,3vw,2.8rem)}
   .sgrid{display:grid;grid-template-columns:280px minmax(0,1fr);grid-template-areas:"nav panes" "out panes";grid-template-rows:auto 1fr;gap:16px 64px;align-items:start}
   .snav{grid-area:nav;display:flex;flex-direction:column;gap:4px;padding:10px;border-radius:22px;border:1px solid var(--line);background:linear-gradient(160deg,var(--s2),var(--s1))}
@@ -584,7 +585,7 @@ body.pre #app{opacity:0}
   .snav button svg{flex:none;width:20px;height:20px}
   .snav button:hover{background:var(--soft2);color:var(--fg)}
   .snav button.on{background:var(--soft);color:var(--fg)}
-  .spanes{grid-area:panes;max-width:860px}
+  .spanes{grid-area:panes;max-width:960px}
   .spanes .sblock{display:none}
   .spanes .sblock.on{display:flex}
   .spanes .sh{display:none}
@@ -593,7 +594,7 @@ body.pre #app{opacity:0}
 }
 /* Regione e Piattaforme su PC: liste lunghe in griglia a 3 colonne, sottotitolo allineato al titolo */
 @media (min-width:900px) and (min-height:560px){
-  .page:has(#rgl),.page:has(#pfg){max-width:1040px}
+  .page:has(#rgl),.page:has(#pfg){max-width:1500px}
   .page:has(#rgl) .sub,.page:has(#pfg) .sub{text-align:left}
   #rgl,#pfg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
   #pfg .lemp{grid-column:1/-1}
@@ -2121,8 +2122,9 @@ async function revokeAll(){
    - modifica media (nuova funzione o schermata) -> seconda cifra: 2.2 -> 2.3
    - modifica molto grande (cambiamenti profondi) -> prima cifra: 2.x -> 3.0
    Ogni voce: v (versione), d (data), t (elenco di novità in italiano, brevi). La pagina Impostazioni > Novità le mostra da sola. */
-const APP_VER="2.4.1";
+const APP_VER="2.4.2";
 const CHANGELOG=[
+  {v:"2.4.2",d:"22 ottobre 2026",t:["Su PC tutte le pagine usano tutta la larghezza dello schermo, senza fasce vuote ai lati","Domande, risultato, ricerca, regione e piattaforme più ampi, con più titoli in griglia sugli schermi grandi"]},
   {v:"2.4.1",d:"22 ottobre 2026",t:["Impostazioni su PC a tutta larghezza: via le fasce vuote ai lati, menu laterale più largo e contenuto più ampio"]},
   {v:"2.4",d:"22 ottobre 2026",t:["Impostazioni su PC: menu laterale a sinistra e una sezione alla volta a destra, senza dover scorrere tutto","Esci resta sotto il menu, sempre a portata","Su telefono resta la lista unica di sezioni"]},
   {v:"2.3",d:"22 ottobre 2026",t:["Impostazioni rifatte da zero: sezioni più chiare (Suggerimenti, Dove guardare, Aspetto, Account, Informazioni), ognuna con una breve spiegazione","Su PC due colonne ordinate: preferenze a sinistra, account e informazioni a destra","Esci sempre ben visibile in fondo"]},
