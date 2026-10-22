@@ -567,6 +567,12 @@ body.pre #app{opacity:0}
 .srow.rd svg{color:var(--red)}
 .srow.sm{min-height:52px;font-size:.95rem}
 .sblock .sh+.seg,.sblock .seg+.sh{margin-top:6px}
+.sblock.sin{animation:spIn .42s var(--ease) both}
+.sblock.sin .srow,.sblock.sin #thseg button{animation:spIn .55s var(--ease) backwards}
+.sblock.sin .srow:nth-child(2),.sblock.sin #thseg button:nth-child(2){animation-delay:.07s}
+.sblock.sin .srow:nth-child(3),.sblock.sin #thseg button:nth-child(3){animation-delay:.14s}
+@keyframes spIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.sblock.sin,.sblock.sin .srow,.sblock.sin #thseg button{animation:none}}
 .seg.tp button{height:auto;display:flex;flex-direction:column;align-items:center;gap:9px;padding:10px 10px 12px;font-size:.9rem}
 .pv{display:block;position:relative;width:100%;height:76px;border-radius:12px;overflow:hidden;border:1px solid var(--line);--pb:#0b0b0d;--ps:#2a2a2f;--pt:rgba(255,255,255,.42);background:var(--pb)}
 .pv.l{--pb:#f5f5f6;--ps:#dcdce1;--pt:rgba(0,0,0,.3)}
@@ -595,14 +601,14 @@ body.pre #app{opacity:0}
   .snav button svg{flex:none;width:20px;height:20px}
   .snav button:hover{background:var(--soft2);color:var(--fg)}
   .snav button.on{color:#fff;background:var(--grad);box-shadow:0 10px 26px rgba(255,61,82,.28)}
-  .spanes{grid-area:panes;max-width:960px;padding:34px;border:1px solid var(--line);border-radius:30px;background:linear-gradient(160deg,var(--s2),var(--s1));min-height:480px}
+  .spanes{grid-area:panes;max-width:960px;padding:34px;border:1px solid var(--line);border-radius:30px;background:linear-gradient(160deg,var(--s2),var(--s1));align-self:start}
   .spanes .sblock{display:none}
   .spanes .sblock.on{display:flex}
   .spanes .sblock.pho{display:none!important}
   .snav button svg:last-child:not(:first-child){margin-left:auto;width:16px;height:16px;opacity:.55}
   .spanes .sblock{gap:10px}
-  .spanes .sh{font-family:var(--fd);font-size:2rem;font-weight:700;letter-spacing:-.01em;text-transform:none;color:var(--fg);padding:0}
-  .spanes .sd{font-size:1rem;padding:0 0 14px}
+  .spanes .sblock .sh{font-family:var(--fd);font-size:2rem;font-weight:700;letter-spacing:-.01em;text-transform:none;color:var(--fg);padding:0}
+  .spanes .sblock .sd{font-size:1rem;padding:0 0 14px}
   .spanes .sgrp{border-radius:24px;background:var(--s1)}
   .spanes .sgrp .srow{min-height:76px;padding:0 26px;font-size:1.05rem;gap:18px}
   .spanes .sgrp .srow>svg:first-child{width:40px;height:40px;padding:9px;border-radius:12px}
@@ -641,8 +647,8 @@ body.pre #app{opacity:0}
 .sgrp .srow>svg:first-child{width:34px;height:34px;padding:7px;border-radius:10px;background:var(--soft);color:var(--fg)}
 .sgrp .srow+.srow{border-top:1px solid var(--line);position:relative}
 .sgrp .srow>svg:last-child:not(:first-child){width:16px;height:16px;opacity:.6}
-#thseg{padding:4px;gap:4px;border-radius:16px;border:1px solid var(--line);background:linear-gradient(160deg,var(--s2),var(--s1))}
-#thseg button{height:42px;border:0;border-radius:12px;background:none}
+#thseg{padding:0;gap:10px;border:0;border-radius:0;background:none}
+#thseg button{height:auto;min-height:0;border:1px solid var(--line);border-radius:18px;background:var(--s2)}
 #thseg button.on{background:linear-gradient(135deg,rgba(255,61,82,.28),rgba(143,98,248,.24));box-shadow:0 0 0 1px var(--red) inset}
 .srow.out{justify-content:center;min-height:56px;margin-top:auto;border-radius:18px;border:1px solid rgba(255,61,82,.45);background:rgba(255,61,82,.1)}
 .srow.out .sl{flex:none;text-align:center}
@@ -2205,7 +2211,7 @@ function settingsPage(){
     },
     seenp:()=>seenPage(),starsw:()=>{const v=!starsOn();setSet("stars",v);S.seen=[];S.cands=[];const bt=document.querySelector('[data-act="starsw"]');if(bt){bt.setAttribute("aria-checked",String(v));const sw=bt.querySelector(".sw");if(sw)sw.classList.toggle("on",v);}},
     pfpick:()=>pfPage(),reg:()=>regionPage(),news:()=>newsPage(),acuser:()=>accountPage("user"),acpass:()=>accountPage("pass")}});
-  const nv=$("snav");if(nv)nv.onclick=e=>{const b=e.target.closest&&e.target.closest("button[data-s]");if(!b)return;tap();window._ssec=b.dataset.s;nv.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));document.querySelectorAll(".spanes .sblock").forEach(x=>x.classList.toggle("on",x.dataset.s===b.dataset.s));};
+  const nv=$("snav");if(nv)nv.onclick=e=>{const b=e.target.closest&&e.target.closest("button[data-s]");if(!b)return;tap();window._ssec=b.dataset.s;nv.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));document.querySelectorAll(".spanes .sblock").forEach(x=>x.classList.toggle("on",x.dataset.s===b.dataset.s));const ne=document.querySelector(".spanes .sblock.on");if(ne&&!RM()){ne.classList.remove("sin");void ne.offsetWidth;ne.classList.add("sin");}};
   const th=$("thseg"),pr=window.themePref();
   th.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.t===pr));
   th.onclick=e=>{const b=e.target.closest&&e.target.closest("button[data-t]");if(!b)return;tap();{const r=b.getBoundingClientRect(),cx=(e.clientX||e.clientY)?e.clientX:r.left+r.width/2,cy=(e.clientX||e.clientY)?e.clientY:r.top+r.height/2;window.setTheme(b.dataset.t,cx,cy);}th.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));};
