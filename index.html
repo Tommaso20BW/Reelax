@@ -567,6 +567,27 @@ body.pre #app{opacity:0}
 .srow.rd svg{color:var(--red)}
 .srow.sm{min-height:52px;font-size:.95rem}
 .sblock .sh+.seg,.sblock .seg+.sh{margin-top:6px}
+.vfoot{flex:none;align-self:center;padding:6px 12px;font-size:.78rem;letter-spacing:.02em;color:var(--mut)}
+.vfoot:active{opacity:.6}
+/* Impostazioni su PC: sezioni su due colonne, Esci e versione a tutta larghezza */
+@media (min-width:900px) and (min-height:560px){
+  .page.sp{display:block;max-width:1040px;column-count:2;column-gap:40px}
+  .page.sp h1{column-span:all;margin-bottom:28px}
+  .page.sp .sblock{break-inside:avoid;margin-bottom:28px}
+  .page.sp h1+.sblock{margin-top:0}
+  .page.sp .srow.out{column-span:all;margin-top:28px}
+  .page.sp .vfoot{column-span:all;display:block;margin:18px auto 0}
+}
+/* Regione e Piattaforme su PC: liste lunghe in griglia a 3 colonne, sottotitolo allineato al titolo */
+@media (min-width:900px) and (min-height:560px){
+  .page:has(#rgl),.page:has(#pfg){max-width:1040px}
+  .page:has(#rgl) .sub,.page:has(#pfg) .sub{text-align:left}
+  #rgl,#pfg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+  #pfg .lemp{grid-column:1/-1}
+  #rgl{overflow:visible;border:0;background:none;border-radius:0}
+  #rgl .srow{border:1px solid var(--line);border-radius:var(--r2);background:linear-gradient(160deg,var(--s2),var(--s1))}
+  #rgl .srow+.srow{border-top:1px solid var(--line)}
+}
 .nws{margin:0;padding:14px 18px 14px 36px;font-size:.92rem;line-height:1.4}
 .nws li+li{margin-top:8px}
 .srow .sn{color:var(--mut);font-weight:600;font-size:.9rem}
@@ -2084,8 +2105,11 @@ async function revokeAll(){
    - modifica media (nuova funzione o schermata) -> seconda cifra: 2.2 -> 2.3
    - modifica molto grande (cambiamenti profondi) -> prima cifra: 2.x -> 3.0
    Ogni voce: v (versione), d (data), t (elenco di novità in italiano, brevi). La pagina Impostazioni > Novità le mostra da sola. */
-const APP_VER="2.2";
+const APP_VER="2.2.3";
 const CHANGELOG=[
+  {v:"2.2.3",d:"22 ottobre 2026",t:["Su PC, Regione e Piattaforme mostrano le liste in griglia a 3 colonne, senza scorrere una colonna lunghissima"]},
+  {v:"2.2.2",d:"22 ottobre 2026",t:["Impostazioni su PC: le sezioni si dispongono su due colonne invece di una sola colonna stretta"]},
+  {v:"2.2.1",d:"22 ottobre 2026",t:["Impostazioni più ordinate: la versione è ora una scritta discreta in fondo, che apre le Novità"]},
   {v:"2.2",d:"22 ottobre 2026",t:["Nuova pagina Novità con la versione dell'app","Tema chiaro e scuro neutri, senza oro e senza toni viola: accento rosso Reelax","Cronologia fino a 100 titoli, ogni titolo scade dopo 7 giorni","Svuota la cronologia: ora è un cestino in alto a destra, con pannello di conferma"]}
 ];
 function newsPage(){
@@ -2100,9 +2124,8 @@ function settingsPage(){
     sec('Ricerca','<div class="sgrp" id="sg_pf">'+pfGroup()+'</div>')+
     sec('Suggerimenti','<div class="sgrp" id="sg_sn">'+seenGroup()+'</div>')+
     sec('Aspetto','<div class="seg" id="thseg">'+[["auto","Auto"],["light","Chiaro"],["dark","Scuro"]].map(x=>'<button type="button" data-t="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>')+
-    sec('Novità','<div class="sgrp"><button type="button" class="srow" data-act="news">'+IC.list+'<span class="sl">Versione '+APP_VER+'</span>'+IC.chev+'</button></div>')+
     sec('Account','<div class="sgrp"><button type="button" class="srow" data-act="acuser">'+IC.user+'<span class="sl">Cambia username</span>'+IC.chev+'</button><button type="button" class="srow" data-act="acpass">'+IC.lock+'<span class="sl">Cambia password</span>'+IC.chev+'</button><button type="button" class="srow" data-act="acall">'+IC.devs+'<span class="sl">Esci da tutti i dispositivi</span></button></div>')+
-    '<button type="button" class="srow out" data-act="logout">'+IC.out+'<span class="sl">Esci</span></button></div>',true);
+    '<button type="button" class="srow out" data-act="logout">'+IC.out+'<span class="sl">Esci</span></button><button type="button" class="vfoot" data-act="news">Reelax · versione '+APP_VER+' · Novità</button></div>',true);
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>home(),recent:()=>recentPage(),logout:confirmLogout,acall:revokeAll,
     pfsw:()=>{
       const v=!pfOn();pfSet(v);
