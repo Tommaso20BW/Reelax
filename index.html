@@ -573,7 +573,7 @@ body.pre #app{opacity:0}
 .sblock.sin .srow:nth-child(3),.sblock.sin #thseg button:nth-child(3){animation-delay:.14s}
 @keyframes spIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.sblock.sin,.sblock.sin .srow,.sblock.sin #thseg button{animation:none}}
-.seg.tp button{height:auto;display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 8px;font-size:.9rem}
+.seg.tp button{height:auto;display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 8px 16px;font-size:.92rem;text-align:center}
 .tpv{display:none;position:relative;width:100%;height:96px;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:var(--s3)}
 .tpv .m{position:absolute;inset:0;--pb:#0b0b0d;--ps:#2a2a2f;background:var(--pb)}
 .tpv .m.l{--pb:#f5f5f6;--ps:#dcdce1}
@@ -584,7 +584,10 @@ body.pre #app{opacity:0}
 .tpv .m s{right:7%;bottom:14%;width:18%;height:14%;border-radius:99px;background:var(--grad)}
 .tpv.a .m.l{clip-path:polygon(56% 0,100% 0,100% 100%,36% 100%)}
 .tl{display:flex;flex-direction:column;align-items:center;gap:8px;font-weight:700}
-.tl svg{width:24px;height:24px}
+.seg.tp .tl svg{width:42px;height:42px;padding:10px;margin:0;border-radius:50%;background:var(--soft);color:var(--fg);vertical-align:baseline;transition:background .3s,color .3s}
+#thseg button.on .tl svg{background:var(--grad);color:#fff}
+.sblock.pcx{display:none}
+.vh{font:700 .72rem var(--fb);letter-spacing:.14em;text-transform:uppercase;color:var(--mut);padding:10px 6px 0}
 .srow .sv{flex:none;font-size:.85rem;font-weight:600;color:var(--mut);font-variant-numeric:tabular-nums}
 @media (min-width:1500px) and (min-height:560px){.sres.lib{grid-template-columns:repeat(8,minmax(0,1fr))}.page #rgl,.page #pfg{grid-template-columns:repeat(4,minmax(0,1fr))}}
 /* Impostazioni: telefono = una colonna di sezioni; PC = menu a sinistra + una sezione alla volta a destra, Esci sotto il menu */
@@ -611,7 +614,7 @@ body.pre #app{opacity:0}
   .spanes #thseg button{padding:14px 14px 18px;gap:14px;border-radius:22px;transition:transform .25s var(--ease),border-color .15s,background .15s,box-shadow .2s}
   .spanes #thseg button:hover{transform:translateY(-3px)}
   .spanes #thseg .tl{flex-direction:row;gap:10px}
-  .spanes #thseg .tl svg{width:22px;height:22px}
+  .spanes #thseg.seg.tp .tl svg{width:34px;height:34px;padding:7px}
   .spanes{grid-area:panes;max-width:960px;padding:34px;border:1px solid var(--line);border-radius:30px;background:linear-gradient(160deg,var(--s2),var(--s1));align-self:start}
   .spanes .sblock{display:none}
   .spanes .sblock.on{display:flex}
@@ -2185,17 +2188,18 @@ function newsPage(){
 }
 function settingsPage(){
   RUN++;SRUN++;setBd(null);setRoute("/impostazioni");
-  const SEC=[['sug','Suggerimenti',IC.star],['dove','Dove guardare',IC.globe],['asp','Aspetto',IC.sun],['acc','Account',IC.user]];
+  const SEC=[['sug','Suggerimenti',IC.star],['dove','Dove guardare',IC.globe],['asp','Aspetto',IC.sun],['acc','Account',IC.user],['inf','Informazioni',IC.info]];
   if(!SEC.some(x=>x[0]===window._ssec))window._ssec='sug';
-  const sec=(id,t,d,h)=>'<div class="sblock'+(window._ssec===id?' on':'')+'" data-s="'+id+'"><div class="sh">'+t+'</div>'+(d?'<div class="sd">'+d+'</div>':'')+h+'</div>';
+  const sec=(id,t,d,h)=>'<div class="sblock'+(id==='inf'?' pcx':'')+(window._ssec===id?' on':'')+'" data-s="'+id+'"><div class="sh">'+t+'</div>'+(d?'<div class="sd">'+d+'</div>':'')+h+'</div>';
   const row=(act,ic,lab,extra)=>'<button type="button" class="srow" data-act="'+act+'">'+ic+'<span class="sl">'+lab+'</span>'+(extra||'')+'</button>';
   swap('<div class="page sp"><h1>Impostazioni</h1><div class="sgrid">'+
-    '<div class="snav" id="snav"><i class="snpill"></i>'+SEC.map(x=>'<button type="button" data-s="'+x[0]+'"'+(window._ssec===x[0]?' class="on"':'')+'>'+x[2]+'<span>'+x[1]+'</span></button>').join('')+'<button type="button" data-act="news">'+IC.info+'<span>Informazioni</span>'+IC.chev+'</button></div>'+
+    '<div class="snav" id="snav"><i class="snpill"></i>'+SEC.map(x=>'<button type="button" data-s="'+x[0]+'"'+(window._ssec===x[0]?' class="on"':'')+'>'+x[2]+'<span>'+x[1]+'</span></button>').join('')+'</div>'+
     '<div class="spanes">'+
       sec('sug','Suggerimenti','Come Reelax sceglie i titoli e cosa ricorda per te.','<div class="sgrp" id="sg_sn">'+seenGroup()+'</div>')+
       sec('dove','Dove guardare','Paese e piattaforme di streaming che usi.','<div class="sgrp" id="sg_pf">'+pfGroup()+'</div>')+
       sec('asp','Aspetto','Tema chiaro, scuro o in base al dispositivo.','<div class="seg tp" id="thseg">'+[["auto","Auto","half"],["light","Chiaro","sun"],["dark","Scuro","moon"]].map(x=>{const m='<i class="m %c"><b></b><u></u><s></s></i>';return '<button type="button" data-t="'+x[0]+'"><span class="tpv'+(x[0]==="auto"?' a':'')+'">'+(x[0]==="auto"?m.replace('%c','d')+m.replace('%c','l'):m.replace('%c',x[0]==="light"?'l':'d'))+'</span><span class="tl">'+IC[x[2]]+'<span>'+x[1]+'</span></span></button>';}).join('')+'</div>')+
       sec('acc','Account','Dati di accesso e dispositivi collegati.','<div class="sgrp">'+row('acuser',IC.user,'Cambia username',IC.chev)+row('acpass',IC.lock,'Cambia password',IC.chev)+row('acall',IC.devs,'Esci da tutti i dispositivi')+'</div>')+
+      sec('inf','Informazioni','Versione '+APP_VER+' · cosa c\'è di nuovo.',CHANGELOG.map(c=>'<div class="vh">Versione '+esc(c.v)+' · '+esc(c.d)+'</div><div class="sgrp"><ul class="nws">'+c.t.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div>').join(''))+
       '<div class="sblock pho"><div class="sh">Informazioni</div><div class="sgrp">'+row('news',IC.spark,'Versione e novità','<span class="sv">'+APP_VER+'</span>'+IC.chev)+'</div></div>'+
     '</div>'+
     '<button type="button" class="srow out" data-act="logout">'+IC.out+'<span class="sl">Esci</span></button></div></div>',true);
@@ -2244,7 +2248,7 @@ function settingsPage(){
         panes.style.height="";const h1=panes.offsetHeight;
         if(Math.abs(h1-h0)>1)panes.animate([{height:h0+"px"},{height:h1+"px"}],{duration:480,easing:"cubic-bezier(.2,.85,.25,1)"});
         nw.animate([{opacity:0,transform:"translateX("+(dir*26)+"px)"},{opacity:1,transform:"none"}],{duration:460,easing:"cubic-bezier(.2,.85,.25,1)"});
-        [].slice.call(nw.children).forEach((c,i)=>c.animate([{opacity:0,transform:"translateY(14px)"},{opacity:1,transform:"none"}],{duration:560,delay:60+i*70,easing:"cubic-bezier(.2,.85,.25,1)",fill:"backwards"}));
+        [].slice.call(nw.children).forEach((c,i)=>c.animate([{opacity:0,transform:"translateY(14px)"},{opacity:1,transform:"none"}],{duration:560,delay:60+Math.min(i,8)*70,easing:"cubic-bezier(.2,.85,.25,1)",fill:"backwards"}));
         nw.querySelectorAll("#thseg button").forEach((c,i)=>c.animate([{opacity:0,transform:"translateY(16px) scale(.96)"},{opacity:1,transform:"none"}],{duration:560,delay:180+i*80,easing:"cubic-bezier(.2,.85,.25,1)",fill:"backwards"}));
       };
       if(RM()||!old.animate){flip();return;}
