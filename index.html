@@ -393,13 +393,11 @@ body.locked #app,body.locked #bd{visibility:hidden}
 .lgc{width:100%;max-width:360px;display:flex;flex-direction:column;gap:14px}
 .lgc>*{animation:btnIn .7s cubic-bezier(.22,1,.36,1) backwards}
 .lgc>:nth-child(2){animation-delay:.08s}.lgc>:nth-child(3){animation-delay:.14s}.lgc>:nth-child(4){animation-delay:.2s}.lgc>:nth-child(5){animation-delay:.26s}
-/* scritta REELAX del login: stesso carattere/spaziatura di quella in alto; ogni lettera entra a turno, poi il gradiente dell'app scorre sulle lettere (sfasato lettera per lettera = onda di colore) */
-.lgword{display:flex;justify-content:center;margin-bottom:22px;padding-left:.2em;font-family:var(--fd);font-weight:800;font-size:1.7rem;letter-spacing:.2em;text-transform:uppercase;line-height:1.2;-webkit-user-select:none;user-select:none}
-.lgword b{display:inline-block;font:inherit;letter-spacing:inherit;color:transparent;-webkit-text-fill-color:transparent;
-  background:linear-gradient(90deg,#ff3d52 0%,#c13bd9 25%,#8f62f8 50%,#c13bd9 75%,#ff3d52 100%) 0 50%/200% 100% repeat-x;-webkit-background-clip:text;background-clip:text;
-  animation:lgwIn .8s var(--ease) backwards,lgwFlow 4.5s linear infinite;
-  animation-delay:calc(.1s + var(--i)*.07s),calc(var(--i)*-.45s)}
-@keyframes lgwIn{from{opacity:0;transform:translate3d(0,12px,0) scale(.88)}}
+/* scritta REELAX del login: una sola parola (non lettere separate); entra tutta insieme, poi un unico gradiente dell'app (rosso, viola, blu) scorre sull'intera scritta */
+.lgword{display:flex;justify-content:center;margin-bottom:24px;padding-left:.2em;font-family:var(--fd);font-weight:800;font-size:2.1rem;letter-spacing:.2em;text-transform:uppercase;line-height:1.2;-webkit-user-select:none;user-select:none;animation:lgwIn .9s var(--ease) .1s backwards}
+.lgword span{display:block;color:#c13bd9;background:linear-gradient(90deg,#ff3d52 0%,#c13bd9 25%,#8f62f8 50%,#c13bd9 75%,#ff3d52 100%) 0 50%/200% 100% repeat-x}
+@supports ((-webkit-background-clip:text) or (background-clip:text)){.lgword span{color:transparent;-webkit-text-fill-color:transparent;-webkit-background-clip:text;background-clip:text;animation:lgwFlow 5s linear infinite}}
+@keyframes lgwIn{from{opacity:0;transform:translate3d(0,10px,0)}}
 @keyframes lgwFlow{to{background-position:200% 50%}}
 .lgi{display:block;width:100%;height:56px;border-radius:18px;border:1px solid var(--line2);background:var(--s2);color:var(--fg);font:600 16px var(--fb);padding:0 18px;outline:none;transition:border-color .2s,box-shadow .2s}
 .lgi:focus{border-color:var(--vio);box-shadow:0 0 0 3px rgba(143,98,248,.25)}
@@ -854,7 +852,7 @@ html.tt .snav button,html.tt .sw,html.tt .sw i{transition-property:transform,wid
 <div id="lg" hidden>
   <div class="lgbg" aria-hidden="true"><i></i><i></i><i></i></div>
   <form class="lgc" id="lgf" autocomplete="on">
-    <div class="lgword" role="img" aria-label="Reelax"><b aria-hidden="true" style="--i:0">R</b><b aria-hidden="true" style="--i:1">E</b><b aria-hidden="true" style="--i:2">E</b><b aria-hidden="true" style="--i:3">L</b><b aria-hidden="true" style="--i:4">A</b><b aria-hidden="true" style="--i:5">X</b></div>
+    <div class="lgword" role="img" aria-label="Reelax"><span aria-hidden="true">Reelax</span></div>
     <input class="lgi" id="lgu" name="username" type="text" placeholder="Nome utente" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required>
     <input class="lgi" id="lgp" name="password" type="password" placeholder="Password" autocomplete="current-password" required>
     <p class="lgerr" id="lge" role="alert"></p>
