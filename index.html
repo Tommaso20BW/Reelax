@@ -575,14 +575,16 @@ body.pre #app{opacity:0}
 .sblock .sd{font-size:.82rem;line-height:1.35;color:var(--mut);padding:0 6px;margin-top:-2px}
 .sblock .sd+.sgrp,.sblock .sd+.seg{margin-top:2px}
 @media (min-width:900px) and (min-height:560px){
-  .page.sp{max-width:960px;justify-content:flex-start;gap:28px}
-  .sgrid{display:grid;grid-template-columns:230px minmax(0,1fr);grid-template-areas:"nav panes" "out panes";grid-template-rows:auto 1fr;gap:14px 48px;align-items:start}
-  .snav{grid-area:nav;display:flex;flex-direction:column;gap:4px}
-  .snav button{display:flex;align-items:center;gap:12px;height:46px;padding:0 14px;border-radius:14px;font-weight:700;font-size:.95rem;color:var(--mut);text-align:left;transition:background .15s,color .15s}
+  #app.onset{max-width:none}
+  #app .page.sp{max-width:1280px;width:100%;margin:0 auto;justify-content:flex-start;gap:30px}
+  #app .page.sp h1{text-align:left;font-size:clamp(2.2rem,3vw,2.8rem)}
+  .sgrid{display:grid;grid-template-columns:280px minmax(0,1fr);grid-template-areas:"nav panes" "out panes";grid-template-rows:auto 1fr;gap:16px 64px;align-items:start}
+  .snav{grid-area:nav;display:flex;flex-direction:column;gap:4px;padding:10px;border-radius:22px;border:1px solid var(--line);background:linear-gradient(160deg,var(--s2),var(--s1))}
+  .snav button{display:flex;align-items:center;gap:12px;height:50px;padding:0 14px;border-radius:14px;font-weight:700;font-size:.95rem;color:var(--mut);text-align:left;transition:background .15s,color .15s}
   .snav button svg{flex:none;width:20px;height:20px}
   .snav button:hover{background:var(--soft2);color:var(--fg)}
   .snav button.on{background:var(--soft);color:var(--fg)}
-  .spanes{grid-area:panes;max-width:580px}
+  .spanes{grid-area:panes;max-width:860px}
   .spanes .sblock{display:none}
   .spanes .sblock.on{display:flex}
   .spanes .sh{display:none}
@@ -2119,8 +2121,9 @@ async function revokeAll(){
    - modifica media (nuova funzione o schermata) -> seconda cifra: 2.2 -> 2.3
    - modifica molto grande (cambiamenti profondi) -> prima cifra: 2.x -> 3.0
    Ogni voce: v (versione), d (data), t (elenco di novità in italiano, brevi). La pagina Impostazioni > Novità le mostra da sola. */
-const APP_VER="2.4";
+const APP_VER="2.4.1";
 const CHANGELOG=[
+  {v:"2.4.1",d:"22 ottobre 2026",t:["Impostazioni su PC a tutta larghezza: via le fasce vuote ai lati, menu laterale più largo e contenuto più ampio"]},
   {v:"2.4",d:"22 ottobre 2026",t:["Impostazioni su PC: menu laterale a sinistra e una sezione alla volta a destra, senza dover scorrere tutto","Esci resta sotto il menu, sempre a portata","Su telefono resta la lista unica di sezioni"]},
   {v:"2.3",d:"22 ottobre 2026",t:["Impostazioni rifatte da zero: sezioni più chiare (Suggerimenti, Dove guardare, Aspetto, Account, Informazioni), ognuna con una breve spiegazione","Su PC due colonne ordinate: preferenze a sinistra, account e informazioni a destra","Esci sempre ben visibile in fondo"]},
   {v:"2.2.4",d:"22 ottobre 2026",t:["Versione e novità è ora un tasto in Impostazioni, sopra Esci","Aggiunto lo storico completo delle versioni, dalla 1.0 in poi"]},
