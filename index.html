@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- VERSIONI: a ogni modifica aggiorna APP_VER e CHANGELOG (regola scritta sopra settingsPage: cerca "VERSIONE E NOVITÀ"). -->
+<!-- VERSIONI: una voce per rilascio: se è lo stesso lavoro, aggiorna la voce in cima invece di aggiungerne (regola scritta sopra settingsPage: cerca "VERSIONE E NOVITÀ"). -->
 <html lang="it">
 <head>
 <meta charset="utf-8">
@@ -567,6 +567,16 @@ body.pre #app{opacity:0}
 .srow.rd svg{color:var(--red)}
 .srow.sm{min-height:52px;font-size:.95rem}
 .sblock .sh+.seg,.sblock .seg+.sh{margin-top:6px}
+.seg.tp button{height:auto;display:flex;flex-direction:column;align-items:center;gap:9px;padding:10px 10px 12px;font-size:.9rem}
+.pv{display:block;position:relative;width:100%;height:76px;border-radius:12px;overflow:hidden;border:1px solid var(--line);--pb:#0b0b0d;--ps:#2a2a2f;--pt:rgba(255,255,255,.42);background:var(--pb)}
+.pv.l{--pb:#f5f5f6;--ps:#dcdce1;--pt:rgba(0,0,0,.3)}
+.pv::before{content:"";position:absolute;left:10%;top:13%;width:26%;height:6px;border-radius:3px;background:var(--pt)}
+.pv b,.pv u,.pv s{position:absolute;text-decoration:none}
+.pv b,.pv u{top:32%;height:52%;width:20%;border-radius:5px;background:var(--ps)}
+.pv b{left:10%}.pv u{left:34%}
+.pv s{right:9%;bottom:16%;width:24%;height:15%;border-radius:99px;background:var(--grad)}
+.pv.a{background:none}.pv.a .pv{position:absolute;inset:0;width:auto;height:auto;border:0;border-radius:0}
+.pv.a .pv.l{clip-path:polygon(58% 0,100% 0,100% 100%,38% 100%)}
 .srow .sv{flex:none;font-size:.85rem;font-weight:600;color:var(--mut);font-variant-numeric:tabular-nums}
 @media (min-width:1500px) and (min-height:560px){.sres.lib{grid-template-columns:repeat(8,minmax(0,1fr))}.page #rgl,.page #pfg{grid-template-columns:repeat(4,minmax(0,1fr))}}
 /* Impostazioni: telefono = una colonna di sezioni; PC = menu a sinistra + una sezione alla volta a destra, Esci sotto il menu */
@@ -578,19 +588,27 @@ body.pre #app{opacity:0}
 @media (min-width:900px) and (min-height:560px){
   #app.onset{max-width:none}
   #app .page.sp{max-width:1500px;width:100%;margin:0 auto;justify-content:flex-start;gap:30px}
-  #app .page.sp h1{text-align:left;font-size:clamp(2.2rem,3vw,2.8rem)}
-  .sgrid{display:grid;grid-template-columns:280px minmax(0,1fr);grid-template-areas:"nav panes" "out panes";grid-template-rows:auto 1fr;gap:16px 64px;align-items:start}
-  .snav{grid-area:nav;display:flex;flex-direction:column;gap:4px;padding:10px;border-radius:22px;border:1px solid var(--line);background:linear-gradient(160deg,var(--s2),var(--s1))}
-  .snav button{display:flex;align-items:center;gap:12px;height:50px;padding:0 14px;border-radius:14px;font-weight:700;font-size:.95rem;color:var(--mut);text-align:left;transition:background .15s,color .15s}
+  #app .page.sp h1{text-align:left;font-size:clamp(1.9rem,2.4vw,2.3rem);margin:0 0 4px}
+  .sgrid{display:grid;grid-template-columns:270px minmax(0,1fr);grid-template-areas:"nav panes" "out panes";grid-template-rows:auto 1fr;gap:16px 56px;align-items:start}
+  .snav{grid-area:nav;display:flex;flex-direction:column;gap:6px}
+  .snav button{display:flex;align-items:center;gap:14px;height:56px;padding:0 16px;border-radius:16px;font-weight:700;font-size:.95rem;color:var(--mut);text-align:left;transition:background .15s,color .15s}
   .snav button svg{flex:none;width:20px;height:20px}
   .snav button:hover{background:var(--soft2);color:var(--fg)}
-  .snav button.on{background:var(--soft);color:var(--fg)}
-  .spanes{grid-area:panes;max-width:960px}
+  .snav button.on{color:#fff;background:var(--grad);box-shadow:0 10px 26px rgba(255,61,82,.28)}
+  .spanes{grid-area:panes;max-width:960px;padding:34px;border:1px solid var(--line);border-radius:30px;background:linear-gradient(160deg,var(--s2),var(--s1));min-height:480px}
   .spanes .sblock{display:none}
   .spanes .sblock.on{display:flex}
-  .spanes .sh{display:none}
-  .spanes .sd{font-size:.92rem;padding:0 4px 6px}
-  .page.sp .srow.out{grid-area:out;margin-top:12px}
+  .spanes .sblock.pho{display:none!important}
+  .snav button svg:last-child:not(:first-child){margin-left:auto;width:16px;height:16px;opacity:.55}
+  .spanes .sblock{gap:10px}
+  .spanes .sh{font-family:var(--fd);font-size:2rem;font-weight:700;letter-spacing:-.01em;text-transform:none;color:var(--fg);padding:0}
+  .spanes .sd{font-size:1rem;padding:0 0 14px}
+  .spanes .sgrp{border-radius:24px;background:var(--s1)}
+  .spanes .sgrp .srow{min-height:76px;padding:0 26px;font-size:1.05rem;gap:18px}
+  .spanes .sgrp .srow>svg:first-child{width:40px;height:40px;padding:9px;border-radius:12px}
+  .spanes .seg{max-width:none;gap:14px}
+  .spanes .seg button{border-radius:20px;font-size:1.05rem}
+  .page.sp .srow.out{grid-area:out;margin:14px 0 0;width:auto}
 }
 /* Regione e Piattaforme su PC: liste lunghe in griglia a 3 colonne, sottotitolo allineato al titolo */
 @media (min-width:900px) and (min-height:560px){
@@ -2121,24 +2139,14 @@ async function revokeAll(){
   b.disabled=false;reset(3500);
 }
 /* ---------- VERSIONE E NOVITÀ ----------
-   REGOLA (per chi modifica questo file, anche in una nuova chat): a OGNI modifica si aggiorna APP_VER e si aggiunge una voce IN CIMA a CHANGELOG.
+   REGOLA (per chi modifica questo file, anche in una nuova chat): una voce di CHANGELOG per ogni RILASCIO, non per ogni ritocco. Se la modifica riguarda lo stesso lavoro già in cima (stessa giornata, stessa funzione), NON aggiungere una voce nuova: aggiorna quella in cima (e solo se serve APP_VER). Una voce nuova solo per novità davvero nuove per l'utente. Mai 20 voci per la stessa cosa.
    - modifica piccola (ritocco, correzione)      -> terza cifra: 2.2 -> 2.2.1
    - modifica media (nuova funzione o schermata) -> seconda cifra: 2.2 -> 2.3
    - modifica molto grande (cambiamenti profondi) -> prima cifra: 2.x -> 3.0
    Ogni voce: v (versione), d (data), t (elenco di novità in italiano, brevi). La pagina Impostazioni > Novità le mostra da sola. */
-const APP_VER="2.4.4";
+const APP_VER="2.2";
 const CHANGELOG=[
-  {v:"2.4.4",d:"22 ottobre 2026",t:["Svuota la cronologia: i titoli non ricompaiono più se li avevi ancora su un altro dispositivo rimasto indietro"]},
-  {v:"2.4.3",d:"22 ottobre 2026",t:["Trovati di recente: «Svuota la cronologia» ora cancella davvero, anche dopo la sincronizzazione con gli altri dispositivi","I titoli recenti restano fino a 100 su questo dispositivo, anche se il server ne conserva meno"]},
-  {v:"2.4.2",d:"22 ottobre 2026",t:["Su PC tutte le pagine usano tutta la larghezza dello schermo, senza fasce vuote ai lati","Domande, risultato, ricerca, regione e piattaforme più ampi, con più titoli in griglia sugli schermi grandi"]},
-  {v:"2.4.1",d:"22 ottobre 2026",t:["Impostazioni su PC a tutta larghezza: via le fasce vuote ai lati, menu laterale più largo e contenuto più ampio"]},
-  {v:"2.4",d:"22 ottobre 2026",t:["Impostazioni su PC: menu laterale a sinistra e una sezione alla volta a destra, senza dover scorrere tutto","Esci resta sotto il menu, sempre a portata","Su telefono resta la lista unica di sezioni"]},
-  {v:"2.3",d:"22 ottobre 2026",t:["Impostazioni rifatte da zero: sezioni più chiare (Suggerimenti, Dove guardare, Aspetto, Account, Informazioni), ognuna con una breve spiegazione","Su PC due colonne ordinate: preferenze a sinistra, account e informazioni a destra","Esci sempre ben visibile in fondo"]},
-  {v:"2.2.4",d:"22 ottobre 2026",t:["Versione e novità è ora un tasto in Impostazioni, sopra Esci","Aggiunto lo storico completo delle versioni, dalla 1.0 in poi"]},
-  {v:"2.2.3",d:"22 ottobre 2026",t:["Su PC, Regione e Piattaforme mostrano le liste in griglia a 3 colonne, senza scorrere una colonna lunghissima"]},
-  {v:"2.2.2",d:"22 ottobre 2026",t:["Impostazioni su PC: le sezioni si dispongono su due colonne invece di una sola colonna stretta"]},
-  {v:"2.2.1",d:"22 ottobre 2026",t:["Impostazioni più ordinate: la versione è ora una scritta discreta in fondo, che apre le Novità"]},
-  {v:"2.2",d:"22 ottobre 2026",t:["Nuova pagina Novità con la versione dell'app","Tema chiaro e scuro neutri, senza oro e senza toni viola: accento rosso Reelax","Cronologia fino a 100 titoli, ogni titolo scade dopo 7 giorni","Svuota la cronologia: ora è un cestino in alto a destra, con pannello di conferma"]},
+  {v:"2.2",d:"22 ottobre 2026",t:["Nuova pagina Novità con la versione dell'app","Impostazioni rifatte: sezioni più chiare, su PC menu laterale con pannello e anteprime del tema","Su PC tutte le pagine usano tutta la larghezza dello schermo","Tema chiaro e scuro neutri, con accento rosso Reelax","Cronologia fino a 100 titoli, ogni titolo scade dopo 7 giorni; svuotarla ora cancella davvero, anche tra dispositivi"]},
   {v:"2.1.2",d:"21 ottobre 2026",t:["Il logo Reelax in alto ora si può toccare e ha una nuova animazione con una linea sfumata","Cambio tema più fluido, con transizione e interruttore rifatti","Il caricamento si può annullare e la posizione di scorrimento viene ricordata","Migliorie e correzioni"]},
   {v:"2.1.1",d:"20 ottobre 2026",t:["Animazioni più fluide nel passaggio tra le pagine","Migliorie e correzioni"]},
   {v:"2.1",d:"19 ottobre 2026",t:["Condivisione dei titoli: pannello per salvare l'immagine o copiarla","Titoli simili e saghe: dalla scheda si scoprono gli altri film della saga","Stelle di valutazione e nuove animazioni","Layout adattato anche agli schermi grandi","Effetto ripple nel cambio tema, carosello e gesti al tocco più fluidi","Migliorie e correzioni"]},
@@ -2158,18 +2166,18 @@ function newsPage(){
 }
 function settingsPage(){
   RUN++;SRUN++;setBd(null);setRoute("/impostazioni");
-  const SEC=[['sug','Suggerimenti',IC.star],['dove','Dove guardare',IC.globe],['asp','Aspetto',IC.sun],['acc','Account',IC.user],['inf','Informazioni',IC.info]];
+  const SEC=[['sug','Suggerimenti',IC.star],['dove','Dove guardare',IC.globe],['asp','Aspetto',IC.sun],['acc','Account',IC.user]];
   if(!SEC.some(x=>x[0]===window._ssec))window._ssec='sug';
   const sec=(id,t,d,h)=>'<div class="sblock'+(window._ssec===id?' on':'')+'" data-s="'+id+'"><div class="sh">'+t+'</div>'+(d?'<div class="sd">'+d+'</div>':'')+h+'</div>';
   const row=(act,ic,lab,extra)=>'<button type="button" class="srow" data-act="'+act+'">'+ic+'<span class="sl">'+lab+'</span>'+(extra||'')+'</button>';
   swap('<div class="page sp"><h1>Impostazioni</h1><div class="sgrid">'+
-    '<div class="snav" id="snav">'+SEC.map(x=>'<button type="button" data-s="'+x[0]+'"'+(window._ssec===x[0]?' class="on"':'')+'>'+x[2]+'<span>'+x[1]+'</span></button>').join('')+'</div>'+
+    '<div class="snav" id="snav">'+SEC.map(x=>'<button type="button" data-s="'+x[0]+'"'+(window._ssec===x[0]?' class="on"':'')+'>'+x[2]+'<span>'+x[1]+'</span></button>').join('')+'<button type="button" data-act="news">'+IC.info+'<span>Informazioni</span>'+IC.chev+'</button></div>'+
     '<div class="spanes">'+
       sec('sug','Suggerimenti','Come Reelax sceglie i titoli e cosa ricorda per te.','<div class="sgrp" id="sg_sn">'+seenGroup()+'</div>')+
       sec('dove','Dove guardare','Paese e piattaforme di streaming che usi.','<div class="sgrp" id="sg_pf">'+pfGroup()+'</div>')+
-      sec('asp','Aspetto','Tema chiaro, scuro o in base al dispositivo.','<div class="seg" id="thseg">'+[["auto","Auto"],["light","Chiaro"],["dark","Scuro"]].map(x=>'<button type="button" data-t="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>')+
+      sec('asp','Aspetto','Tema chiaro, scuro o in base al dispositivo.','<div class="seg tp" id="thseg">'+[["auto","Auto"],["light","Chiaro"],["dark","Scuro"]].map(x=>'<button type="button" data-t="'+x[0]+'">'+(x[0]==="auto"?'<span class="pv a"><span class="pv d"><b></b><u></u><s></s></span><span class="pv l"><b></b><u></u><s></s></span></span>':'<span class="pv '+(x[0]==="light"?"l":"d")+'"><b></b><u></u><s></s></span>')+'<span>'+x[1]+'</span></button>').join('')+'</div>')+
       sec('acc','Account','Dati di accesso e dispositivi collegati.','<div class="sgrp">'+row('acuser',IC.user,'Cambia username',IC.chev)+row('acpass',IC.lock,'Cambia password',IC.chev)+row('acall',IC.devs,'Esci da tutti i dispositivi')+'</div>')+
-      sec('inf','Informazioni','','<div class="sgrp">'+row('news',IC.spark,'Versione e novità','<span class="sv">'+APP_VER+'</span>'+IC.chev)+'</div>')+
+      '<div class="sblock pho"><div class="sh">Informazioni</div><div class="sgrp">'+row('news',IC.spark,'Versione e novità','<span class="sv">'+APP_VER+'</span>'+IC.chev)+'</div></div>'+
     '</div>'+
     '<button type="button" class="srow out" data-act="logout">'+IC.out+'<span class="sl">Esci</span></button></div></div>',true);
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>home(),recent:()=>recentPage(),logout:confirmLogout,acall:revokeAll,
