@@ -8,7 +8,8 @@
         - correzione o ritocco piccolo -> terza cifra (2.2 -> 2.2.1) | nuova funzione o schermata -> seconda cifra (2.2 -> 2.3) | cambiamento molto grande -> prima cifra.
         - ogni voce ha v (versione), d (data), t (elenco di novità in italiano, brevi, solo cose che l'utente vede).
      3. NELLA RISPOSTA scrivi sempre una riga: «Versione: X, motivo: …». Anche se non cambi nulla (es. solo commenti): scrivi «Versione invariata, motivo: …».
-     4. Non consegnare il file senza aver fatto i punti 1-3. Se non sei sicuro di averli fatti, non hai finito.-->
+     4. Non consegnare il file senza aver fatto i punti 1-3. Se non sei sicuro di averli fatti, non hai finito.
+     Le stesse regole sono in AGENTS.md / CLAUDE.md nella cartella del progetto. -->
 <html lang="it">
 <head>
 <meta charset="utf-8">
@@ -48,7 +49,7 @@
 /* tema: auto (segue il dispositivo) | chiaro | scuro */
 (function(){
   /* loghi a tema (app + scheda browser): file su GitHub. Icona della Home (apple-touch-icon / manifest): fissa. Per aggiornare i file alza V. */
-  var V="5",ICO={dark:{fav:"img/favicon.png",logo:"img/logo-dark.png"},light:{fav:"img/favicon.png",logo:"img/logo-light.png"}};
+  var V="5",ICO={dark:{fav:"img/favicon.png"},light:{fav:"img/favicon.png"}};
   function abs(f){try{return new URL(f+"?v="+V,location.href).href;}catch(e){return f+"?v="+V;}}
   var K="reelax_theme",mq=window.matchMedia?matchMedia("(prefers-color-scheme: light)"):null;
   function pref(){try{var v=localStorage.getItem(K);return v==="light"||v==="dark"?v:"auto";}catch(e){return"auto";}}
@@ -62,7 +63,6 @@
     document.documentElement.setAttribute("data-theme",t);
     if(defer!==true)meta();
     var I=ICO[t],f=document.getElementById("fav");
-    document.documentElement.style.setProperty("--logo",'url("'+abs(I.logo)+'")');
     if(f){f.setAttribute("type","image/png");f.setAttribute("href",abs(I.fav));}
   }
   window.themePref=pref;
@@ -145,7 +145,6 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .brand .bt{display:inline-block}
 .brand .fx{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding-left:.2em;opacity:0;pointer-events:none}
 .brand .fx b{font:inherit;letter-spacing:inherit;background:linear-gradient(90deg,#ff3d52 0%,#ff3d52 22%,#c13bd9 55%,#8f62f8 100%) 0 50%/120% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
-.mark{width:22px;height:22px;border-radius:7px;background:#2a1240 var(--logo) center/cover no-repeat;display:grid;place-items:center;box-shadow:0 3px 12px rgba(255,61,82,.45)}
 .prog{height:3px;margin:2px var(--gut) var(--pgb);border-radius:3px;background:var(--soft);overflow:hidden;transition:opacity .3s}
 /* linea gradiente del tasto Reelax: sta sopra la barra di progresso, visibile solo durante l'effetto */
 .bline{position:absolute;left:var(--gut);right:var(--gut);bottom:var(--pgb);height:3px;border-radius:3px;background:var(--grad);box-shadow:0 0 10px rgba(255,61,82,.6);transform:scaleX(0);opacity:0;pointer-events:none;z-index:6}
@@ -394,8 +393,6 @@ body.locked #app,body.locked #bd{visibility:hidden}
 .lgc{width:100%;max-width:360px;display:flex;flex-direction:column;gap:14px}
 .lgc>*{animation:btnIn .7s cubic-bezier(.22,1,.36,1) backwards}
 .lgc>:nth-child(2){animation-delay:.08s}.lgc>:nth-child(3){animation-delay:.14s}.lgc>:nth-child(4){animation-delay:.2s}.lgc>:nth-child(5){animation-delay:.26s}
-.lgbrand{display:flex;flex-direction:column;align-items:center;gap:14px;margin-bottom:14px;font-family:var(--fd);font-weight:800;font-size:1.05rem;letter-spacing:.22em;text-transform:uppercase;text-indent:calc(.22em - 1px)}
-.lgbrand .mark{width:64px;height:64px;border-radius:20px}
 .lgi{display:block;width:100%;height:56px;border-radius:18px;border:1px solid var(--line2);background:var(--s2);color:var(--fg);font:600 16px var(--fb);padding:0 18px;outline:none;transition:border-color .2s,box-shadow .2s}
 .lgi:focus{border-color:var(--vio);box-shadow:0 0 0 3px rgba(143,98,248,.25)}
 .lgi::placeholder{color:var(--dim);font-weight:500}
@@ -416,9 +413,7 @@ body.locked #app,body.locked #bd{visibility:hidden}
 .lgc{position:relative;z-index:1}
 
 /* logo: leggero galleggiamento; durante l'accesso pulsa con un anello che si espande */
-.lgbrand{position:relative;isolation:isolate}
-.lgc>*:not(.lgbrand){position:relative;z-index:1}
-.lgbrand .mark{position:relative;z-index:-1;box-shadow:none}
+.lgc>*{position:relative;z-index:1}
 /* sfondo dell'app: le due luci si muovono piano */
 /* aloni di sfondo fermi: animarli rallentava tutto il sito */
 body.pre #app{opacity:0}
@@ -851,7 +846,6 @@ html.tt .snav button,html.tt .sw,html.tt .sw i{transition-property:transform,wid
 <div id="lg" hidden>
   <div class="lgbg" aria-hidden="true"><i></i><i></i><i></i></div>
   <form class="lgc" id="lgf" autocomplete="on">
-    <div class="lgbrand"><span class="mark"></span>Reelax</div>
     <input class="lgi" id="lgu" name="username" type="text" placeholder="Nome utente" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required>
     <input class="lgi" id="lgp" name="password" type="password" placeholder="Password" autocomplete="current-password" required>
     <p class="lgerr" id="lge" role="alert"></p>
@@ -2303,7 +2297,7 @@ async function revokeAll(){
    Ogni voce: v (versione), d (data), t (elenco di novità in italiano, brevi). La pagina Impostazioni > Novità le mostra da sola. */
 const APP_VER="2.2.1";
 const CHANGELOG=[
-  {v:"2.2.1",d:"22 ottobre 2026",t:["Nuova animazione di accesso e uscita: un'onda circolare parte dal tasto e rivela la schermata successiva, ora più fluida","Schermata di accesso con lo stesso sfondo dell'app, nel tema chiaro e in quello scuro","Su smartphone l'app resta in verticale: ruotando il telefono compare l'invito a raddrizzarlo","Conferma di uscita più chiara: il tasto ora dice «Sì, esci dall'account»","Traduzioni completate: intestazioni delle schede, condivisione, errori, impostazioni e frasi di «Perché fa per te» ora seguono la lingua della regione"]},
+  {v:"2.2.1",d:"22 ottobre 2026",t:["Nuova animazione di accesso e uscita: un'onda circolare parte dal tasto e rivela la schermata successiva, ora più fluida","Schermata di accesso più pulita: senza logo e con lo stesso sfondo dell'app, nel tema chiaro e in quello scuro","Su smartphone l'app resta in verticale: ruotando il telefono compare l'invito a raddrizzarlo","Conferma di uscita più chiara: il tasto ora dice «Sì, esci dall'account»","Traduzioni completate: intestazioni delle schede, condivisione, errori, impostazioni e frasi di «Perché fa per te» ora seguono la lingua della regione"]},
   {v:"2.2",d:"22 ottobre 2026",t:["Nuova pagina Novità con la versione dell'app","Impostazioni rifatte: sezioni più chiare, su PC menu laterale con pannello e anteprime del tema","Su PC tutte le pagine usano tutta la larghezza dello schermo","Tema chiaro e scuro neutri, con accento rosso Reelax","Cronologia fino a 100 titoli, ogni titolo scade dopo 7 giorni; svuotarla ora cancella davvero, anche tra dispositivi"]},
   {v:"2.1.2",d:"21 ottobre 2026",t:["Il logo Reelax in alto ora si può toccare e ha una nuova animazione con una linea sfumata","Cambio tema più fluido, con transizione e interruttore rifatti","Il caricamento si può annullare e la posizione di scorrimento viene ricordata","Migliorie e correzioni"]},
   {v:"2.1.1",d:"20 ottobre 2026",t:["Animazioni più fluide nel passaggio tra le pagine","Migliorie e correzioni"]},
