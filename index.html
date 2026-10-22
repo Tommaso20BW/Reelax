@@ -1827,7 +1827,7 @@ async function syncPull(){
     L.recent=Array.isArray(j.recent)?j.recent:[];
     if(Array.isArray(j.seen))L.seen=j.seen;else{L.seen=seen0;if(seen0.length)need=true;}
     if(typeof j.ts==="number")L.ts=j.ts;
-    sbuild();RECENT=L.recent;
+    sbuild();RECENT=L.recent;pruneRecent();
     if(!RECENT.length&&keep.length){RECENT=L.recent=keep;need=true;}
     try{localStorage.setItem(LKEY,JSON.stringify(L));}catch(e){}
     if(m.ch.length)afterSettings(m.ch);
@@ -1922,12 +1922,21 @@ function seenPage(){
 function seenGroup(){const on=starsOn();return '<button type="button" class="srow" data-act="starsw" role="switch" aria-checked="'+on+'">'+IC.star+'<span class="sl">Adatta ai miei gusti</span><span class="sw'+(on?' on':'')+'"><i></i></span></button><button type="button" class="srow" data-act="seenp">'+IC.eye+'<span class="sl">Già visti</span><span class="sn">'+(L.seen||[]).length+'</span>'+IC.chev+'</button><button type="button" class="srow" data-act="recent">'+IC.clock+'<span class="sl">Trovati di recente</span><span class="sn">'+RECENT.length+'</span>'+IC.chev+'</button>';}
 sbuild();
 /* ---------- Trovati di recente (solo su questo dispositivo) ---------- */
-const RKEY="reelax_recent",RCAP=60;
+const RKEY="reelax_recent",RCAP=100,RWEEK=7*864e5;
 let RECENT=L.recent;
 if(!RECENT.length){try{const j=JSON.parse(localStorage.getItem(RKEY)||"[]");if(Array.isArray(j)&&j.length)RECENT=L.recent=j;}catch(e){}}   // dalla vecchia versione solo-locale
+function pruneRecent(){
+  const n=Date.now();let ch=false;
+  (L.recent||[]).forEach(x=>{if(x&&!x.ts){x.ts=n;ch=true;}});
+  const k=(L.recent||[]).filter(x=>x&&n-x.ts<RWEEK);
+  if(k.length!==(L.recent||[]).length)ch=true;
+  L.recent=k;RECENT=k;
+  if(ch)lsave();
+}
+pruneRecent();
 function addRecent(r){
   try{
-    const it=itemOf(r);if(!it||!it.t)return;
+    const it=itemOf(r);if(!it||!it.t)return;it.ts=Date.now();
     RECENT=RECENT.filter(x=>x.k!==it.k);RECENT.unshift(it);if(RECENT.length>RCAP)RECENT.length=RCAP;
     L.recent=RECENT;lsave();
   }catch(e){}
@@ -1945,7 +1954,7 @@ function clearRecent(){
   b.classList.remove("ask");sl.textContent="Svuota la cronologia";
 }
 function recentPage(){
-  RUN++;SRUN++;setBd(null);setRoute("/recenti");
+  pruneRecent();RUN++;SRUN++;setBd(null);setRoute("/recenti");
   swap('<div class="page"><h1>Trovati di recente</h1><div class="sres lib" id="lres"></div>'+'<button type="button" class="srow dng" data-act="clr" style="flex:none">'+IC.trash+'<span class="sl">Svuota la cronologia</span></button>'+'</div>',true);
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>settingsPage(),clr:clearRecent}});
   const box=$("lres");
