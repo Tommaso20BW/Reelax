@@ -370,14 +370,19 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 #lb .hint{position:absolute;left:0;right:0;bottom:calc(var(--sab) + 22px);text-align:center;font-size:.8rem;color:var(--mut);opacity:0;transition:opacity .5s .3s}
 #lb.show .hint{opacity:1}
 
+/* solo verticale su smartphone: in orizzontale (schermo touch basso) una schermata copre l'app e chiede di raddrizzare il telefono */
+#rot{position:fixed;inset:0;z-index:2000;display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:var(--bg);color:var(--fg);text-align:center;padding:24px;font-weight:700;font-size:1rem;-webkit-user-select:none;user-select:none}
+#rot svg{width:54px;height:54px;color:var(--mut);animation:rotTilt 2.4s cubic-bezier(.45,.05,.2,1) infinite}
+@keyframes rotTilt{0%,25%{transform:rotate(-90deg)}60%,100%{transform:none}}
+@media (orientation:landscape) and (max-height:500px) and (pointer:coarse){#rot{display:flex}}
+@media (prefers-reduced-motion:reduce){#rot svg{animation:none;transform:none}}
+
 /* accesso */
 body.locked #app,body.locked #bd{visibility:hidden}
 #lg{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;overflow:auto;
   padding:calc(var(--sat) + 24px) var(--gut) calc(var(--sab) + 24px);
-  background:radial-gradient(120% 55% at 50% 38%,rgba(143,98,248,.16),transparent 62%),radial-gradient(90% 50% at 100% 100%,rgba(255,61,82,.14),transparent 60%),var(--bg)}
+  background:var(--bg)}
 #lg[hidden]{display:none}
-@property --cr{syntax:'<length>';inherits:false;initial-value:0px}
-#lg.rv{-webkit-mask-image:radial-gradient(circle at var(--cx) var(--cy),transparent var(--cr),#000 calc(var(--cr) + 2px));mask-image:radial-gradient(circle at var(--cx) var(--cy),transparent var(--cr),#000 calc(var(--cr) + 2px))}
 
 .lgc{width:100%;max-width:360px;display:flex;flex-direction:column;gap:14px}
 .lgc>*{animation:btnIn .7s cubic-bezier(.22,1,.36,1) backwards}
@@ -392,15 +397,15 @@ body.locked #app,body.locked #bd{visibility:hidden}
 #lg .btn:disabled{opacity:.6}
 @keyframes shake{0%,100%{transform:none}20%{transform:translateX(-9px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(3px)}}
 .lgc.bad .lgi{animation:shake .45s ease;border-color:var(--red)}
-/* sfondo vivo del login: macchie colorate che si muovono lentamente */
-.lgbg{position:fixed;left:0;right:0;top:-60vh;bottom:-60vh;z-index:0;overflow:hidden;pointer-events:none}
-.lgbg i{position:absolute;border-radius:50%;filter:blur(70px);will-change:transform}
-.lgbg i:nth-child(1){width:46vmax;height:46vmax;left:-14vmax;top:calc(60vh + 12vmax);background:#c13bd9;opacity:.38;animation:fA 22s ease-in-out infinite alternate}
-.lgbg i:nth-child(2){width:40vmax;height:40vmax;right:-14vmax;bottom:calc(60vh - 16vmax);background:#8f62f8;opacity:.42;animation:fB 26s ease-in-out infinite alternate}
-.lgbg i:nth-child(3){width:26vmax;height:26vmax;right:6%;top:calc(60vh + 22vh);background:#ff3d52;opacity:.16;animation:fC 18s ease-in-out infinite alternate}
-@keyframes fA{to{transform:translate3d(9vmax,7vmax,0) scale(1.12)}}
-@keyframes fB{to{transform:translate3d(-8vmax,-6vmax,0) scale(1.1)}}
-@keyframes fC{to{transform:translate3d(-6vmax,9vmax,0) scale(.9)}}
+/* sfondo del login: stessi aloni dell'app (body::before/::after), così segue il tema chiaro e scuro */
+.lgbg{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.lgbg i{position:absolute;width:110vmax;height:110vmax;border-radius:50%}
+.lgbg i:nth-child(1){left:-60vmax;top:-10vmax;background:radial-gradient(closest-side,rgba(255,61,82,.07),transparent)}
+.lgbg i:nth-child(2){right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side,rgba(255,61,82,.07),transparent)}
+.lgbg i:nth-child(3){display:none}
+:root[data-theme="light"] .lgbg i{opacity:.18}
+:root:not([data-theme="light"]) .lgbg i:nth-child(1){background:radial-gradient(closest-side,rgba(255,255,255,.05),transparent)}
+:root:not([data-theme="light"]) .lgbg i:nth-child(2){background:radial-gradient(closest-side,rgba(255,255,255,.035),transparent)}
 .lgc{position:relative;z-index:1}
 
 /* logo: leggero galleggiamento; durante l'accesso pulsa con un anello che si espande */
@@ -846,6 +851,7 @@ html.tt .snav button,html.tt .sw,html.tt .sw i{transition-property:transform,wid
     <button type="submit" class="btn primary" id="lgb">Entra</button>
   </form>
 </div>
+<div id="rot" role="alert" aria-live="polite"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="6.5" y="2.5" width="11" height="19" rx="2.6"/><path d="M11 18.5h2"/></svg><span id="rott">Ruota il telefono in verticale</span></div>
 <div id="lb" aria-modal="true" role="dialog" aria-label="Locandina">
   <div class="bg"><i></i></div>
   <div class="card2" id="lbc"></div>
@@ -1845,9 +1851,13 @@ async function animeDetails(c){const w=await enrich(c.title,c.movie?"film anime"
 /* ---------- TMDB (tramite proxy: la chiave NON è in questo file) ---------- */
 const TMDB_PROXY="https://stasera-tmdb.tommaso2000bw.workers.dev";
 const TMDB_IMG="https://image.tmdb.org/t/p/w500";
-const tmdbOn=()=>/^https:\/\//.test(TMDB_PROXY);
+/* accesso di prova (test/test): token locale, nessuna chiamata al server; l'app usa il catalogo interno */
+const TEST_USER="test",TEST_PASS="test";
+const isTest=()=>{try{return (localStorage.getItem("reelax_token")||"").slice(-5)===".test";}catch(e){return false;}};
+const mkTestTok=()=>btoa(JSON.stringify({exp:Date.now()+30*864e5,test:1})).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"")+".test";
+const tmdbOn=()=>!isTest()&&/^https:\/\//.test(TMDB_PROXY);
 let LASTERR="";
-const tm=(path,params)=>fjr(TMDB_PROXY.replace(/\/+$/,"")+path+"?"+new URLSearchParams(Object.assign({language:LANG()},params||{})).toString(),10000,{headers:{Authorization:"Bearer "+getTok()}}).catch(e=>{
+const tm=(path,params)=>isTest()?Promise.reject(new Error("modalità test")):fjr(TMDB_PROXY.replace(/\/+$/,"")+path+"?"+new URLSearchParams(Object.assign({language:LANG()},params||{})).toString(),10000,{headers:{Authorization:"Bearer "+getTok()}}).catch(e=>{
   if(e&&e.message==="HTTP 401"){doLogout();}
   LASTERR=(e&&(e.name==="AbortError"?"timeout":e.message))||"errore";throw e;});
 /* ---------- Liste personali: già visto / da vedere (locale + sincronizzate dal Worker) ---------- */
@@ -3552,31 +3562,42 @@ const isAuthed=()=>{
   }catch(e){return false;}
 };
 const lg=$("lg");
-/* onda circolare: un cerchio luminoso parte dal tasto premuto e rivela la schermata successiva */
+/* onda circolare: un cerchio parte dal tasto premuto; il bordo è coperto da un anello sfumato che lo segue esattamente (stessa curva, stessa durata) */
 const WAVE_E="cubic-bezier(.65,0,.25,1)",WAVE_D=950;
+const WAVE_BLUR=true;   // false = niente sfocatura animata su app/form (più leggero sui telefoni lenti)
+const bl=(a,b)=>WAVE_BLUR?{filter:a}:{};
 const ptOf=el=>{try{const r=el.getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2};}catch(e){return{x:innerWidth/2,y:innerHeight/2};}};
-const waveR=o=>Math.hypot(Math.max(o.x,innerWidth-o.x),Math.max(o.y,innerHeight-o.y));
-function waveRing(o,R){
+const waveR=o=>Math.hypot(Math.max(o.x,innerWidth-o.x),Math.max(o.y,innerHeight-o.y))+4;
+const CLIPOK=(()=>{try{return !!(window.CSS&&CSS.supports("clip-path",'path(evenodd,"M0 0H1V1H0Z")')&&CSS.supports("clip-path","circle(1px at 1px 1px)"));}catch(e){return false;}})();
+function waveRing(o,R){   // anello originale: bordo rosa + bagliore viola; cresce in sincrono con il cerchio (stessa curva e durata)
   const g=document.createElement("div");
-  g.style.cssText="position:fixed;z-index:301;pointer-events:none;border-radius:50%;border:3px solid #ff5a6b;box-shadow:0 0 30px #c13bd9,inset 0 0 30px rgba(193,59,217,.5);left:"+o.x+"px;top:"+o.y+"px;width:"+2*R+"px;height:"+2*R+"px;transform:translate(-50%,-50%) scale(0)";
+  g.style.cssText="position:fixed;z-index:301;pointer-events:none;border-radius:50%;border:3px solid #ff5a6b;box-shadow:0 0 30px #c13bd9,inset 0 0 30px rgba(193,59,217,.5);will-change:transform,opacity;left:"+o.x+"px;top:"+o.y+"px;width:"+2*R+"px;height:"+2*R+"px;transform:translate(-50%,-50%) scale(.001)";
   document.body.appendChild(g);
   const rm=()=>g.remove();
-  g.animate([{transform:"translate(-50%,-50%) scale(0)",opacity:1},{transform:"translate(-50%,-50%) scale(1)",opacity:1,offset:.9},{transform:"translate(-50%,-50%) scale(1)",opacity:0}],{duration:WAVE_D,easing:WAVE_E,fill:"forwards"}).finished.then(rm,rm);
+  g.animate([{transform:"translate(-50%,-50%) scale(.001)"},{transform:"translate(-50%,-50%) scale(1)"}],{duration:WAVE_D,easing:WAVE_E,fill:"forwards"}).finished.then(rm,rm);
+  g.animate([{opacity:1},{opacity:1,offset:.9},{opacity:0}],{duration:WAVE_D,easing:"linear",fill:"forwards"});
   setTimeout(rm,WAVE_D+400);
 }
+const clearLg=()=>{try{lg.getAnimations({subtree:true}).forEach(x=>x.cancel());}catch(e){lg.getAnimations().forEach(x=>x.cancel());const f=$("lgf");if(f)f.getAnimations().forEach(x=>x.cancel());}};
+const nextPaint=f=>requestAnimationFrame(()=>requestAnimationFrame(()=>setTimeout(f,40)));   // lascia finire il lavoro pesante prima di partire
 function lockApp(o,after){
-  const anim=!!o&&!RM()&&!!lg.animate&&!document.body.classList.contains("locked");
+  const anim=!!o&&!RM()&&!!lg.animate&&CLIPOK&&!document.body.classList.contains("locked");
   if(!anim)document.body.classList.add("locked");
+  clearLg();lg.style.clipPath="";
   lg.hidden=false;lg.style.top=lg.style.bottom=lg.style.height="";
   $("lgu").value="";$("lgp").value="";$("lge").textContent="";$("lgb").disabled=false;
   const c=$("lgf");c.classList.remove("bad","busy");
-  if(anim){   // logout: il login si apre come un cerchio dal tasto Esci, mentre l'app dietro si sfoca e rimpicciolisce
+  if(anim){   // logout: il login si apre come un cerchio dal tasto Esci, l'app dietro rimpicciolisce appena
     const R=waveR(o),app=$("app");
-    lg.getAnimations().forEach(x=>x.cancel());
-    const done=()=>{document.body.classList.add("locked");lg.getAnimations().forEach(x=>x.cancel());app.getAnimations().forEach(x=>x.cancel());if(after)after();setTimeout(()=>{try{$("lgu").focus();}catch(e){}},50);};
-    app.animate([{transform:"none",filter:"blur(0)"},{transform:"scale(.94)",filter:"blur(5px)"}],{duration:WAVE_D,easing:WAVE_E,fill:"forwards"});
-    waveRing(o,R);
-    lg.animate([{clipPath:"circle(0px at "+o.x+"px "+o.y+"px)"},{clipPath:"circle("+R+"px at "+o.x+"px "+o.y+"px)"}],{duration:WAVE_D,easing:WAVE_E,fill:"forwards"}).finished.then(done,done);
+    clearLg();
+    lg.style.clipPath="circle(0px at "+o.x+"px "+o.y+"px)";
+    const done=()=>{document.body.classList.add("locked");clearLg();app.getAnimations().forEach(x=>x.cancel());lg.style.clipPath="";lg.style.willChange="";if(after)after();setTimeout(()=>{try{$("lgu").focus();}catch(e){}},50);};
+    nextPaint(()=>{
+      lg.style.willChange="clip-path";
+      app.animate([{transform:"none",...bl("blur(0)")},{transform:"scale(.94)",...bl("blur(5px)")}],{duration:WAVE_D,easing:WAVE_E,fill:"forwards"});
+      waveRing(o,R);
+      lg.animate([{clipPath:"circle(0px at "+o.x+"px "+o.y+"px)"},{clipPath:"circle("+R+"px at "+o.x+"px "+o.y+"px)"}],{duration:WAVE_D,easing:WAVE_E,fill:"forwards"}).finished.then(done,done);
+    });
     return;
   }
   if(after)after();
@@ -3588,17 +3609,23 @@ function unlockApp(o){
   document.body.classList.remove("locked");
   try{document.activeElement&&document.activeElement.blur();}catch(e){}
   resetScroll();[100,300,600,1000].forEach(t=>setTimeout(()=>{resetScroll();fit();},t));
-  if(!RM()&&lg.animate&&o){   // login: un foro circolare si apre dal tasto Entra e mostra l'app
-    const R=waveR(o),end=()=>{lg.hidden=true;lg.classList.remove("rv");lg.getAnimations().forEach(x=>x.cancel());lg.style.removeProperty("--cx");lg.style.removeProperty("--cy");lg.style.removeProperty("--cr");};
-    lg.style.setProperty("--cx",o.x+"px");lg.style.setProperty("--cy",o.y+"px");lg.classList.add("rv");
-    waveRing(o,R);
-    $("lgf").animate([{transform:"none",filter:"blur(0)"},{transform:"scale(.94)",filter:"blur(5px)"}],{duration:WAVE_D,easing:WAVE_E,fill:"forwards"});
-    lg.animate([{"--cr":"0px"},{"--cr":R+"px"}],{duration:WAVE_D,easing:WAVE_E,fill:"forwards"}).finished.then(end,end);
-    setTimeout(end,WAVE_D+700);
+  routeFromHash(true);   // la pagina si costruisce SUBITO, ancora coperta dal login: durante il cerchio non resta lavoro pesante
+  if(!RM()&&lg.animate&&o&&CLIPOK){   // login: un foro circolare si apre dal tasto Entra e mostra l'app
+    const R=waveR(o),W=innerWidth,H=innerHeight;
+    const hole=r=>"path(evenodd,'M-10 -10H"+(W+10)+"V"+(H+10)+"H-10Z M"+o.x+" "+(o.y-r)+"a"+r+" "+r+" 0 1 0 0 "+2*r+"a"+r+" "+r+" 0 1 0 0 "+(-2*r)+"Z')";
+    const end=()=>{lg.hidden=true;clearLg();lg.style.clipPath="";lg.style.willChange="";};
+    nextPaint(()=>{
+      lg.style.willChange="clip-path";
+      waveRing(o,R);
+      $("lgf").animate([{transform:"none",...bl("blur(0)")},{transform:"scale(.94)",...bl("blur(5px)")}],{duration:WAVE_D,easing:WAVE_E,fill:"forwards"});
+      lg.animate([{clipPath:hole(1)},{clipPath:hole(R)}],{duration:WAVE_D,easing:WAVE_E,fill:"forwards"}).finished.then(end,end);
+      setTimeout(end,WAVE_D+700);
+    });
+    setTimeout(syncPull,WAVE_D+150);
+    return;
   }
-  else if(!RM()&&lg.animate){lg.animate([{opacity:1,filter:"blur(0)"},{opacity:0,filter:"blur(16px)"}],{duration:600,easing:"cubic-bezier(.4,0,.6,1)",fill:"forwards"}).onfinish=()=>{lg.hidden=true;lg.getAnimations().forEach(x=>x.cancel());};setTimeout(()=>{lg.hidden=true;},900);}
+  if(!RM()&&lg.animate){lg.animate([{opacity:1,filter:"blur(0)"},{opacity:0,filter:"blur(16px)"}],{duration:600,easing:"cubic-bezier(.4,0,.6,1)",fill:"forwards"}).onfinish=()=>{lg.hidden=true;clearLg();};setTimeout(()=>{lg.hidden=true;},900);}
   else lg.hidden=true;
-  routeFromHash(true);   // la prima pagina compare mentre il cerchio si apre
   syncPull();
 }
 function doLogout(o){
@@ -3614,7 +3641,8 @@ $("lgf").addEventListener("submit",async e=>{
   e.preventDefault();if(lgBusy)return;lgBusy=true;
   const c=$("lgf"),er=$("lge"),btn=$("lgb"),org=ptOf(btn);btn.disabled=true;er.textContent="";c.classList.remove("bad");c.classList.add("busy");const t0=Date.now();
   let tok="",fail="";
-  try{
+  if($("lgu").value.trim()===TEST_USER&&$("lgp").value===TEST_PASS){tok=mkTestTok();}
+  else try{
     const r=await fetch(TMDB_PROXY.replace(/\/+$/,"")+"/auth/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username:$("lgu").value,password:$("lgp").value})});
     if(r.ok){tok=(await r.json()).token||"";}
     else if(r.status!==401)fail="Servizio non disponibile ("+r.status+"). Riprova tra poco.";
@@ -3696,6 +3724,17 @@ addEventListener("keydown",function(e){
   addEventListener("online",check);addEventListener("focus",check);
   setInterval(check,180000);
   if("serviceWorker" in navigator&&location.protocol==="https:")addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){});});   // avvio rapido e uso offline
+})();
+</script>
+<script>
+/* blocco rotazione: dove il sistema lo permette (Android, app installata) blocco davvero in verticale; su iPhone/browser resta la schermata "ruota il telefono" */
+(function(){
+  var T={it:"Ruota il telefono in verticale",en:"Rotate your phone to portrait",es:"Gira el teléfono en vertical",fr:"Tourne ton téléphone en mode portrait",de:"Dreh dein Handy ins Hochformat",pt:"Vire o telefone para a vertical"};
+  function txt(){var e=document.getElementById("rott");if(e)e.textContent=T[(document.documentElement.lang||"it").slice(0,2)]||T.en;}
+  function lock(){try{var o=screen.orientation;if(o&&o.lock)o.lock("portrait").catch(function(){});}catch(e){}}
+  txt();lock();
+  addEventListener("orientationchange",txt);addEventListener("resize",txt);
+  document.addEventListener("visibilitychange",function(){if(!document.hidden)lock();});
 })();
 </script>
 </body>
