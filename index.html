@@ -563,19 +563,28 @@ body.pre #app{opacity:0}
 @media (prefers-reduced-motion:reduce){.sw::before,.sw i{transition:none}}
 .pfg{display:flex;flex-direction:column;gap:8px}
 .pfg .lemp{padding:36px 0}
-.pfr{display:flex;align-items:center;gap:12px;width:100%;min-height:54px;padding:8px 14px 8px 8px;text-align:left;border-radius:var(--r2);border:1px solid var(--line);background:linear-gradient(160deg,var(--s2),var(--s1));transition:border-color .15s,transform .1s}
-.pfr:active{transform:scale(.99)}
+.pfr{display:flex;align-items:center;gap:12px;width:100%;min-height:54px;padding:8px 14px 8px 8px;text-align:left;border-radius:var(--r2);border:1px solid var(--line);background:linear-gradient(160deg,var(--s2),var(--s1));transition:border-color .2s,transform .12s,box-shadow .3s,background .3s;animation:pfIn .55s var(--ease) backwards;animation-delay:calc(var(--d,0)*40ms)}
+.pfr:active{transform:scale(.97)}
 .pfi{display:grid;place-items:center;flex:none;width:38px;height:38px;border-radius:11px;overflow:hidden;border:1px solid var(--line);background:var(--s3)}
 .pfi img{width:100%;height:100%;object-fit:cover}
 .pfi b{font:800 .9rem var(--fd);color:var(--mut)}
 .pfn{flex:1;min-width:0;font-size:1rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pfm{width:100%;min-height:48px;margin-top:2px;border-radius:var(--r2);border:1px dashed var(--line2);color:var(--mut);font-weight:700;font-size:.95rem}
 .pfm:active{transform:scale(.99)}
-.pfk{flex:none;display:grid;place-items:center;width:24px;height:24px;border-radius:50%;border:2px solid var(--line2);color:#fff;transition:background .15s,border-color .15s}
-.pfk svg{width:14px;height:14px;stroke-width:3;opacity:0}
-.pfr.on{border-color:var(--red)}
+.pfk{position:relative;flex:none;display:grid;place-items:center;width:24px;height:24px;border-radius:50%;border:2px solid var(--line2);color:#fff;transition:background .25s,border-color .25s}
+.pfk svg{width:14px;height:14px;stroke-width:3;opacity:0;transform:scale(.2) rotate(-25deg);transition:opacity .15s,transform .4s cubic-bezier(.34,1.56,.64,1)}
+.pfk::after{content:"";position:absolute;inset:-2px;border-radius:50%;border:2px solid var(--red);opacity:0;pointer-events:none}
+.pfr.on{border-color:var(--red);box-shadow:0 0 0 3px color-mix(in srgb,var(--red) 16%,transparent);background:linear-gradient(160deg,color-mix(in srgb,var(--red) 9%,var(--s2)),var(--s1))}
 .pfr.on .pfk{background:var(--red);border-color:var(--red)}
-.pfr.on .pfk svg{opacity:1}
+.pfr.on .pfk svg{opacity:1;transform:none}
+.pfr.pop .pfk{animation:pfPop .45s cubic-bezier(.34,1.56,.64,1)}
+.pfr.pop .pfk::after{animation:pfRing .6s ease-out}
+.pfr.pop .pfi{animation:pfBump .4s cubic-bezier(.34,1.56,.64,1)}
+.pfm{animation:pfIn .55s var(--ease) backwards;animation-delay:calc(var(--d,0)*40ms)}
+@keyframes pfIn{from{opacity:0;transform:translate3d(0,16px,0) scale(.96)}}
+@keyframes pfPop{0%{transform:scale(.7)}60%{transform:scale(1.22)}100%{transform:scale(1)}}
+@keyframes pfRing{from{opacity:.8;transform:scale(1)}to{opacity:0;transform:scale(2.1)}}
+@keyframes pfBump{0%{transform:scale(1)}45%{transform:scale(1.12) rotate(-4deg)}100%{transform:scale(1)}}
 @media (hover:hover){.pfr:hover{border-color:var(--line2)}.pfr.on:hover{border-color:var(--red)}}
 /* impostazioni: sezioni con titolo, righe raggruppate */
 .sgrp{display:flex;flex-direction:column;overflow:hidden;border-radius:var(--r2);border:1px solid var(--line);background:linear-gradient(160deg,var(--s2),var(--s1))}
@@ -2288,15 +2297,19 @@ function pfGroup(){
     (on?pfPickRow():'');
 }
 let allT=null;
-async function revokeAll(){
+function revokeAll(){   // apre il popup di conferma (stesso di Esci / Svuota cronologia)
+  const e=shEl();e.setAttribute("aria-label","Uscire da tutti i dispositivi?");
+  $("shg").innerHTML='<button type="button" class="srow rd" data-sh="outall">'+IC.devs+'<span class="sl">Sì, esci da tutti i dispositivi</span></button>'+shRow("clrno",IC.x,"Annulla");
+  e.classList.add("on");void e.offsetWidth;e.classList.add("show");
+}
+async function doRevokeAll(){   // dopo la conferma nel popup: l'esito si legge sulla riga in Impostazioni
   const b=document.querySelector('[data-act="acall"]');if(!b)return;
-  const sl=b.querySelector(".sl"),lab="Esci da tutti i dispositivi",reset=ms=>{clearTimeout(allT);allT=setTimeout(()=>{if(b.isConnected){b.classList.remove("ask");sl.textContent=lab;}},ms);};
-  if(!b.classList.contains("ask")){b.classList.add("ask");sl.textContent="Tocca ancora per confermare";reset(3000);return;}
-  clearTimeout(allT);b.disabled=true;
+  const sl=b.querySelector(".sl"),lab="Esci da tutti i dispositivi",reset=ms=>{clearTimeout(allT);allT=setTimeout(()=>{if(b.isConnected){sl.textContent=lab;}},ms);};
+  clearTimeout(allT);b.disabled=true;sl.textContent="Un attimo…";
   try{
     const r=await fetch(PX()+"/auth/revoke",{method:"POST",headers:AUTHH()});
     const j=await r.json().catch(()=>({}));
-    if(r.ok&&j.token){try{localStorage.setItem(AUTH_KEY,j.token);}catch(e){}b.classList.remove("ask");sl.textContent="Fatto: gli altri dovranno rifare l'accesso";}
+    if(r.ok&&j.token){try{localStorage.setItem(AUTH_KEY,j.token);}catch(e){}sl.textContent="Fatto: gli altri dovranno rifare l'accesso";}
     else if(r.status===401){doLogout();return;}
     else sl.textContent=(r.status===404||r.status===405)?"Aggiorna prima il Worker":"Non riesco adesso. Riprova.";
   }catch(e){sl.textContent="Impossibile contattare il server";}
@@ -2311,7 +2324,7 @@ async function revokeAll(){
    Ogni voce: v (versione), d (data), t (elenco di novità in italiano, brevi). La pagina Impostazioni > Novità le mostra da sola. */
 const APP_VER="2.2.1";
 const CHANGELOG=[
-  {v:"2.2.1",d:"22 ottobre 2026",t:["Nuova animazione di accesso e uscita: un'onda circolare parte dal tasto e rivela la schermata successiva, ora più fluida","Schermata di accesso rinnovata: scritta REELAX animata con i colori sfumati dell'app e lo stesso sfondo dell'app, nel tema chiaro e in quello scuro","Su smartphone l'app resta in verticale: ruotando il telefono compare l'invito a raddrizzarlo","Account di prova isolato: non vede né modifica liste, «Già visti», cronologia, paese e piattaforme dell'account vero, e nelle Impostazioni non mostra più username, password e dispositivi","Conferma di uscita più chiara: il tasto ora dice «Sì, esci dall'account»","Traduzioni completate: intestazioni delle schede, condivisione, errori, impostazioni e frasi di «Perché fa per te» ora seguono la lingua della regione"]},
+  {v:"2.2.1",d:"22 ottobre 2026",t:["Nuova animazione di accesso e uscita: un'onda circolare parte dal tasto e rivela la schermata successiva, ora più fluida","Schermata di accesso rinnovata: scritta REELAX animata con i colori sfumati dell'app e lo stesso sfondo dell'app, nel tema chiaro e in quello scuro","Su smartphone l'app resta in verticale: ruotando il telefono compare l'invito a raddrizzarlo","Account di prova isolato: non vede né modifica liste, «Già visti», cronologia, paese e piattaforme dell'account vero, e nelle Impostazioni non mostra più username, password e dispositivi","Lista «Le mie piattaforme» più viva: le righe entrano a cascata e la selezione ha una piccola animazione con segno di spunta che rimbalza","Conferma di uscita più chiara: il tasto ora dice «Sì, esci dall'account»; anche «Esci da tutti i dispositivi» apre lo stesso popup di conferma","Traduzioni completate: intestazioni delle schede, condivisione, errori, impostazioni e frasi di «Perché fa per te» ora seguono la lingua della regione"]},
   {v:"2.2",d:"22 ottobre 2026",t:["Nuova pagina Novità con la versione dell'app","Impostazioni rifatte: sezioni più chiare, su PC menu laterale con pannello e anteprime del tema","Su PC tutte le pagine usano tutta la larghezza dello schermo","Tema chiaro e scuro neutri, con accento rosso Reelax","Cronologia fino a 100 titoli, ogni titolo scade dopo 7 giorni; svuotarla ora cancella davvero, anche tra dispositivi"]},
   {v:"2.1.2",d:"21 ottobre 2026",t:["Il logo Reelax in alto ora si può toccare e ha una nuova animazione con una linea sfumata","Cambio tema più fluido, con transizione e interruttore rifatti","Il caricamento si può annullare e la posizione di scorrimento viene ricordata","Migliorie e correzioni"]},
   {v:"2.1.1",d:"20 ottobre 2026",t:["Animazioni più fluide nel passaggio tra le pagine","Migliorie e correzioni"]},
@@ -2482,9 +2495,9 @@ async function pfPage(){
   if(!list.length){box.innerHTML='<div class="lemp">'+IC.tv+'<span>Non riesco a caricare l\'elenco</span></div>';return;}
   const isOn=k=>pfSel().some(x=>x.k===k);
   list.sort((x,y)=>(isOn(y.k)?1:0)-(isOn(x.k)?1:0));   // le già selezionate stanno in cima (all'apertura; poi non si spostano mentre tocchi)
-  const row=(x,i)=>'<button type="button" class="pfr'+(isOn(x.k)?' on':'')+'" data-i="'+i+'" aria-pressed="'+isOn(x.k)+'"><span class="pfi">'+(x.l?'<img src="https://image.tmdb.org/t/p/w92'+esc(x.l)+'" alt="" loading="lazy" referrerpolicy="no-referrer">':'<b>'+esc(x.n.slice(0,2))+'</b>')+'</span><span class="pfn">'+esc(x.n)+'</span><span class="pfk">'+IC.check+'</span></button>';
-  const top=[],rest=[];list.forEach((x,i)=>(topSet.has(x.k)||isOn(x.k)?top:rest).push(row(x,i)));
-  box.innerHTML=top.join('')+(rest.length?'<button type="button" class="pfm" data-more="1">Mostra altre ('+rest.length+')</button>':'');
+  const row=(x,i,d)=>'<button type="button" class="pfr'+(isOn(x.k)?' on':'')+'" style="--d:'+Math.min(d||0,12)+'" data-i="'+i+'" aria-pressed="'+isOn(x.k)+'"><span class="pfi">'+(x.l?'<img src="https://image.tmdb.org/t/p/w92'+esc(x.l)+'" alt="" loading="lazy" referrerpolicy="no-referrer">':'<b>'+esc(x.n.slice(0,2))+'</b>')+'</span><span class="pfn">'+esc(x.n)+'</span><span class="pfk">'+IC.check+'</span></button>';
+  const top=[],rest=[];list.forEach((x,i)=>{const g=(topSet.has(x.k)||isOn(x.k))?top:rest;g.push(row(x,i,g.length));});
+  box.innerHTML=top.join('')+(rest.length?'<button type="button" class="pfm" style="--d:'+Math.min(top.length,12)+'" data-more="1">Mostra altre ('+rest.length+')</button>':'');
   box.onclick=e=>{
     const mb=e.target.closest&&e.target.closest("[data-more]");
     if(mb){tap();mb.outerHTML=rest.join('');return;}
@@ -2492,6 +2505,7 @@ async function pfPage(){
     const x=list[+b.dataset.i],i=L.platforms.findIndex(y=>y&&y.k===x.k);
     if(i>=0)L.platforms.splice(i,1);else L.platforms.push({k:x.k,n:x.n,l:x.l,ids:x.ids});
     stT().platforms=Date.now();lsave();const on=i<0;b.classList.toggle("on",on);b.setAttribute("aria-pressed",on?"true":"false");
+    b.classList.remove("pop");if(on){void b.offsetWidth;b.classList.add("pop");setTimeout(()=>b.classList.remove("pop"),700);}
   };
 }
 function confirmLogout(){   // apre il popup di conferma (stesso di Condividi / Svuota cronologia)
@@ -3163,6 +3177,7 @@ async function shAct(k,b){
   if(k==="clr"){shClose();doClearRecent();return;}
   if(k==="clrno"){shClose();return;}
   if(k==="out"){shClose();doLogout(ptOf(b));return;}
+  if(k==="outall"){shClose();doRevokeAll();return;}
   const d=S.cur&&S.cur.d;if(!d)return;
   const say=t=>{const l=b.querySelector(".sl");if(l)l.textContent=t;};
   if(k==="more"){shClose();setTimeout(shareNative,250);return;}
