@@ -783,6 +783,10 @@ body.pre #app{opacity:0}
 @property --bdb{syntax:"<number>";inherits:true;initial-value:.6}
 html.tt{transition:--bg .55s ease,--s1 .55s ease,--s2 .55s ease,--s3 .55s ease,--line .55s ease,--line2 .55s ease,--fg .55s ease,--mut .55s ease,--dim .55s ease,--soft .55s ease,--soft2 .55s ease,--shade .55s ease,--bgrgb .55s ease,--bdb .55s ease}
 @media (prefers-reduced-motion:reduce){html.tt{transition:none}}
+/* cambio tema: gli elementi con transizioni proprie sui colori (tessere e simboli del selettore, menu laterale, interruttori) le sospendono finché dura la dissolvenza globale: seguono la stessa curva di tutto il resto invece di sommarsi e arrivare in ritardo */
+html.tt #thseg button{transition-property:transform,box-shadow}
+html.tt #thseg .tl svg{transition:none}
+html.tt .snav button,html.tt .sw,html.tt .sw i{transition-property:transform,width}
 /* ingresso più calmo */
 .poster::before{display:none}
 .in .res>*{animation-duration:1s;animation-delay:calc(var(--k,0)*45ms + 60ms)}
