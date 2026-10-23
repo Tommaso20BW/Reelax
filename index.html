@@ -872,8 +872,15 @@ html.tt .snav button,html.tt .sw,html.tt .sw i{transition-property:transform,wid
 /* ricerca: niente salti di altezza, feedback al tocco */
 #sres{min-height:55vh}
 .bk{transition:transform .15s,opacity .25s}
-.bk.pick{transform:scale(.94);opacity:.8}
-.sres.lib.wait .bk:not(.pick){opacity:.4}
+.bk.pick{transform:none;opacity:1}
+.bk.pick .cv{animation:pickPop .5s cubic-bezier(.34,1.56,.64,1) both;box-shadow:0 14px 34px rgba(0,0,0,.5),0 0 0 2px rgba(255,90,107,.75)}   /* tocco: la locandina fa "pop", si solleva e si illumina */
+.bk.pick .cv::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.3) 50%,transparent 65%);transform:translateX(-120%);animation:pickShine 1.15s .3s ease-in-out infinite}   /* riflesso che scorre finché arrivano i dettagli */
+@keyframes pickPop{0%{transform:scale(1)}35%{transform:scale(.94)}100%{transform:scale(1.04)}}
+@keyframes pickShine{to{transform:translateX(120%)}}
+.sres.lib.wait .bk:not(.pick){opacity:.35;transform:scale(.97)}
+.fly{position:fixed;z-index:6;overflow:hidden;pointer-events:none;transform-origin:0 0;will-change:transform;background:var(--s2);box-shadow:0 24px 50px rgba(0,0,0,.5)}
+.fly img{width:100%;height:100%;object-fit:cover;display:block}
+@media (prefers-reduced-motion:reduce){.bk.pick .cv,.bk.pick .cv::after{animation:none}}
 .sres.lib.wait{pointer-events:none}
 </style>
 </head>
@@ -1375,7 +1382,7 @@ function home(anim){
 }
 
 /* ---------- Ricerca manuale (TMDB) ---------- */
-let SQ="",SRUN=0,SLIST=[];
+let SQ="",SRUN=0,SLIST=[],SCACHE={q:null,list:[],t:0};
 let VY=0,SPULL=false;   // VY: prossimo cambio pagina in verticale; SPULL: la ricerca aperta è stata aperta trascinando giù dalla home
 function searchPage(how){
   if(how==="pull"){SPULL=true;VY=1;}else if(stage.querySelector(".opts"))SPULL=false;   // dal tasto in alto: si chiude di lato come sempre
@@ -1388,7 +1395,7 @@ function searchPage(how){
   let t=null;
   inp.addEventListener("input",()=>{SQ=inp.value.trim();clearTimeout(t);t=setTimeout(()=>doSearch(SQ),250);});
   inp.addEventListener("keydown",e=>{if(e.key==="Enter"){clearTimeout(t);SQ=inp.value.trim();doSearch(SQ);inp.blur();}});
-  box.onclick=e=>{const b=e.target.closest&&e.target.closest("[data-i]");if(!b||box.classList.contains("wait"))return;tap();TDX=1;
+  box.onclick=e=>{const b=e.target.closest&&e.target.closest("[data-i]");if(!b||box.classList.contains("wait"))return;tap();TDX=0;FLY={el:b.querySelector(".cv"),t:Date.now()};   // la locandina toccata volerà al suo posto nella scheda
     inp.blur();b.classList.add("pick");box.classList.add("wait");
     Promise.resolve(openSearched(SLIST[+b.dataset.i])).finally(()=>{b.classList.remove("pick");box.classList.remove("wait");});};
   // scorrendo l'elenco la tastiera si chiude, così l'ultimo risultato resta raggiungibile senza spazio vuoto in fondo
@@ -1469,6 +1476,9 @@ async function doSearch(q){
   const unfade=()=>{try{box.getAnimations().forEach(x=>x.cancel());}catch(e){}};
   try{
     // TMDB mostra subito i suoi risultati; gli anime di AniList (più lento) arrivano dopo e si aggiungono in fondo
+    if(!had&&SCACHE.q===q&&SCACHE.list.length&&Date.now()-SCACHE.t<6e5){   // tornando alla ricerca: gli stessi risultati di prima, subito (le locandine sono già in memoria)
+      SLIST=SCACHE.list;const all={};SLIST.forEach(x=>{if(x.poster_path)all[x.poster_path]=1;});
+      box.innerHTML=(trend?'<p class="trl">Di tendenza ora</p>':"")+SLIST.map((x,i)=>bkCard(x,i,all)).join("");return;}
     const mainP=(trend?trendTitles():searchTitles(q)).catch(()=>null);
     const alP=trend?Promise.resolve([]):searchAniList(q).catch(()=>[]);
     const base=await mainP;
@@ -1484,6 +1494,7 @@ async function doSearch(q){
       if(my!==SRUN||!$("sres"))return;
     }
     box.classList.remove("busy");unfade();
+    SCACHE={q:q,list:SLIST,t:Date.now()};
     box.innerHTML=SLIST.length?(trend?'<p class="trl">Di tendenza ora</p>':"")+SLIST.map((x,i)=>bkCard(x,i,ok)).join(""):'<p class="smsg">Nessun risultato.</p>';
     if(SLIST.length)bkReveal(box);
     {const tl=box.querySelector(".trl");if(tl&&tl.animate&&!RM())tl.animate([{opacity:0,transform:"translate3d(0,8px,0)"},{opacity:1,transform:"none"}],{duration:800,easing:"cubic-bezier(.2,.85,.25,1)",fill:"backwards"});}
@@ -1492,7 +1503,7 @@ async function doSearch(q){
       if(my!==SRUN||!$("sres")||!al.length)return;
       const merged=mergeAl(base||[],al).slice(0,22),start=SLIST.length;
       if(merged.length>start){
-        SLIST=merged;
+        SLIST=merged;SCACHE={q:q,list:SLIST,t:Date.now()};
         box.insertAdjacentHTML("beforeend",merged.slice(start).map((x,k)=>bkCard(x,start+k,{})).join(""));
         bkReveal(box,0,start);
       }
@@ -2433,7 +2444,7 @@ async function doRevokeAll(){   // dopo la conferma nel popup: questo dispositiv
    Ogni voce: d (data), t (elenco di novità in italiano, brevi). La versione (v) e APP_VER si calcolano da sole: vedi "VERSIONE AUTOMATICA" sotto CHANGELOG. La pagina Impostazioni > Novità le mostra da sola. */
 let APP_VER="";   // si calcola da sola dal CHANGELOG (vedi sotto): non va scritta a mano
 const CHANGELOG=[
-  {d:"23 ottobre 2026",t:["La scelta Novità, Recenti o Classici ora viene sempre rispettata, anche quando i titoli arrivano da fonti diverse da TMDB","Nella prima domanda ogni categoria ha una breve descrizione","Anche le voglie e le cose da evitare hanno una breve descrizione","Trovati di recente senza limite di titoli: ognuno resta 7 giorni","Dalla prima domanda trascina la pagina verso il basso per aprire subito Cerca","Accesso: i campi compilati in automatico non diventano più gialli e, se completi, la tastiera si chiude e si entra da soli","«Esci da tutti i dispositivi» e «Svuota la cronologia» confermano con un breve avviso in basso; la cronologia svuotata si può recuperare con Annulla","Caricamento più leggero e leggibile con il tema chiaro, sfondo della scheda più morbido con il tema scuro","Nuova locandina con i colori Reelax per i titoli senza immagine","Avvio più rapido e controllo degli aggiornamenti molto più leggero","Migliorie e correzioni"]},
+  {d:"23 ottobre 2026",t:["La scelta Novità, Recenti o Classici ora viene sempre rispettata, anche quando i titoli arrivano da fonti diverse da TMDB","Nella prima domanda ogni categoria ha una breve descrizione","Anche le voglie e le cose da evitare hanno una breve descrizione","Trovati di recente senza limite di titoli: ognuno resta 7 giorni","Dalla prima domanda trascina la pagina verso il basso per aprire subito Cerca","Ricerca: toccando un titolo la locandina vola nella scheda, e tornando indietro i risultati sono subito pronti","Accesso: i campi compilati in automatico non diventano più gialli e, se completi, la tastiera si chiude e si entra da soli","«Esci da tutti i dispositivi» e «Svuota la cronologia» confermano con un breve avviso in basso; la cronologia svuotata si può recuperare con Annulla","Caricamento più leggero e leggibile con il tema chiaro, sfondo della scheda più morbido con il tema scuro","Nuova locandina con i colori Reelax per i titoli senza immagine","Avvio più rapido e controllo degli aggiornamenti molto più leggero","Migliorie e correzioni"]},
   {d:"22 ottobre 2026",t:["Nuova animazione di accesso e uscita: un'onda circolare parte dal tasto e rivela la schermata successiva, ora più fluida","Schermata di accesso rinnovata: scritta REELAX animata con i colori sfumati dell'app e lo stesso sfondo dell'app, nel tema chiaro e in quello scuro","Su smartphone l'app resta in verticale: ruotando il telefono compare l'invito a raddrizzarlo","Account di prova isolato: non vede né modifica liste, «Già visti», cronologia, paese e piattaforme dell'account vero, e nelle Impostazioni non mostra più username, password e dispositivi","Lista «Le mie piattaforme» più viva: le righe entrano a cascata e la selezione ha una piccola animazione con segno di spunta che rimbalza","Conferma di uscita più chiara: il tasto ora dice «Sì, esci dall'account»; anche «Esci da tutti i dispositivi» apre lo stesso popup di conferma","Traduzioni completate: intestazioni delle schede, condivisione, errori, impostazioni e frasi di «Perché fa per te» ora seguono la lingua della regione"]},
   {d:"22 ottobre 2026",t:["Nuova pagina Novità con la versione dell'app","Impostazioni rifatte: sezioni più chiare, su PC menu laterale con pannello e anteprime del tema","Su PC tutte le pagine usano tutta la larghezza dello schermo","Tema chiaro e scuro neutri, con accento rosso Reelax","Cronologia fino a 100 titoli, ogni titolo scade dopo 7 giorni; svuotarla ora cancella davvero, anche tra dispositivi"]},
   {d:"21 ottobre 2026",t:["Il logo Reelax in alto ora si può toccare e ha una nuova animazione con una linea sfumata","Cambio tema più fluido, con transizione e interruttore rifatti","Il caricamento si può annullare e la posizione di scorrimento viene ricordata","Migliorie e correzioni"]},
@@ -3606,7 +3617,31 @@ function settle(snap){
     softIn(el,el.classList.contains('tag')?100:140+i*50);
   });
 }
+/* volo della locandina dalla griglia alla scheda: un'immagine che ha già le misure finali e si muove solo con transform (fluido),
+   con gli angoli corretti per la scala in ogni momento. La locandina vera resta nascosta finché il volo non arriva */
+function flyPoster(src,a,po){
+  const img=src.querySelector("img");if(!img)return false;
+  const hero=po.closest(".hero");if(hero&&getComputedStyle(hero).display!=="contents"){hero.style.animation="none";}   // niente "sali" sul contenitore: il punto d'arrivo resta fermo
+  po.getAnimations().forEach(x=>x.cancel());
+  const b=po.getBoundingClientRect();if(!b.width||!a.width)return false;
+  const r0=parseFloat(getComputedStyle(src).borderTopLeftRadius)||12,r1=parseFloat(getComputedStyle(po).borderTopLeftRadius)||20;
+  const f=document.createElement("div");f.className="fly";f.setAttribute("aria-hidden","true");
+  f.style.cssText="left:"+b.left+"px;top:"+b.top+"px;width:"+b.width+"px;height:"+b.height+"px";
+  const im=new Image();im.referrerPolicy="no-referrer";im.alt="";im.src=img.currentSrc||img.src;f.appendChild(im);document.body.appendChild(f);
+  po.style.visibility="hidden";src.style.visibility="hidden";
+  const N=12,K=[];
+  for(let i=0;i<=N;i++){const p=i/N,L=(u,v)=>u+(v-u)*p,x=L(a.left,b.left),y=L(a.top,b.top),w=L(a.width,b.width),h=L(a.height,b.height),r=L(r0,r1),sx=w/b.width,sy=h/b.height;
+    K.push({offset:p,transform:"translate3d("+(x-b.left).toFixed(2)+"px,"+(y-b.top).toFixed(2)+"px,0) scale("+sx.toFixed(4)+","+sy.toFixed(4)+")",borderRadius:(r/sx).toFixed(2)+"px / "+(r/sy).toFixed(2)+"px"});}
+  const done=()=>{po.style.visibility="";if(!f.isConnected)return;f.animate([{opacity:1},{opacity:0}],{duration:160,easing:"ease-out",fill:"forwards"}).onfinish=()=>f.remove();setTimeout(()=>f.remove(),500);};
+  f.animate(K,{duration:560,easing:"cubic-bezier(.65,0,.25,1)",fill:"forwards"}).finished.then(done,done);
+  setTimeout(done,1200);
+  return true;
+}
+let FLY=null;   // locandina toccata in una griglia (ricerca): vola fino al suo posto nella scheda
 function show(r,sur,man,quiet){
+  const fly=(!quiet&&!RM()&&FLY&&Date.now()-FLY.t<15000&&FLY.el&&FLY.el.isConnected&&FLY.el.querySelector("img.ld"))?FLY:null;FLY=null;
+  const flyA=fly?fly.el.getBoundingClientRect():null;
+  if(fly){VY=1;TDX=0;NAV=0;}   // con il volo le pagine si scambiano solo sfumando
   {const k=r.m&&r.m.id!=null?String(r.m.id):"";if(k){RCACHE.set(k,{r:r,sur:sur,man:man});if(RCACHE.size>12)RCACHE.delete(RCACHE.keys().next().value);if(PENDCAST!==k)setRoute((man?"/t/":"/r/")+enc(k),{replace:!man&&CURR.indexOf("/r/")===0});}else ROUTED=false;}   // "Un altro" sostituisce il risultato, non allunga la cronologia
   addRecent(r);S.cur=r;S.curSur=sur;S.curMan=man;const d=r.d,rnd=S.style==="surprise";const p=man?0:compat(r);
   const poster=d.poster
@@ -3648,7 +3683,8 @@ function show(r,sur,man,quiet){
   const rs=stage.querySelectorAll('.res>*');rs.forEach((el,i)=>el.style.setProperty('--k',i));
   polish(p,r);
   startSaga();
-  if(!quiet&&!RM()){   // ingresso morbido della locandina: sale dal basso ingrandendosi, mentre lo sfondo di caricamento si dissolve
+  if(fly&&flyA){const po=stage.querySelector('.hero .poster');if(po&&!flyPoster(fly.el,flyA,po))fly.el=null;}
+  if(!quiet&&!RM()&&!(fly&&fly.el)){   // ingresso morbido della locandina: sale dal basso ingrandendosi, mentre lo sfondo di caricamento si dissolve
     const po=stage.querySelector('.hero .poster');
     if(po&&po.animate)po.animate([{opacity:0,transform:'translate3d(0,22px,0) scale(.93)'},{opacity:1,transform:'none'}],{duration:1000,delay:40,easing:'cubic-bezier(.16,1,.3,1)',fill:'backwards'});
   }
@@ -3901,7 +3937,7 @@ $("lgf").addEventListener("submit",async e=>{
   const go=()=>{clearTimeout(t);t=setTimeout(async()=>{
     if(!ready())return;run=true;
     try{if(document.activeElement)document.activeElement.blur();}catch(e){}
-    await keyboardDown();run=false;
+    await keyboardDown();await sleep(300);run=false;   // tastiera giù, poi una breve pausa prima di entrare
     if(!ready())return;
     if(f.requestSubmit)f.requestSubmit();else $("lgb").click();
   },150);};
