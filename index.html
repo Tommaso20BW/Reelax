@@ -432,8 +432,7 @@ body.locked #app,body.locked #bd{visibility:hidden}
   background:var(--bg)}
 #lg[hidden]{display:none}
 
-.lgc{width:100%;max-width:360px;display:flex;flex-direction:column;gap:14px;translate:0 0;transition:translate .48s cubic-bezier(.38,.7,.125,1)}   /* curva simile a quella della tastiera di iPhone: modulo e tastiera si muovono insieme */
-@media (prefers-reduced-motion:reduce){.lgc{transition:none}}
+.lgc{width:100%;max-width:360px;display:flex;flex-direction:column;gap:14px}
 .lgc>*{animation:btnIn .7s cubic-bezier(.22,1,.36,1) backwards}
 .lgc>:nth-child(2){animation-delay:.08s}.lgc>:nth-child(3){animation-delay:.14s}.lgc>:nth-child(4){animation-delay:.2s}.lgc>:nth-child(5){animation-delay:.26s}
 /* scritta REELAX del login: una sola parola (non lettere separate); entra tutta insieme, poi un unico gradiente dell'app (rosso, viola, blu) scorre sull'intera scritta */
@@ -2445,7 +2444,7 @@ async function doRevokeAll(){   // dopo la conferma nel popup: questo dispositiv
    Ogni voce: d (data), t (elenco di novità in italiano, brevi). La versione (v) e APP_VER si calcolano da sole: vedi "VERSIONE AUTOMATICA" sotto CHANGELOG. La pagina Impostazioni > Novità le mostra da sola. */
 let APP_VER="";   // si calcola da sola dal CHANGELOG (vedi sotto): non va scritta a mano
 const CHANGELOG=[
-  {d:"23 ottobre 2026",t:["La scelta Novità, Recenti o Classici ora viene sempre rispettata, anche quando i titoli arrivano da fonti diverse da TMDB","Nella prima domanda ogni categoria ha una breve descrizione","Anche le voglie e le cose da evitare hanno una breve descrizione","Trovati di recente senza limite di titoli: ognuno resta 7 giorni","Dalla prima domanda trascina la pagina verso il basso per aprire subito Cerca","Ricerca: toccando un titolo la locandina vola nella scheda, e tornando indietro i risultati sono subito pronti","Accesso: il modulo si sposta insieme alla tastiera; i campi compilati in automatico non diventano più gialli e, se completi, la tastiera si chiude e si entra da soli","«Esci da tutti i dispositivi» e «Svuota la cronologia» confermano con un breve avviso in basso; la cronologia svuotata si può recuperare con Annulla","Caricamento più leggero e leggibile con il tema chiaro, sfondo della scheda più morbido con il tema scuro","Nuova locandina con i colori Reelax per i titoli senza immagine","Avvio più rapido e controllo degli aggiornamenti molto più leggero","Migliorie e correzioni"]},
+  {d:"23 ottobre 2026",t:["La scelta Novità, Recenti o Classici ora viene sempre rispettata, anche quando i titoli arrivano da fonti diverse da TMDB","Nella prima domanda ogni categoria ha una breve descrizione","Anche le voglie e le cose da evitare hanno una breve descrizione","Trovati di recente senza limite di titoli: ognuno resta 7 giorni","Dalla prima domanda trascina la pagina verso il basso per aprire subito Cerca","Ricerca: toccando un titolo la locandina vola nella scheda, e tornando indietro i risultati sono subito pronti","Accesso: i campi compilati in automatico non diventano più gialli e la tastiera si chiude da sola","«Esci da tutti i dispositivi» e «Svuota la cronologia» confermano con un breve avviso in basso; la cronologia svuotata si può recuperare con Annulla","Caricamento più leggero e leggibile con il tema chiaro, sfondo della scheda più morbido con il tema scuro","Nuova locandina con i colori Reelax per i titoli senza immagine","Avvio più rapido e controllo degli aggiornamenti molto più leggero","Migliorie e correzioni"]},
   {d:"22 ottobre 2026",t:["Nuova animazione di accesso e uscita: un'onda circolare parte dal tasto e rivela la schermata successiva, ora più fluida","Schermata di accesso rinnovata: scritta REELAX animata con i colori sfumati dell'app e lo stesso sfondo dell'app, nel tema chiaro e in quello scuro","Su smartphone l'app resta in verticale: ruotando il telefono compare l'invito a raddrizzarlo","Account di prova isolato: non vede né modifica liste, «Già visti», cronologia, paese e piattaforme dell'account vero, e nelle Impostazioni non mostra più username, password e dispositivi","Lista «Le mie piattaforme» più viva: le righe entrano a cascata e la selezione ha una piccola animazione con segno di spunta che rimbalza","Conferma di uscita più chiara: il tasto ora dice «Sì, esci dall'account»; anche «Esci da tutti i dispositivi» apre lo stesso popup di conferma","Traduzioni completate: intestazioni delle schede, condivisione, errori, impostazioni e frasi di «Perché fa per te» ora seguono la lingua della regione"]},
   {d:"22 ottobre 2026",t:["Nuova pagina Novità con la versione dell'app","Impostazioni rifatte: sezioni più chiare, su PC menu laterale con pannello e anteprime del tema","Su PC tutte le pagine usano tutta la larghezza dello schermo","Tema chiaro e scuro neutri, con accento rosso Reelax","Cronologia fino a 100 titoli, ogni titolo scade dopo 7 giorni; svuotarla ora cancella davvero, anche tra dispositivi"]},
   {d:"21 ottobre 2026",t:["Il logo Reelax in alto ora si può toccare e ha una nuova animazione con una linea sfumata","Cambio tema più fluido, con transizione e interruttore rifatti","Il caricamento si può annullare e la posizione di scorrimento viene ricordata","Migliorie e correzioni"]},
@@ -3925,47 +3924,16 @@ $("lgf").addEventListener("submit",async e=>{
   c.classList.remove("busy");btn.disabled=false;er.textContent=fail||"Nome utente o password non corretti.";
   void c.offsetWidth;c.classList.add("bad");$("lgp").value="";try{$("lgp").focus();}catch(x){}
 });
-/* login e tastiera (telefono): il modulo si sposta INSIEME alla tastiera invece di lasciare che iOS sposti la pagina di colpo.
-   Si sposta solo quando lo schermo si restringe davvero (tastiera vera), verso il centro dello spazio libero; chiudendo torna giù con la stessa curva.
-   Col pannello "Accedi" di iOS (Face ID) lo schermo non cambia e il modulo resta fermo. Passare da un campo all'altro non lo muove.
-   Usa la proprietà "translate", separata da "transform": non interferisce con le animazioni dell'onda di accesso/uscita */
-(function(){
-  if(!window.visualViewport||!matchMedia("(pointer:coarse)").matches)return;
-  const vv=visualViewport,f=$("lgf");let open=false,t=null;
-  const isIn=el=>!!el&&(el.id==="lgu"||el.id==="lgp");
-  const curY=()=>{const v=getComputedStyle(f).translate;if(!v||v==="none")return 0;const p=v.split(" ");return parseFloat(p[1]||"0")||0;};
-  const shift=(top,bot)=>{   // spostamento perché il modulo stia al centro della zona visibile [top,bot], senza uscire dal bordo alto
-    const r=f.getBoundingClientRect(),top0=r.top-curY(),h=r.height;
-    let y=top+((bot-top)-h)/2-top0;y=Math.max(y,top+12+SAT()-top0);
-    return Math.min(0,Math.round(y));};
-  const put=y=>{f.style.translate="0 "+y+"px";};
-  f.addEventListener("focusin",e=>{
-    if(lg.hidden||!isIn(e.target))return;clearTimeout(t);if(open)return;open=true;
-    // niente spostamento in anticipo: al tocco iOS può mostrare il pannello "Accedi" (Face ID) invece della tastiera, e lì il modulo deve restare al centro
-  });
-  f.addEventListener("focusout",()=>{clearTimeout(t);t=setTimeout(()=>{if(isIn(document.activeElement))return;open=false;put(0);},80);});
-  vv.addEventListener("resize",()=>{   // lo schermo è cambiato: tastiera aperta (o chiusa)
-    if(lg.hidden)return;const kb=Math.max(0,innerHeight-vv.height-vv.offsetTop);
-    if(open&&kb>80)put(shift(vv.offsetTop,vv.offsetTop+vv.height));else put(0);});   // si sposta solo quando lo schermo si restringe davvero (tastiera vera)
-})();
-/* compilazione automatica (password salvate): quando i campi si riempiono da soli, prima si chiude la tastiera e poi parte l'accesso.
+/* compilazione automatica (password salvate / Face ID): appena i campi si riempiono da soli la tastiera si chiude; per entrare si preme "Entra".
    Due segnali, così almeno uno scatta su ogni telefono: lo stato "compilato automaticamente" del campo (animazione finta su :-webkit-autofill)
    e l'inserimento "in un colpo" (evento senza tipo o insertReplacementText). Scrivendo a mano, lettera per lettera, non succede nulla */
 (function(){
-  const f=$("lgf"),u=$("lgu"),p=$("lgp");let t=null,run=false;
-  const ready=()=>!lgBusy&&!run&&!lg.hidden&&!!u.value.trim()&&!!p.value;
-  const keyboardDown=()=>new Promise(r=>{   // aspetto che l'area visibile smetta di cambiare (tastiera giù), al massimo poco più di mezzo secondo
-    const vv=window.visualViewport;if(!vv){setTimeout(r,350);return;}
-    let h=vv.height,n=0;const iv=setInterval(()=>{if(Math.abs(vv.height-h)<1){if(++n>=3){clearInterval(iv);r();}}else{h=vv.height;n=0;}},60);
-    setTimeout(()=>{clearInterval(iv);r();},600);});
-  const go=()=>{clearTimeout(t);t=setTimeout(async()=>{
-    if(!ready())return;run=true;
-    try{if(document.activeElement)document.activeElement.blur();}catch(e){}
-    await keyboardDown();await sleep(300);run=false;   // tastiera giù, poi una breve pausa prima di entrare
-    if(!ready())return;
-    if(f.requestSubmit)f.requestSubmit();else $("lgb").click();
-  },150);};
-  f.addEventListener("animationstart",e=>{if(e.animationName==="rxAutofill")go();});
+  const u=$("lgu"),p=$("lgp");let t=null;
+  const go=()=>{clearTimeout(t);t=setTimeout(()=>{
+    if(lg.hidden||!u.value.trim()||!p.value)return;
+    try{const a=document.activeElement;if(a===u||a===p)a.blur();}catch(e){}
+  },120);};
+  $("lgf").addEventListener("animationstart",e=>{if(e.animationName==="rxAutofill")go();});
   [u,p].forEach(el=>el.addEventListener("input",e=>{if(!e.inputType||e.inputType==="insertReplacementText")go();}));
 })();
 const boot=()=>{document.body.classList.remove("pre");try{if(!(history.state&&typeof history.state.d==="number"))history.replaceState({d:0},"");}catch(e){}if(isAuthed()){routeFromHash(true);syncPull();}else lockApp();};
