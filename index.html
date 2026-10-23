@@ -10,15 +10,14 @@
         - se aggiungi righe alla voce in cima (stessa giornata), ricontale e alza la versione se superi una soglia: la voce non resta mai di livello più basso del suo contenuto.
         - ogni voce ha d (data) e t (elenco di novità in italiano, brevi, solo cose che l'utente vede). Non scrivere v: la mette il calcolo.
      3. NELLA RISPOSTA scrivi sempre una riga: «Versione: X, motivo: …». Anche se non cambi nulla (es. solo commenti): scrivi «Versione invariata, motivo: …».
-     4. Non consegnare il file senza aver fatto i punti 1-3. Se non sei sicuro di averli fatti, non hai finito.
-     Le stesse regole sono in AGENTS.md / CLAUDE.md nella cartella del progetto. -->
+     4. Non consegnare il file senza aver fatto i punti 1-3. Se non sei sicuro di averli fatti, non hai finito. -->
 <html lang="it">
 <head>
 <meta charset="utf-8">
 <title>Reelax</title>
 <meta name="description" content="Scegli film, serie TV o anime da guardare stasera in 10 secondi.">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
-<link id="fav" rel="icon" type="image/png" href="img/favicon.png?v=5">
+<link id="fav" rel="icon" type="image/png" href="img/favicon.png?v=6">
 <link id="apple" rel="apple-touch-icon" href="img/apple-touch-icon.png?v=4">
 <link rel="apple-touch-startup-image" media="(device-width:402px) and (device-height:874px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)" href="img/splash-402x874@3x.jpg?v=1">
 <link rel="apple-touch-startup-image" media="(device-width:440px) and (device-height:956px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)" href="img/splash-440x956@3x.jpg?v=1">
@@ -44,14 +43,17 @@
 <link rel="dns-prefetch" href="https://image.tmdb.org">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=Instrument+Sans:wght@400;500;600;700&display=swap">
+<link rel="preconnect" href="https://stasera-tmdb.tommaso2000bw.workers.dev" crossorigin>
+<!-- font caricati senza bloccare la pagina (media=print -> all appena pronti) -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=Instrument+Sans:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=Instrument+Sans:wght@400;500;600;700&display=swap"></noscript>
 <script>(function(){try{localStorage.removeItem("reelax_fs");}catch(e){}})();</script>
 <script>
 /* ⚠️ MODIFICHI QUESTO FILE? Prima leggi la testata in cima (regole versione/changelog), poi aggiorna APP_VER e CHANGELOG e dichiara «Versione: X, motivo: …» nella risposta. */
 /* tema: auto (segue il dispositivo) | chiaro | scuro */
 (function(){
   /* loghi a tema (app + scheda browser): file su GitHub. Icona della Home (apple-touch-icon / manifest): fissa. Per aggiornare i file alza V. */
-  var V="5",ICO={dark:{fav:"img/favicon.png"},light:{fav:"img/favicon.png"}};
+  var V="6",ICO={dark:{fav:"img/favicon.png"},light:{fav:"img/favicon.png"}};
   function abs(f){try{return new URL(f+"?v="+V,location.href).href;}catch(e){return f+"?v="+V;}}
   var K="reelax_theme",mq=window.matchMedia?matchMedia("(prefers-color-scheme: light)"):null;
   function pref(){try{var v=localStorage.getItem(K);return v==="light"||v==="dark"?v:"auto";}catch(e){return"auto";}}
@@ -261,6 +263,9 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .poster.fb h3{margin:0;font-family:var(--fd);font-size:1.25em;line-height:1.1}
 .poster.fb small{opacity:.8;font-size:.7em;letter-spacing:.1em;text-transform:uppercase}
 .poster.fb{text-align:center;align-items:center}
+.poster.fb>*{position:relative;z-index:1}
+.poster.fb .ini{position:absolute;inset:0;z-index:0;display:grid;place-items:center;font:800 9em/1 var(--fd);color:rgba(255,255,255,.16);pointer-events:none}
+.poster.fb h3{text-shadow:0 2px 14px rgba(0,0,0,.25)}
 .hero h2,.hero .tag,.hero .chips{position:relative;z-index:3}
 .hero h2{margin:0;font-family:var(--fd);font-weight:800;font-size:clamp(1.7rem,7.5vw,2.3rem);line-height:1.03;letter-spacing:-.035em;word-break:break-word}
 .tag{margin:-6px 0 0;font-size:.88rem;color:var(--mut);font-style:italic}
@@ -425,15 +430,6 @@ body.locked #app,body.locked #bd{visibility:hidden}
 /* sfondo dell'app: le due luci si muovono piano */
 /* aloni di sfondo fermi: animarli rallentava tutto il sito */
 body.pre #app{opacity:0}
-/* schermata di avvio: stessa grafica dell'immagine di iOS (sfondo sfumato + sola scritta), poi sfuma verso login o app */
-#sp{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background-color:#b3306f;background-image:linear-gradient(135deg,#d8304a,#9d2fb0 62%,#6f4bd1)}
-#sp[hidden]{display:none}
-#sp svg{display:block;width:min(56vw,320px);height:auto;overflow:visible;fill:#fff}
-#sp path{transform-box:fill-box;transform-origin:50% 50%}
-@keyframes spw{0%,100%{opacity:1}50%{opacity:.62}}
-#sp.wait path{animation:spw 2.2s ease-in-out infinite}
-#sp.wait path:nth-child(2){animation-delay:.14s}#sp.wait path:nth-child(3){animation-delay:.28s}#sp.wait path:nth-child(4){animation-delay:.42s}#sp.wait path:nth-child(5){animation-delay:.56s}#sp.wait path:nth-child(6){animation-delay:.7s}
-@media (prefers-reduced-motion:reduce){#sp.wait path{animation:none}}
 
 /* animazioni */
 @keyframes up{from{opacity:0;transform:translateY(18px) scale(.98)}}
@@ -837,8 +833,6 @@ html.tt .snav button,html.tt .sw,html.tt .sw i{transition-property:transform,wid
 </style>
 </head>
 <body class="pre">
-<div id="sp" class="wait" role="presentation"><svg viewBox="0 0 4727 702" aria-hidden="true"><path d="M358 702 212 437H171V702H0V0H287Q370 0 428.5 29Q487 58 516 108.5Q545 159 545 221Q545 291 505.5 346Q466 401 389 424L551 702ZM171 316H277Q324 316 347.5 293Q371 270 371 228Q371 188 347.5 165Q324 142 277 142H171Z"/><path d="M1053 137V279H1282V411H1053V565H1312V702H882V0H1312V137Z"/><path d="M1824 137V279H2053V411H1824V565H2083V702H1653V0H2083V137Z"/><path d="M2595 570H2819V702H2424V0H2595Z"/><path d="M3568 578H3306L3264 702H3085L3339 0H3537L3791 702H3610ZM3524 446 3437 189 3351 446Z"/><path d="M4528 702 4385 487 4259 702H4065L4290 345L4060 0H4259L4400 212L4524 0H4718L4495 354L4727 702Z"/></svg></div>
-<script>var IS_APP=!!(navigator.standalone||(window.matchMedia&&matchMedia("(display-mode: standalone)").matches));(function(){var s=document.getElementById("sp");if(s)s.hidden=true;setTimeout(function(){if(s)s.hidden=true;},10000);})();</script>
 <div id="bd"><i></i></div>
 <div id="app">
   <header class="top">
@@ -900,10 +894,7 @@ html.tt .snav button,html.tt .sw,html.tt .sw i{transition-property:transform,wid
   },o);
   // Ctrl + mouse wheel / trackpad pinch (Chrome, Edge, Firefox)
   window.addEventListener("wheel",function(e){if(e.ctrlKey)e.preventDefault();},o);
-  // Ctrl/Cmd + + - 0 =
-  window.addEventListener("keydown",function(e){
-    if((e.ctrlKey||e.metaKey)&&["+","-","=","0","_"].indexOf(e.key)>-1)e.preventDefault();
-  });
+  // Ctrl/Cmd + + - 0 da tastiera: lasciati liberi (zoom voluto, utile per chi legge male; non capita per sbaglio)
 })();
 </script>
 <script>
@@ -1174,7 +1165,7 @@ const STEPS=[
 const steps=()=>STEPS.filter(s=>!(s.skip&&s.skip()));
 function gkey(cat,a){cat=cat==="cartoni"?(a&&a.fmt==="movie"?"film":"serie"):cat; return cat==="film"?"film":cat==="anime"?"anime":"serie";}
 
-function opt(g,o,on,i){const sub=(g==="time"||g==="era")&&o[3]?'<span class="s">'+esc(o[3])+'</span>':'';return '<button type="button" class="opt'+(on?' on':'')+'" style="--i:'+i+'" data-g="'+g+'" data-v="'+o[0]+'" aria-pressed="'+(on?'true':'false')+'"><span class="em">'+o[1]+'</span><span class="tx"><span class="t">'+esc(o[2])+'</span>'+sub+'</span></button>';}
+function opt(g,o,on,i){const sub=o[3]?'<span class="s">'+esc(o[3])+'</span>':'';return '<button type="button" class="opt'+(on?' on':'')+'" style="--i:'+i+'" data-g="'+g+'" data-v="'+o[0]+'" aria-pressed="'+(on?'true':'false')+'"><span class="em">'+o[1]+'</span><span class="tx"><span class="t">'+esc(o[2])+'</span>'+sub+'</span></button>';}
 const resetAnswers=()=>Object.assign(S,{cat:"",fmt:"",mood:"",time:"",era:"",style:"",step:0,seen:[],cands:[],cur:null,avoid:[]});
 function restart(){resetAnswers();home();}
 /* indietro dal risultato: torna alla home con tutto deselezionato (pre = pulizia che gira sempre, anche quando si torna indietro tramite la cronologia del browser) */
@@ -1566,7 +1557,6 @@ async function episodesPage(d,se,snap){
   }).join("");
   if(eb.animate&&!RM())eb.animate([{opacity:0},{opacity:1}],{duration:220,easing:"ease-out"});
 }
-function simHtml(d){return "";}
 function personInfo(d){
   const dep=DEPT[d.known_for_department]||d.known_for_department||"";
   const dt=v=>{if(!v)return"";const x=new Date(v+"T00:00:00");return isNaN(x)?"":x.toLocaleDateString(LANG(),{day:"numeric",month:"long",year:"numeric"});};
@@ -1787,15 +1777,16 @@ const normT=s=>String(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u0
 const sameTitle=(a,b)=>{const x=normT(a),y=normT(b);return !!x&&x===y;};
 async function enrich(title,kind){const ok=r=>r&&r.extract&&r.type!=='disambiguation'&&KW.test(r.extract.slice(0,300))&&sameTitle(r.title,title);const out=r=>({extract:r.extract,thumb:r.thumbnail&&r.thumbnail.source});try{const r=await wsum(title);if(ok(r))return out(r);}catch(e){}try{const s=await fjr("https://it.wikipedia.org/w/api.php?action=query&list=search&format=json&origin=*&srlimit=3&srsearch="+encodeURIComponent(title+" "+kind),8000);for(const x of (s.query&&s.query.search)||[]){try{const r=await wsum(x.title);if(ok(r))return out(r);}catch(e){}}}catch(e){}return null;}
 async function sparql(q){const d=await fj("https://query.wikidata.org/sparql?format=json&query="+encodeURIComponent(q),30000);return(d.results&&d.results.bindings)||[];}
-async function wdFilms(a,strict,anim){let genres=(G.film.mood[a.mood]||["drama film"]).filter(x=>x!=="animated film");if(!anim&&!genres.length)genres=["drama film","comedy film"];const useMood=anim?(strict&&genres.length>0):true;const minL=Math.max(2,Math.round((a.risk<30?40:a.risk<60?18:a.risk<80?8:3)/(strict?1:3)/(anim?2:1)));const AN='?film wdt:P136 ?ga. ?ga rdfs:label "animated film"@en. ';const q="SELECT ?film ?filmLabel ?sl ?d ?rt ?img WHERE{"+(useMood?"VALUES ?gl{"+VALS(genres)+"} ?g rdfs:label ?gl. ?film wdt:P136 ?g. ":"")+"?film wdt:P31 wd:Q11424; wikibase:sitelinks ?sl. FILTER(?sl>="+minL+") "+(anim?AN+"FILTER NOT EXISTS{?film wdt:P495 wd:Q17} ":"FILTER NOT EXISTS{"+AN+"} ")+"OPTIONAL{?film wdt:P577 ?d} OPTIONAL{?film wdt:P2047 ?rt} OPTIONAL{?film wdt:P18 ?img} SERVICE wikibase:label{bd:serviceParam wikibase:language \"it,en\"}} LIMIT 200";const seen={},out=[];(await sparql(q)).forEach(b=>{const id=b.film.value.split("/").pop(),t=b.filmLabel&&b.filmLabel.value;if(seen[id]||!t||/^Q\d+$/.test(t))return;seen[id]=1;out.push({id,title:t,year:b.d?b.d.value.slice(0,4):"",sl:+b.sl.value,runtime:b.rt?Math.round(+b.rt.value):null,img:b.img?b.img.value.replace(/^http:/,"https:")+"?width=500":null,genres:useMood?genres:[],movie:true});});return out;}
-async function wpFilms(a,anim){const term=anim?'"film d\'animazione" -giapponese':MOOD_TXT[a.mood];const url="https://it.wikipedia.org/w/api.php?action=query&generator=search&format=json&origin=*&gsrnamespace=0&gsrlimit=30&gsroffset="+rand(200)+"&gsrsearch="+encodeURIComponent('hastemplate:Film "è un film" '+term)+"&prop=extracts|pageimages&exintro=1&explaintext=1&exsentences=4&exlimit=30&piprop=thumbnail&pithumbsize=500";const d=await fj(url,12000),p=d.query&&d.query.pages?Object.values(d.query.pages):[];return p.filter(x=>x.extract&&/film/i.test(x.extract.slice(0,200))).map(x=>({id:"wp"+x.pageid,title:x.title.replace(/\s*\(film.*\)$/,""),year:(x.extract.match(/\b(19|20)\d\d\b/)||[""])[0],sl:10,runtime:null,genres:[],movie:true,pre:{extract:x.extract,thumb:x.thumbnail&&x.thumbnail.source}}));}
+/* data di uscita: sempre la PRIMA (Wikidata elenca anche riedizioni e uscite in altri paesi: "I Goonies" risultava del 2021) */
+async function wdFilms(a,strict,anim){let genres=(G.film.mood[a.mood]||["drama film"]).filter(x=>x!=="animated film");if(!anim&&!genres.length)genres=["drama film","comedy film"];const useMood=anim?(strict&&genres.length>0):true;const minL=Math.max(2,Math.round((a.risk<30?40:a.risk<60?18:a.risk<80?8:3)/(strict?1:3)/(anim?2:1)));const AN='?film wdt:P136 ?ga. ?ga rdfs:label "animated film"@en. ';const q="SELECT ?film ?filmLabel ?sl ?d ?rt ?img WHERE{"+(useMood?"VALUES ?gl{"+VALS(genres)+"} ?g rdfs:label ?gl. ?film wdt:P136 ?g. ":"")+"?film wdt:P31 wd:Q11424; wikibase:sitelinks ?sl. FILTER(?sl>="+minL+") "+(anim?AN+"FILTER NOT EXISTS{?film wdt:P495 wd:Q17} ":"FILTER NOT EXISTS{"+AN+"} ")+(a.era&&a.era!=="any"?"?film wdt:P577 ?d. FILTER NOT EXISTS{?film wdt:P577 ?d0. FILTER(?d0<?d)} FILTER(YEAR(?d)>="+ERA_R[a.era][0]+" && YEAR(?d)<="+ERA_R[a.era][1]+") ":"OPTIONAL{?film wdt:P577 ?d. FILTER NOT EXISTS{?film wdt:P577 ?d0. FILTER(?d0<?d)}} ")+"OPTIONAL{?film wdt:P2047 ?rt} OPTIONAL{?film wdt:P18 ?img} SERVICE wikibase:label{bd:serviceParam wikibase:language \"it,en\"}} LIMIT 200";const seen={},out=[];(await sparql(q)).forEach(b=>{const id=b.film.value.split("/").pop(),t=b.filmLabel&&b.filmLabel.value;if(seen[id]||!t||/^Q\d+$/.test(t))return;seen[id]=1;out.push({id,title:t,year:b.d?b.d.value.slice(0,4):"",sl:+b.sl.value,runtime:b.rt?Math.round(+b.rt.value):null,img:b.img?b.img.value.replace(/^http:/,"https:")+"?width=500":null,genres:useMood?genres:[],movie:true});});return out;}
+async function wpFilms(a,anim){const term=anim?'"film d\'animazione" -giapponese':MOOD_TXT[a.mood];const url="https://it.wikipedia.org/w/api.php?action=query&generator=search&format=json&origin=*&gsrnamespace=0&gsrlimit=30&gsroffset="+rand(200)+"&gsrsearch="+encodeURIComponent('hastemplate:Film "è un film" '+term)+"&prop=extracts|pageimages&exintro=1&explaintext=1&exsentences=4&exlimit=30&piprop=thumbnail&pithumbsize=500";const d=await fj(url,12000),p=d.query&&d.query.pages?Object.values(d.query.pages):[];return p.filter(x=>x.extract&&/film/i.test(x.extract.slice(0,200))&&eraOk((x.extract.match(/\b(19|20)\d\d\b/)||[""])[0],a)).map(x=>({id:"wp"+x.pageid,title:x.title.replace(/\s*\(film.*\)$/,""),year:(x.extract.match(/\b(19|20)\d\d\b/)||[""])[0],sl:10,runtime:null,genres:[],movie:true,pre:{extract:x.extract,thumb:x.thumbnail&&x.thumbnail.source}}));}
 async function filmDiscover(a,anim){let list=[],err=null;try{list=await wdFilms(a,true,anim);const rtMin=a.time==="mid"?85:a.time==="long"?120:0,rtMax=a.time==="short"?95:a.time==="mid"?125:999;list=tier(list,[m=>!m.runtime||(m.runtime>=rtMin&&m.runtime<=rtMax),()=>true]);}catch(e){err=e;}if(list.length<5){try{list=list.concat(await wdFilms(a,false,anim));}catch(e){err=err||e;}}if(list.length<3){try{list=list.concat(await wpFilms(a,anim));}catch(e){err=err||e;}}if(!list.length&&err)throw err;return list;}
 async function wdMeta(id){if(!/^Q\d+$/.test(id))return{};try{const q='SELECT ?gl ?dl WHERE{OPTIONAL{wd:'+id+' wdt:P136 ?g. ?g rdfs:label ?gl. FILTER(LANG(?gl)="it")} OPTIONAL{wd:'+id+' wdt:P57 ?dr. ?dr rdfs:label ?dl. FILTER(LANG(?dl)="en")}}';const rows=await Promise.race([sparql(q),sleep(8000).then(()=>{throw new Error("t");})]);const gl=[],dr=[];rows.forEach(b=>{if(b.gl)gl.push(b.gl.value.replace(/^film\s+(di\s+|d['’]\s*)?/i,""));if(b.dl)dr.push(b.dl.value);});return{glist:uniq(gl).slice(0,4),dir:uniq(dr).slice(0,2).join(", ")};}catch(e){return{};}}
 async function itTitleOf(qid){try{const d=await fjr("https://www.wikidata.org/w/api.php?action=wbgetentities&format=json&origin=*&props=sitelinks&sitefilter=itwiki&ids="+qid,8000);const e=d.entities&&d.entities[qid];return e&&e.sitelinks&&e.sitelinks.itwiki?e.sitelinks.itwiki.title:null;}catch(e){return null;}}
 async function enrichFilm(c){if(!/^Q\d+$/.test(String(c.id)))return null;const t=await itTitleOf(c.id);if(!t)return null;try{const r=await wsum(t);if(r&&r.extract&&r.type!=="disambiguation")return{extract:r.extract,thumb:r.thumbnail&&r.thumbnail.source};}catch(e){}return null;}
 async function filmDetails(c){const [w,meta]=await Promise.all([c.pre?Promise.resolve(c.pre):enrichFilm(c),wdMeta(c.id)]);const gl=meta.glist&&meta.glist.length?meta.glist:uniq((c.genres||[]).map(x=>x));return{movie:true,title:c.title,year:c.year,runtime:c.runtime,dir:meta.dir||"",glist:gl,gt:gl.join(" · "),overview:(w&&w.extract)||"Trama non ancora disponibile su Wikipedia in italiano.",it:!!(w&&w.extract),poster:(w&&w.thumb)||c.img,rl:"Wikidata",rv:null,pop:c.sl};}
 
-async function tvDiscover(a,anim){const want=G.serie.mood[a.mood]||["Drama","Comedy"];const pages=uniq(Array.from({length:anim?14:6},()=>rand(240)));const lists=await Promise.all(pages.map(p=>fjr("https://api.tvmaze.com/shows?page="+p,9000).catch(()=>[])));const all=[].concat(...lists);if(!all.length)throw new Error("rete/TVmaze non raggiungibile");const items=all.filter(s=>(anim?s.type==="Animation":s.type!=="Animation")&&(s.genres||[]).indexOf("Anime")<0&&(anim||(s.genres&&s.genres.length))).map(s=>({id:s.id,src:"tv",anim:anim,title:s.name,year:s.premiered?s.premiered.slice(0,4):"",genres:s.genres||[],rating:s.rating&&s.rating.average||0,runtime:s.averageRuntime||30,image:s.image&&s.image.original||null,summary:strip(s.summary||""),lang:s.language||""}));const ov=m=>m.genres.some(x=>want.indexOf(x)>=0);return tier(items,[m=>ov(m)&&(anim||a.risk>=60||m.lang==="English"||m.lang==="Italian"),m=>ov(m),()=>true]);}
+async function tvDiscover(a,anim){const want=G.serie.mood[a.mood]||["Drama","Comedy"];const pages=uniq(Array.from({length:anim?14:6},()=>rand(240)));const lists=await Promise.all(pages.map(p=>fjr("https://api.tvmaze.com/shows?page="+p,9000).catch(()=>[])));const all=[].concat(...lists);if(!all.length)throw new Error("rete/TVmaze non raggiungibile");const items=all.filter(s=>eraOk(s.premiered?s.premiered.slice(0,4):"",a)&&(anim?s.type==="Animation":s.type!=="Animation")&&(s.genres||[]).indexOf("Anime")<0&&(anim||(s.genres&&s.genres.length))).map(s=>({id:s.id,src:"tv",anim:anim,title:s.name,year:s.premiered?s.premiered.slice(0,4):"",genres:s.genres||[],rating:s.rating&&s.rating.average||0,runtime:s.averageRuntime||30,image:s.image&&s.image.original||null,summary:strip(s.summary||""),lang:s.language||""}));const ov=m=>m.genres.some(x=>want.indexOf(x)>=0);return tier(items,[m=>ov(m)&&(anim||a.risk>=60||m.lang==="English"||m.lang==="Italian"),m=>ov(m),()=>true]);}
 async function tvDetails(c){const w=await enrich(c.title,c.anim?"serie animata":"serie televisiva");return{movie:false,isTv:true,title:c.title,year:c.year,runtime:c.runtime,overview:(w&&w.extract)||c.summary||"Trama non disponibile.",it:!!(w&&w.extract),poster:c.image||(w&&w.thumb),rl:"TVmaze",rv:c.rating,glist:itg(c.genres),gt:itg(c.genres).join(" · ")};}
 
 const GIT={"Comedy":"Commedia","Drama":"Drammatico","Romance":"Sentimentale","Horror":"Horror","Action":"Azione","Adventure":"Avventura","Fantasy":"Fantasy","Science-Fiction":"Fantascienza","Sci-Fi":"Fantascienza","Mystery":"Mistero","Thriller":"Thriller","Suspense":"Suspense","Slice of Life":"Vita quotidiana","Psychological":"Psicologico","Family":"Famiglia","Crime":"Crimine"};
@@ -1835,8 +1826,9 @@ async function animeAniList(a){
   const fmts=a.fmt==="movie"?["MOVIE"]:a.fmt==="any"?["TV","MOVIE"]:["TV"];
   const pop=a.risk<30?40000:a.risk<60?15000:a.risk<80?6000:2500;
   const maxPage=a.risk<30?3:a.risk<60?6:a.risk<80?10:16;
-  const q="query($p:Int,$g:String,$f:[MediaFormat],$el:Int,$eg:Int){Page(page:$p,perPage:25){media(type:ANIME,isAdult:false,genre:$g,format_in:$f,episodes_lesser:$el,episodes_greater:$eg,sort:POPULARITY_DESC){id title{romaji english}startDate{year}genres averageScore duration episodes format coverImage{large}description(asHtml:false)}}}";
+  const q="query($p:Int,$g:String,$f:[MediaFormat],$el:Int,$eg:Int,$sg:FuzzyDateInt,$sl:FuzzyDateInt){Page(page:$p,perPage:25){media(type:ANIME,isAdult:false,genre:$g,format_in:$f,episodes_lesser:$el,episodes_greater:$eg,startDate_greater:$sg,startDate_lesser:$sl,sort:POPULARITY_DESC){id title{romaji english}startDate{year}genres averageScore duration episodes format coverImage{large}description(asHtml:false)}}}";
   const vars={p:1+rand(maxPage),g:genre,f:fmts};
+  if(a.era&&a.era!=="any"){const er=ERA_R[a.era];if(er[0])vars.sg=(er[0]-1)*10000+1231;if(er[1]<9999)vars.sl=(er[1]+1)*10000+101;}   // epoca scelta: solo anime usciti in quegli anni
   if(a.fmt!=="movie"&&a.fmt!=="any"){if(a.time==="short")vars.el=14;if(a.time==="mid")vars.el=27;if(a.time==="long")vars.eg=26;}
   const call=async v=>{const r=await fjr("https://graphql.anilist.co",12000,{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify({query:q,variables:v})});return(r&&r.data&&r.data.Page&&r.data.Page.media)||[];};
   let media=await call(vars);
@@ -1849,7 +1841,7 @@ async function animeJikan(a){
   const items=[];let err=null;
   for(const s of subs){
     try{
-      const url="https://api.jikan.moe/v4/anime?genres="+JID[pick(want)]+"&type="+s+"&limit=15&page="+(1+rand(3))+"&order_by=popularity&sort=asc&sfw=true";
+      const url="https://api.jikan.moe/v4/anime?genres="+JID[pick(want)]+"&type="+s+"&limit=15&page="+(1+rand(3))+"&order_by=popularity&sort=asc&sfw=true"+(a.era&&a.era!=="any"?(ERA_R[a.era][0]?"&start_date="+ERA_R[a.era][0]+"-01-01":"")+(ERA_R[a.era][1]<9999?"&end_date="+ERA_R[a.era][1]+"-12-31":""):"");
       const r=await fjr(url,12000);
       for(const m of (r.data||[])) items.push({id:m.mal_id,src:"anime",movie:s==="movie",title:m.title_english||m.title,year:m.aired&&m.aired.prop&&m.aired.prop.from?m.aired.prop.from.year:'',genres:(m.genres||[]).map(x=>x.name).concat((m.themes||[]).map(x=>x.name)),rating:m.score||0,runtime:s==="movie"?parseDur(m.duration):null,episodes:m.episodes||null,image:(m.images&&m.images.jpg&&m.images.jpg.large_image_url)||null,summary:m.synopsis||""});
     }catch(e){err=e;}
@@ -2328,6 +2320,7 @@ async function doRevokeAll(){   // dopo la conferma nel popup: l'esito si legge 
    Ogni voce: d (data), t (elenco di novità in italiano, brevi). La versione (v) e APP_VER si calcolano da sole: vedi "VERSIONE AUTOMATICA" sotto CHANGELOG. La pagina Impostazioni > Novità le mostra da sola. */
 let APP_VER="";   // si calcola da sola dal CHANGELOG (vedi sotto): non va scritta a mano
 const CHANGELOG=[
+  {d:"23 ottobre 2026",t:["La scelta Novità, Recenti o Classici ora viene sempre rispettata, anche quando i titoli arrivano da fonti diverse da TMDB","Nella prima domanda ogni categoria ha una breve descrizione","Nuova locandina con i colori Reelax per i titoli senza immagine","Sul risultato puoi scorrere verso sinistra per avere subito un altro titolo","Avvio più rapido e controllo degli aggiornamenti molto più leggero","Migliorie e correzioni"]},
   {d:"22 ottobre 2026",t:["Nuova animazione di accesso e uscita: un'onda circolare parte dal tasto e rivela la schermata successiva, ora più fluida","Schermata di accesso rinnovata: scritta REELAX animata con i colori sfumati dell'app e lo stesso sfondo dell'app, nel tema chiaro e in quello scuro","Su smartphone l'app resta in verticale: ruotando il telefono compare l'invito a raddrizzarlo","Account di prova isolato: non vede né modifica liste, «Già visti», cronologia, paese e piattaforme dell'account vero, e nelle Impostazioni non mostra più username, password e dispositivi","Lista «Le mie piattaforme» più viva: le righe entrano a cascata e la selezione ha una piccola animazione con segno di spunta che rimbalza","Conferma di uscita più chiara: il tasto ora dice «Sì, esci dall'account»; anche «Esci da tutti i dispositivi» apre lo stesso popup di conferma","Traduzioni completate: intestazioni delle schede, condivisione, errori, impostazioni e frasi di «Perché fa per te» ora seguono la lingua della regione"]},
   {d:"22 ottobre 2026",t:["Nuova pagina Novità con la versione dell'app","Impostazioni rifatte: sezioni più chiare, su PC menu laterale con pannello e anteprime del tema","Su PC tutte le pagine usano tutta la larghezza dello schermo","Tema chiaro e scuro neutri, con accento rosso Reelax","Cronologia fino a 100 titoli, ogni titolo scade dopo 7 giorni; svuotarla ora cancella davvero, anche tra dispositivi"]},
   {d:"21 ottobre 2026",t:["Il logo Reelax in alto ora si può toccare e ha una nuova animazione con una linea sfumata","Cambio tema più fluido, con transizione e interruttore rifatti","Il caricamento si può annullare e la posizione di scorrimento viene ricordata","Migliorie e correzioni"]},
@@ -2784,7 +2777,7 @@ async function rank(a){let list=null;
     list=list.filter(m=>!isSeen(m));if(list.length)break;
   }
   if(!list.length)throw new Error("EMPTY");
-  if(a.era&&a.era!=="any"){const f=list.filter(m=>eraOk(m.year,a));if(f.length>=3)list=f;}
+  if(a.era&&a.era!=="any"){list=list.filter(m=>eraOk(m.year,a));if(!list.length)throw new Error("EMPTY");}   // epoca: vincolo vero, mai titoli fuori dagli anni scelti
   if((a.mood==="love"||a.mood==="scare"||a.mood==="sport")&&(S.cat==="anime"||S.cat==="cartoni")){const rx=a.mood==="love"?/romance|drama/i:a.mood==="sport"?/sport/i:/horror/i;const rf=list.filter(m=>m.kwm||(m.genres||[]).some(x=>rx.test(x)));if(rf.length>=2)list=rf;}
   const TP=(starsOn()&&S.style==="taste")?tasteProfile():null;   // i gusti contano solo per "Per te"   // gusti dedotti dalle stelle (solo se la personalizzazione è attiva)
   const out=list.map(m=>({m,s:score(S.cat,m,a)+(TP?110*TP.c*tasteOf(m,TP):0)})).sort((x,y)=>y.s-x.s);
@@ -2850,7 +2843,8 @@ async function run(surprise,fresh){
 }
 
 /* ---------- Risultato ---------- */
-function fbPoster(t,y){const h=Array.from(t).reduce((a,ch)=>((a*31+ch.charCodeAt(0))%360),0);return '<div class="poster fb" role="button" tabindex="0" aria-label="Ingrandisci" style="background:linear-gradient(135deg,hsl('+h+' 68% 42%),hsl('+((h+55)%360)+' 58% 30%))"><small>Reelax</small><h3>'+esc(t)+'</h3><small>'+esc(y||'')+'</small></div>';}
+function fbPoster(t,y){const h=Array.from(t).reduce((a,ch)=>((a*31+ch.charCodeAt(0))%360),0),ini=(String(t||"?").trim().charAt(0)||"?").toUpperCase();   // locandina mancante: colori Reelax (angolo diverso per ogni titolo) e iniziale grande, come nell'immagine da condividere
+  return '<div class="poster fb" role="button" tabindex="0" aria-label="Ingrandisci" style="background:linear-gradient('+(110+h%100)+'deg,#ff3d52,#c13bd9 60%,#8f62f8)"><b class="ini" aria-hidden="true">'+esc(ini)+'</b><small>Reelax</small><h3>'+esc(t)+'</h3><small>'+esc(y||'')+'</small></div>';}
 // umori doppi ("amore e lacrime", "mistero e fantasy"): basta una delle due metà, e il motivo dice quale
 const FACETS={
   love:[["amore",["romance film","romantic drama film","romantic comedy film","romantic comedy","Romance"]],["lacrime",["drama film","Drama"]]],
@@ -3521,7 +3515,6 @@ function show(r,sur,man,quiet){
     (d.seasonList&&d.seasonList.length?'<button type="button" class="card castbtn" data-act="seasons"><h3>Stagioni ed episodi</h3><span class="cs">'+d.seasonList.length+(d.seasonList.length>1?' stagioni':' stagione')+(d.episodes?' · '+d.episodes+' episodi':'')+'</span><span class="cgo">'+(d.seasonList.length===1?'Vedi episodi →':'Vedi stagioni ed episodi →')+'</span></button>':'')+
     infoHtml(d)+
     provHtml(d)+
-    simHtml(d)+
     sagaTile(d)+
     '<button type="button" class="btn shr" data-act="share">'+IC.share+'Condividi</button>'+
     '<p class="attr">'+attrTxt(d).split('\n').map(l=>'<span>'+esc(l)+'</span>').join('')+'</p>'+
@@ -3545,7 +3538,6 @@ function show(r,sur,man,quiet){
     const po=stage.querySelector('.hero .poster');
     if(po&&po.animate)po.animate([{opacity:0,transform:'translate3d(0,22px,0) scale(.93)'},{opacity:1,transform:'none'}],{duration:1000,delay:40,easing:'cubic-bezier(.16,1,.3,1)',fill:'backwards'});
   }
-  {const sg=$("simg");if(sg)sg.onclick=e=>{const b=e.target.closest&&e.target.closest("[data-i]");if(!b)return;tap();TDX=1;openSearched(d.sim[+b.dataset.i],()=>show(r,sur,man,"fade"));};}
   if(snap)settle(snap);
   setBd(d.poster);
   try{jwLoad(d);}catch(e){}
@@ -3576,6 +3568,20 @@ addEventListener("touchstart",e=>{const t=e.touches&&e.touches[0];if(!t)return;
 let EDGEX=-1;
 addEventListener("touchmove",e=>{const t=e.touches&&e.touches[0];if(EDGEX>=0&&t&&Math.abs(t.clientX-EDGEX)>4&&e.cancelable)e.preventDefault();},{passive:false,capture:true});
 addEventListener("touchend",()=>{EDGEX=-1;},true);addEventListener("touchcancel",()=>{EDGEX=-1;},true);
+/* risultato: scorrendo il dito verso sinistra arriva "Un altro" (come il tasto). Solo gesto orizzontale deciso, mai dai bordi né sulla locandina ingrandita */
+(function(){
+  let sx=0,sy=0,on=false;
+  stage.addEventListener("touchstart",e=>{const t=e.touches[0];on=e.touches.length===1&&!LB&&!!stage.querySelector(".res")&&!!document.querySelector('#dockin [data-act="oth"]')&&t.clientX>30&&t.clientX<innerWidth-30;sx=t.clientX;sy=t.clientY;},{passive:true});
+  stage.addEventListener("touchend",e=>{
+    if(!on)return;on=false;
+    const t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;
+    if(dx>-80||Math.abs(dy)>Math.abs(dx)*.5)return;
+    const b=document.querySelector('#dockin [data-act="oth"]');if(!b)return;
+    const r=stage.querySelector(".res");
+    if(r&&r.animate&&!RM())r.animate([{opacity:1,transform:"none"},{opacity:0,transform:"translate3d(-40px,0,0)"}],{duration:200,easing:"ease-in",fill:"forwards"});
+    setTimeout(()=>b.click(),RM()?0:160);
+  },{passive:true});
+})();
 addEventListener("popstate",()=>{
   if(IGN){IGN=0;return;}
   if(Date.now()-EDGET<900&&Date.now()-BTAP>900&&history.state&&typeof history.state.d==="number"&&history.state.d<PD){IGN=1;try{history.forward();}catch(e){IGN=0;}return;}
@@ -3705,24 +3711,11 @@ $("lgf").addEventListener("submit",async e=>{
   c.classList.remove("busy");btn.disabled=false;er.textContent=fail||"Nome utente o password non corretti.";
   void c.offsetWidth;c.classList.add("bad");$("lgp").value="";try{$("lgp").focus();}catch(x){}
 });
-/* avvio: la schermata #sp resta finche' font e pagina sono pronti (solo da app installata: minimo 1,5 s; nel browser nessuna schermata), poi la scritta si dissolve e compare login o app */
-function hideSplash(){
-  const sp=$("sp");if(!sp||sp.hidden)return;
-  if(RM()||!sp.animate){sp.hidden=true;return;}
-  sp.classList.remove("wait");
-  setTimeout(function(){   // inizio dissolvenza: sfondo pagina e colore barra tornano quelli del tema, così iOS rilegge il bordo subito
-    sp.classList.add("fd");
-  },260);
-  const sv=sp.querySelector("svg");
-  [...sp.querySelectorAll("path")].forEach((p,i)=>p.animate([{opacity:1,transform:"none"},{opacity:0,transform:"translateY(-16px) scale(1.14)"}],{duration:520,delay:i*60,easing:"cubic-bezier(.4,0,.2,1)",fill:"forwards"}));
-  if(sv)sv.animate([{filter:"blur(0)"},{filter:"blur(10px)"}],{duration:700,delay:120,easing:"ease-in",fill:"forwards"});
-  sp.animate([{opacity:1},{opacity:0}],{duration:560,delay:420,easing:"ease",fill:"forwards"}).onfinish=()=>{sp.hidden=true;};
-  setTimeout(()=>{sp.hidden=true;},1600);
-}
-const boot=()=>{document.body.classList.remove("pre");try{if(!(history.state&&typeof history.state.d==="number"))history.replaceState({d:0},"");}catch(e){}if(isAuthed()){routeFromHash(true);syncPull();}else lockApp();hideSplash();};
-const fontsOk=(document.fonts&&document.fonts.ready)?Promise.race([document.fonts.ready,sleep(1200)]):Promise.resolve();
-const pageOk=document.readyState==="complete"?Promise.resolve():new Promise(r=>{addEventListener("load",r,{once:true});setTimeout(r,3000);});
-Promise.all([fontsOk,pageOk,0]).then(()=>requestAnimationFrame(()=>requestAnimationFrame(boot)));
+const boot=()=>{document.body.classList.remove("pre");try{if(!(history.state&&typeof history.state.d==="number"))history.replaceState({d:0},"");}catch(e){}if(isAuthed()){routeFromHash(true);syncPull();}else lockApp();};
+/* avvio: si aspettano solo i font (max 1,2 s), non tutto il resto della pagina. Il foglio dei font arriva senza bloccare: prima si attende che sia applicato, poi che i font siano scaricati */
+const cssOk=()=>new Promise(r=>{const l=document.querySelector('link[href*="fonts.googleapis.com/css2"][media]');if(!l||l.media==="all")return r();l.addEventListener("load",r,{once:true});l.addEventListener("error",r,{once:true});});
+const fontsOk=(document.fonts&&document.fonts.ready)?Promise.race([cssOk().then(()=>Promise.all([document.fonts.load('800 1em "Bricolage Grotesque"'),document.fonts.load('400 1em "Instrument Sans"')]).catch(()=>{})).then(()=>document.fonts.ready),sleep(1200)]):Promise.resolve();
+fontsOk.then(()=>requestAnimationFrame(()=>requestAnimationFrame(boot)));
 /* aggiornamento live: tornando sull'app (o ogni minuto) si leggono le impostazioni dagli altri dispositivi */
 let lastPull=Date.now();
 const livePull=()=>{if(document.hidden||document.body.classList.contains("locked")||!isAuthed()||Date.now()-lastPull<15000)return;lastPull=Date.now();syncPull();};
@@ -3737,7 +3730,7 @@ addEventListener("appinstalled",()=>{ib.hidden=true;});
 </script>
 
 <script>
-/* scorciatoie da tastiera (desktop): ← indietro, → / Invio prossimo, Esc chiude la locandina */
+/* scorciatoie da tastiera (desktop): ← indietro, → prossimo, Esc chiude la locandina (Backspace no: premuto per sbaglio faceva perdere la pagina) */
 addEventListener("keydown",function(e){
   if(e.ctrlKey||e.metaKey||e.altKey)return;
   var t=e.target,tag=t&&t.tagName;if(tag==="INPUT"||tag==="TEXTAREA")return;
@@ -3745,7 +3738,7 @@ addEventListener("keydown",function(e){
   if(e.key==="Escape"&&lb&&lb.classList.contains("on")){var x=document.getElementById("lbx");if(x)x.click();return;}
   if(document.body.classList.contains("locked")||(lb&&lb.classList.contains("on")))return;
   var k=e.key,sel=null;
-  if(k==="ArrowLeft"||k==="Backspace")sel='#tl [data-act="back"]';
+  if(k==="ArrowLeft")sel='#tl [data-act="back"]';
   else if(k==="ArrowRight")sel='#dockin [data-act="oth"]';
   if(sel){var b=document.querySelector(sel);if(b){e.preventDefault();b.click();}}
 });
@@ -3757,9 +3750,18 @@ addEventListener("keydown",function(e){
   try{if(/[?&]v=/.test(location.search))history.replaceState(history.state,"",location.pathname+location.hash);}catch(e){}   // tolgo il parametro dall'indirizzo
   function h(t){var x=2166136261;for(var i=0;i<t.length;i++){x^=t.charCodeAt(i);x=Math.imul(x,16777619);}return (x>>>0).toString(36)+"-"+t.length;}
   function get(url,opt){return fetch(url,opt).then(function(r){if(!r.ok)throw 0;return r.text();}).then(function(t){if(t.indexOf("<html")<0)throw 0;return t;});}
+  /* controllo leggero: prima solo l'intestazione ETag (nessun download). Se è uguale a quella della copia in uso la pagina non è cambiata;
+     solo se è diversa (o manca) si scarica la pagina intera e si confronta il contenuto come prima */
+  function tag(r){return r&&r.ok&&(r.headers.get("etag")||r.headers.get("last-modified"))||"";}
+  function same(){
+    return Promise.all([
+      fetch(HREF,{cache:"force-cache"}).then(tag).catch(function(){return "";}),
+      fetch(location.pathname,{method:"HEAD",cache:"no-store"}).then(tag).catch(function(){return "";})
+    ]).then(function(t){return !!t[0]&&t[0]===t[1];});
+  }
   function check(){
     if(busy||navigator.onLine===false)return;busy=true;
-    Promise.all([
+    same().then(function(s){if(s)return null;return Promise.all([
       get(HREF,{cache:"force-cache"}).then(h).catch(function(){return null;}),     // la pagina che sto usando (copia in cache)
       get(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(t){return h(t);})   // quella appena pubblicata
     ]).then(function(r){
@@ -3769,7 +3771,7 @@ addEventListener("keydown",function(e){
       var a=document.activeElement;if(a&&/INPUT|TEXTAREA/.test(a.tagName))return;   // non interrompo chi sta scrivendo
       try{sessionStorage.setItem(G,fresh);}catch(e){}
       location.replace(location.pathname+"?v="+fresh+location.hash);
-    }).catch(function(){}).then(function(){busy=false;});
+    });}).catch(function(){}).then(function(){busy=false;});
   }
   check();
   document.addEventListener("visibilitychange",function(){if(!document.hidden)check();});
