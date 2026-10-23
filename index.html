@@ -171,15 +171,16 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 #app.onset #dock{padding-top:0;padding-bottom:max(14px,var(--sab))}
 .srow.out{margin-top:auto;flex:none}
 /* home: indicatore "Cerca" che scende trascinando la pagina verso il basso */
-.pull{position:fixed;left:50%;top:calc(var(--sat) + 70px);z-index:4;display:flex;align-items:center;gap:8px;padding:6px 16px 6px 6px;border-radius:999px;background:var(--s2);border:1px solid var(--line2);box-shadow:0 10px 30px rgba(0,0,0,.22);font-weight:700;font-size:.9rem;white-space:nowrap;color:var(--fg);pointer-events:none;overflow:hidden;opacity:0;transform:translate3d(-50%,-24px,0) scale(.6);will-change:transform,opacity;transition:background .25s,border-color .25s,color .25s,box-shadow .25s}
-.pull i{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--soft);transition:background .25s}
+.pull{position:fixed;left:50%;top:calc(var(--sat) + 70px);z-index:4;display:flex;align-items:center;gap:8px;padding:6px 16px 6px 6px;border-radius:999px;background:var(--s2);border:1px solid var(--line2);box-shadow:0 10px 30px rgba(0,0,0,.22);font-weight:700;font-size:.9rem;white-space:nowrap;color:var(--fg);pointer-events:none;overflow:hidden;opacity:0;transform:translate3d(-50%,-24px,0) scale(.6);will-change:transform,opacity}
+.pull i{display:grid;place-items:center;width:30px;height:30px;border-radius:50%}
 .pull i svg{width:17px;height:17px}
-.pull::before{content:"";position:absolute;inset:-1px;border-radius:inherit;background:var(--grad);opacity:0;transition:opacity .3s ease}   /* il gradiente sfuma dentro (un gradiente non si può animare direttamente) */
+.pull{--k:0;color:color-mix(in srgb,#fff calc(var(--k)*100%),var(--fg));border-color:color-mix(in srgb,transparent calc(var(--k)*100%),var(--line2));box-shadow:0 10px 30px color-mix(in srgb,rgba(255,61,82,.35) calc(var(--k)*100%),rgba(0,0,0,.22))}
+.pull::before{content:"";position:absolute;inset:-1px;border-radius:inherit;background:var(--grad);opacity:var(--k)}   /* il gradiente entra un po' alla volta, insieme al dito */
 .pull>*{position:relative;z-index:1}
-.pull span{display:inline-block}
-.pull.on{border-color:transparent;color:#fff;box-shadow:0 10px 30px rgba(255,61,82,.35)}
-.pull.on::before{opacity:1}
-.pull.on i{background:rgba(255,255,255,.22)}
+.pull i{background:color-mix(in srgb,rgba(255,255,255,.22) calc(var(--k)*100%),var(--soft))}
+.pull .tx{--m:0;position:relative;display:block;height:1.25em;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 16px*var(--m)),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 16px*var(--m)),transparent)}   /* a metà passaggio il bordo destro della scritta sfuma invece di tagliarsi */
+.pull .tx b{position:absolute;left:0;top:0;font:inherit;line-height:1.25em;white-space:nowrap;will-change:opacity,transform}
+.pull .tx b+b{opacity:0}
 .ghost{position:absolute;z-index:1;box-sizing:border-box;overflow:hidden;padding:10px var(--gut) 20px;pointer-events:none;will-change:transform,opacity}
 
 /* dock inferiore: resta SOPRA la zona della home-indicator, così i tasti si toccano sempre */
@@ -3632,13 +3633,17 @@ addEventListener("touchend",()=>{EDGEX=-1;},true);addEventListener("touchcancel"
     const p=Math.min(1,off/TH);
     pg.style.transform="translate3d(0,"+off+"px,0)";pg.style.opacity=String(1-.35*p);
     ind.style.opacity=String(Math.min(1,p*1.4));ind.style.transform=tf(off,.6+.4*p);
+    /* il passaggio "Cerca" -> "Rilascia per cercare" segue il dito: parte a metà strada e si completa sulla soglia (risalendo torna indietro allo stesso modo).
+       k da 0 a 1 guida insieme gradiente, colori, larghezza e le due scritte che si danno il cambio */
+    let k=Math.max(0,Math.min(1,(off-TH*.5)/(TH*.5)));k=k*k*(3-2*k);
+    ind.style.setProperty("--k",k.toFixed(3));
+    const tx=ind.lastChild,A=tx.firstChild,B=tx.lastChild;
+    tx.style.width=(ind._wa+(ind._wb-ind._wa)*k).toFixed(1)+"px";tx.style.setProperty("--m",(4*k*(1-k)).toFixed(3));
+    A.style.opacity=String(1-k);A.style.transform="translate3d(0,"+(-7*k).toFixed(1)+"px,0)";
+    B.style.opacity=String(k);B.style.transform="translate3d(0,"+(7*(1-k)).toFixed(1)+"px,0)";
     const a=off>=TH;
-    if(a!==armed){armed=a;ind.classList.toggle("on",a);
-      const sp=ind.lastChild,w0=ind.offsetWidth;sp.textContent=a?"Rilascia per cercare":"Cerca";const w1=ind.offsetWidth;   // la pillola si allarga/stringe piano e la scritta nuova entra in dissolvenza
-      if(!RM()&&ind.animate){ind.getAnimations().forEach(x=>{if(x.effect&&x.effect.getKeyframes().some(k=>k.width))x.cancel();});
-        ind.animate([{width:w0+"px"},{width:w1+"px"}],{duration:320,easing:E});
-        sp.animate([{opacity:0,transform:"translate3d(0,"+(a?6:-6)+"px,0)"},{opacity:1,transform:"none"}],{duration:280,easing:E});}
-      if(a&&!RM()&&ind.firstChild.animate)ind.firstChild.animate([{transform:"scale(1)"},{transform:"scale(1.22)"},{transform:"scale(1)"}],{duration:340,easing:"cubic-bezier(.34,1.56,.64,1)"});}
+    if(a!==armed){armed=a;   // sulla soglia: solo un piccolo "tic" dell'icona come conferma
+      if(a&&!RM()&&ind.firstChild.animate)ind.firstChild.animate([{transform:"scale(1)"},{transform:"scale(1.14)"},{transform:"scale(1)"}],{duration:300,easing:"cubic-bezier(.34,1.56,.64,1)"});}
   };
   const reset=()=>{on=false;pull=false;armed=false;off=0;pg=null;ind=null;};
   stage.addEventListener("touchstart",e=>{
@@ -3653,7 +3658,9 @@ addEventListener("touchend",()=>{EDGEX=-1;},true);addEventListener("touchcancel"
         pg=stage.querySelector(".page");if(!pg){on=false;return;}
         pull=true;pg.style.transition="none";pg.getAnimations().forEach(a=>a.cancel());
         ind=document.createElement("div");ind.className="pull";ind.setAttribute("aria-hidden","true");
-        ind.innerHTML='<i>'+IC.search+'</i><span></span>';ind.lastChild.textContent="Cerca";document.body.appendChild(ind);
+        ind.innerHTML='<i>'+IC.search+'</i><span class="tx"><b></b><b></b></span>';
+        ind.lastChild.firstChild.textContent=trStr("Cerca");ind.lastChild.lastChild.textContent=trStr("Rilascia per cercare");
+        document.body.appendChild(ind);ind._wa=ind.lastChild.firstChild.offsetWidth;ind._wb=ind.lastChild.lastChild.offsetWidth;   // larghezze delle due scritte: la pillola passa dall'una all'altra seguendo il dito
       }else{if(Math.abs(dx)>10||dy<-8)on=false;return;}
     }
     if(e.cancelable)e.preventDefault();
