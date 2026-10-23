@@ -3926,12 +3926,12 @@ $("lgf").addEventListener("submit",async e=>{
   void c.offsetWidth;c.classList.add("bad");$("lgp").value="";try{$("lgp").focus();}catch(x){}
 });
 /* login e tastiera (telefono): il modulo si sposta INSIEME alla tastiera invece di lasciare che iOS sposti la pagina di colpo.
-   Toccando un campo parte subito verso il centro dello spazio che resterà libero (altezza della tastiera: l'ultima vista, o una stima),
-   poi si corregge sulla misura vera; chiudendo la tastiera torna giù con la stessa curva. Passare da un campo all'altro non lo muove.
+   Si sposta solo quando lo schermo si restringe davvero (tastiera vera), verso il centro dello spazio libero; chiudendo torna giù con la stessa curva.
+   Col pannello "Accedi" di iOS (Face ID) lo schermo non cambia e il modulo resta fermo. Passare da un campo all'altro non lo muove.
    Usa la proprietà "translate", separata da "transform": non interferisce con le animazioni dell'onda di accesso/uscita */
 (function(){
   if(!window.visualViewport||!matchMedia("(pointer:coarse)").matches)return;
-  const vv=visualViewport,f=$("lgf");let KB=Math.round(innerHeight*.42),open=false,t=null,touchT=0;
+  const vv=visualViewport,f=$("lgf");let open=false,t=null;
   const isIn=el=>!!el&&(el.id==="lgu"||el.id==="lgp");
   const curY=()=>{const v=getComputedStyle(f).translate;if(!v||v==="none")return 0;const p=v.split(" ");return parseFloat(p[1]||"0")||0;};
   const shift=(top,bot)=>{   // spostamento perché il modulo stia al centro della zona visibile [top,bot], senza uscire dal bordo alto
@@ -3939,15 +3939,14 @@ $("lgf").addEventListener("submit",async e=>{
     let y=top+((bot-top)-h)/2-top0;y=Math.max(y,top+12+SAT()-top0);
     return Math.min(0,Math.round(y));};
   const put=y=>{f.style.translate="0 "+y+"px";};
-  f.addEventListener("touchstart",()=>{touchT=Date.now();},{passive:true});
   f.addEventListener("focusin",e=>{
     if(lg.hidden||!isIn(e.target))return;clearTimeout(t);if(open)return;open=true;
-    if(Date.now()-touchT<800)put(shift(0,innerHeight-KB));   // campo toccato: la tastiera sta per salire, il modulo parte insieme a lei
+    // niente spostamento in anticipo: al tocco iOS può mostrare il pannello "Accedi" (Face ID) invece della tastiera, e lì il modulo deve restare al centro
   });
   f.addEventListener("focusout",()=>{clearTimeout(t);t=setTimeout(()=>{if(isIn(document.activeElement))return;open=false;put(0);},80);});
-  vv.addEventListener("resize",()=>{   // misura vera (arriva quando la tastiera ha finito): correggo e la ricordo per la prossima volta
+  vv.addEventListener("resize",()=>{   // lo schermo è cambiato: tastiera aperta (o chiusa)
     if(lg.hidden)return;const kb=Math.max(0,innerHeight-vv.height-vv.offsetTop);
-    if(open&&kb>80){KB=kb;put(shift(vv.offsetTop,vv.offsetTop+vv.height));}else put(0);});
+    if(open&&kb>80)put(shift(vv.offsetTop,vv.offsetTop+vv.height));else put(0);});   // si sposta solo quando lo schermo si restringe davvero (tastiera vera)
 })();
 /* compilazione automatica (password salvate): quando i campi si riempiono da soli, prima si chiude la tastiera e poi parte l'accesso.
    Due segnali, così almeno uno scatta su ogni telefono: lo stato "compilato automaticamente" del campo (animazione finta su :-webkit-autofill)
