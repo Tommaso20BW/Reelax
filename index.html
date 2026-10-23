@@ -186,7 +186,6 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .pull{--k:0;color:color-mix(in srgb,#fff calc(var(--k)*100%),var(--fg));border-color:color-mix(in srgb,transparent calc(var(--k)*100%),var(--line2));box-shadow:0 10px 30px color-mix(in srgb,rgba(255,61,82,.35) calc(var(--k)*100%),rgba(0,0,0,.22))}
 .pull::before{content:"";position:absolute;inset:-1px;border-radius:inherit;background:var(--grad);opacity:var(--k)}   /* il gradiente entra un po' alla volta, insieme al dito */
 .pull>*{position:relative;z-index:1}
-.pull.swp{left:auto;right:14px;top:46%;padding:6px 16px 6px 6px}   /* variante per "Un altro": entra da destra, a metà altezza */
 .pull i{background:color-mix(in srgb,rgba(255,255,255,.22) calc(var(--k)*100%),var(--soft))}
 .pull .tx{--m:0;position:relative;display:block;height:1.25em;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 16px*var(--m)),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 16px*var(--m)),transparent)}   /* a metà passaggio il bordo destro della scritta sfuma invece di tagliarsi */
 .pull .tx b{position:absolute;left:0;top:0;font:inherit;line-height:1.25em;white-space:nowrap;transform-origin:0 50%;will-change:opacity,transform,filter}
@@ -1076,7 +1075,9 @@ function swap(h,anim){
   if(h.indexOf('class="load"')<0)killWall();
   const old=stage.innerHTML,app=$("app");
   document.querySelectorAll(".ghost").forEach(g=>g.remove());
-  const dxs=(anim===false)?0:(TDX||NAV);TDX=0;NAV=0;
+  let vy=(anim===false)?0:VY;VY=0;
+  if(!vy&&anim!==false&&SPULL&&stage.querySelector("#sq")&&h.indexOf('class="opts')>=0){vy=-1;SPULL=false;}   // ricerca aperta trascinando giù: tornando alla home si chiude in verticale (al contrario del gesto)
+  const dxs=(anim===false||vy)?0:(TDX||NAV);TDX=0;NAV=0;
   let ghost=null;
   const fadeOut=!dxs&&anim!==false&&old.trim()&&old.indexOf('class="load"')<0;
   if((dxs||fadeOut)&&old.trim()){
@@ -1108,7 +1109,10 @@ function swap(h,anim){
     return;
   }
   if(!RM()&&stage.animate){
-    if(dxs){   // tra due domande: la vecchia sfuma e scivola un poco via, la nuova arriva dalla parte giusta (avanti da destra, indietro da sinistra)
+    if(vy){   // verticale (ricerca aperta col gesto): vy=1 apre (la nuova scende dall'alto, la vecchia va giù), vy=-1 chiude (la vecchia risale, la nuova sale dal basso)
+      (stage.firstElementChild||stage).animate([{opacity:0,transform:"translate3d(0,"+(-vy*30)+"px,0)"},{opacity:1,transform:"none"}],{duration:420,delay:40,easing:E,fill:"backwards"});
+      if(ghost){const g=ghost;g.animate([{opacity:1,transform:"none"},{opacity:0,transform:"translate3d(0,"+(vy*44)+"px,0)"}],{duration:240,easing:"cubic-bezier(.4,0,1,1)",fill:"forwards"}).onfinish=()=>g.remove();setTimeout(()=>g.remove(),700);}
+    }else if(dxs){   // tra due domande: la vecchia sfuma e scivola un poco via, la nuova arriva dalla parte giusta (avanti da destra, indietro da sinistra)
       const D=22,mv=x=>"translate3d("+x+"px,0,0)";
       const h1=stage.querySelector("h1"),isOpts=!!stage.querySelector(".opts");
       if(!isOpts){const pg=stage.querySelector(".page")||stage;pg.animate([{opacity:0,transform:mv(dxs*D*1.6)},{opacity:1,transform:"none"}],{duration:380,delay:70,easing:E,fill:"backwards"});}
@@ -1340,7 +1344,9 @@ function home(anim){
 
 /* ---------- Ricerca manuale (TMDB) ---------- */
 let SQ="",SRUN=0,SLIST=[];
-function searchPage(){
+let VY=0,SPULL=false;   // VY: prossimo cambio pagina in verticale; SPULL: la ricerca aperta è stata aperta trascinando giù dalla home
+function searchPage(how){
+  if(how==="pull"){SPULL=true;VY=1;}else if(stage.querySelector(".opts"))SPULL=false;   // dal tasto in alto: si chiude di lato come sempre
   RUN++;
   setBd(null);setRoute("/cerca"+(SQ?"/"+enc(SQ):""));
   swap('<div class="page"><h1>Cerca un titolo</h1><input class="lgi sin" id="sq" type="search" placeholder="Film o serie TV" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="search" aria-label="Cerca un titolo"><div class="sres lib" id="sres"></div></div>',true);
@@ -2395,7 +2401,7 @@ async function doRevokeAll(){   // dopo la conferma nel popup: questo dispositiv
    Ogni voce: d (data), t (elenco di novità in italiano, brevi). La versione (v) e APP_VER si calcolano da sole: vedi "VERSIONE AUTOMATICA" sotto CHANGELOG. La pagina Impostazioni > Novità le mostra da sola. */
 let APP_VER="";   // si calcola da sola dal CHANGELOG (vedi sotto): non va scritta a mano
 const CHANGELOG=[
-  {d:"23 ottobre 2026",t:["La scelta Novità, Recenti o Classici ora viene sempre rispettata, anche quando i titoli arrivano da fonti diverse da TMDB","Nella prima domanda ogni categoria ha una breve descrizione","Anche le voglie e le cose da evitare hanno una breve descrizione","Trovati di recente senza limite di titoli: ognuno resta 7 giorni","Dalla prima domanda trascina la pagina verso il basso per aprire subito Cerca","«Esci da tutti i dispositivi» e «Svuota la cronologia» confermano con un breve avviso in basso; la cronologia svuotata si può recuperare con Annulla","Caricamento più leggero e leggibile con il tema chiaro, sfondo della scheda più morbido con il tema scuro","Nuova locandina con i colori Reelax per i titoli senza immagine","Sul risultato trascina verso sinistra per avere subito un altro titolo: la scheda segue il dito","Avvio più rapido e controllo degli aggiornamenti molto più leggero","Migliorie e correzioni"]},
+  {d:"23 ottobre 2026",t:["La scelta Novità, Recenti o Classici ora viene sempre rispettata, anche quando i titoli arrivano da fonti diverse da TMDB","Nella prima domanda ogni categoria ha una breve descrizione","Anche le voglie e le cose da evitare hanno una breve descrizione","Trovati di recente senza limite di titoli: ognuno resta 7 giorni","Dalla prima domanda trascina la pagina verso il basso per aprire subito Cerca","«Esci da tutti i dispositivi» e «Svuota la cronologia» confermano con un breve avviso in basso; la cronologia svuotata si può recuperare con Annulla","Caricamento più leggero e leggibile con il tema chiaro, sfondo della scheda più morbido con il tema scuro","Nuova locandina con i colori Reelax per i titoli senza immagine","Avvio più rapido e controllo degli aggiornamenti molto più leggero","Migliorie e correzioni"]},
   {d:"22 ottobre 2026",t:["Nuova animazione di accesso e uscita: un'onda circolare parte dal tasto e rivela la schermata successiva, ora più fluida","Schermata di accesso rinnovata: scritta REELAX animata con i colori sfumati dell'app e lo stesso sfondo dell'app, nel tema chiaro e in quello scuro","Su smartphone l'app resta in verticale: ruotando il telefono compare l'invito a raddrizzarlo","Account di prova isolato: non vede né modifica liste, «Già visti», cronologia, paese e piattaforme dell'account vero, e nelle Impostazioni non mostra più username, password e dispositivi","Lista «Le mie piattaforme» più viva: le righe entrano a cascata e la selezione ha una piccola animazione con segno di spunta che rimbalza","Conferma di uscita più chiara: il tasto ora dice «Sì, esci dall'account»; anche «Esci da tutti i dispositivi» apre lo stesso popup di conferma","Traduzioni completate: intestazioni delle schede, condivisione, errori, impostazioni e frasi di «Perché fa per te» ora seguono la lingua della regione"]},
   {d:"22 ottobre 2026",t:["Nuova pagina Novità con la versione dell'app","Impostazioni rifatte: sezioni più chiare, su PC menu laterale con pannello e anteprime del tema","Su PC tutte le pagine usano tutta la larghezza dello schermo","Tema chiaro e scuro neutri, con accento rosso Reelax","Cronologia fino a 100 titoli, ogni titolo scade dopo 7 giorni; svuotarla ora cancella davvero, anche tra dispositivi"]},
   {d:"21 ottobre 2026",t:["Il logo Reelax in alto ora si può toccare e ha una nuova animazione con una linea sfumata","Cambio tema più fluido, con transizione e interruttore rifatti","Il caricamento si può annullare e la posizione di scorrimento viene ricordata","Migliorie e correzioni"]},
@@ -3644,58 +3650,6 @@ addEventListener("touchstart",e=>{const t=e.touches&&e.touches[0];if(!t)return;
 let EDGEX=-1;
 addEventListener("touchmove",e=>{const t=e.touches&&e.touches[0];if(EDGEX>=0&&t&&Math.abs(t.clientX-EDGEX)>4&&e.cancelable)e.preventDefault();},{passive:false,capture:true});
 addEventListener("touchend",()=>{EDGEX=-1;},true);addEventListener("touchcancel",()=>{EDGEX=-1;},true);
-/* risultato: trascinando verso sinistra arriva "Un altro" (come il tasto). La scheda segue il dito e da destra entra la pillola "Un altro",
-   che si colora avvicinandosi alla soglia; rilasciando oltre la soglia la scheda vola via, prima torna al suo posto. Mai dai bordi né sulla locandina ingrandita */
-(function(){
-  const TH=90,E="cubic-bezier(.2,.85,.25,1)";
-  let on=false,drag=false,armed=false,sx=0,sy=0,dx=0,res=null,ind=null;
-  const btn=()=>document.querySelector('#dockin [data-act="oth"]');
-  const can=()=>!LB&&!document.body.classList.contains("locked")&&!!stage.querySelector(".res")&&!!btn();
-  const mv=()=>{const o=Math.max(0,-dx);return o<TH?o:TH+(o-TH)*.35;};   // oltre la soglia il dito incontra resistenza
-  const paint=()=>{
-    const m=mv(),p=Math.min(1,m/TH);
-    res.style.transform="translate3d("+(-m).toFixed(1)+"px,0,0)";res.style.opacity=String(1-Math.min(.45,m/320));
-    let k=Math.max(0,Math.min(1,(m-TH*.5)/(TH*.5)));k=k*k*(3-2*k);
-    ind.style.opacity=String(Math.min(1,p*1.4));ind.style.transform="translate3d("+(40*(1-p)).toFixed(1)+"px,-50%,0) scale("+(.7+.3*p).toFixed(3)+")";ind.style.setProperty("--k",k.toFixed(3));
-    const a=m>=TH;
-    if(a!==armed){armed=a;if(a&&!RM()&&ind.firstChild.animate)ind.firstChild.animate([{transform:"scale(1)"},{transform:"scale(1.14)"},{transform:"scale(1)"}],{duration:300,easing:"cubic-bezier(.34,1.56,.64,1)"});}
-  };
-  stage.addEventListener("touchstart",e=>{
-    const t=e.touches[0];on=e.touches.length===1&&can()&&t.clientX>30&&t.clientX<innerWidth-30;
-    drag=false;armed=false;dx=0;sx=t.clientX;sy=t.clientY;
-  },{passive:true});
-  stage.addEventListener("touchmove",e=>{
-    if(!on)return;
-    const t=e.touches[0],ddx=t.clientX-sx,ddy=t.clientY-sy;
-    if(!drag){
-      if(ddx<-12&&Math.abs(ddx)>Math.abs(ddy)*1.3){
-        res=stage.querySelector(".res");if(!res){on=false;return;}
-        drag=true;res.style.transition="none";res.style.willChange="transform,opacity";
-        ind=document.createElement("div");ind.className="pull swp";ind.setAttribute("aria-hidden","true");
-        ind.innerHTML='<i>'+IC.next+'</i><span></span>';ind.lastChild.textContent=trStr("Un altro");document.body.appendChild(ind);
-      }else{if(Math.abs(ddy)>10||ddx>10)on=false;return;}
-    }
-    if(e.cancelable)e.preventDefault();
-    dx=ddx;paint();
-  },{passive:false});
-  const end=e=>{
-    if(!on||!drag){on=false;return;}
-    const go=armed&&e.type==="touchend"&&can(),el=ind,r=res,m=mv(),fast=RM()||!r.animate;
-    on=false;drag=false;armed=false;res=null;ind=null;dx=0;
-    const bye=sc=>{if(fast||!el.animate){el.remove();return;}el.animate([{opacity:el.style.opacity,transform:el.style.transform},{opacity:0,transform:"translate3d(0,-50%,0) scale("+sc+")"}],{duration:260,easing:"ease-out",fill:"forwards"}).onfinish=()=>el.remove();setTimeout(()=>el.remove(),600);};
-    if(go){   // la scheda vola via a sinistra, poi parte "Un altro"
-      bye(1.15);
-      if(!fast){const to="translate3d("+(-innerWidth*.9).toFixed(0)+"px,0,0)";r.animate([{transform:r.style.transform,opacity:r.style.opacity},{transform:to,opacity:0}],{duration:240,easing:"cubic-bezier(.4,0,1,1)",fill:"forwards"});r.style.transform=to;r.style.opacity="0";}
-      setTimeout(()=>{const b=btn();if(b)b.click();},fast?0:200);
-      return;
-    }
-    bye(.7);   // sotto la soglia: la scheda torna al suo posto
-    if(fast){r.style.transform="";r.style.opacity="";r.style.willChange="";return;}
-    r.animate([{transform:r.style.transform,opacity:r.style.opacity},{transform:"none",opacity:1}],{duration:380,easing:E}).onfinish=()=>{r.style.willChange="";r.style.transition="";};
-    r.style.transform="";r.style.opacity="";
-  };
-  stage.addEventListener("touchend",end,{passive:true});stage.addEventListener("touchcancel",end,{passive:true});
-})();
 /* home: trascinando la prima domanda verso il basso compare "Cerca" (come la ricerca di iPhone). La pagina scende con resistenza;
    oltre la soglia l'indicatore si colora e, rilasciando, si apre la ricerca con la tastiera già pronta. Prima della soglia tutto torna su morbido */
 (function(){
@@ -3754,7 +3708,7 @@ addEventListener("touchend",()=>{EDGEX=-1;},true);addEventListener("touchcancel"
     const bye=(sc,ms)=>{if(fast){el.remove();return;}el.animate([{opacity:el.style.opacity,transform:el.style.transform},{opacity:0,transform:tf(o,sc)}],{duration:ms,easing:"ease-out",fill:"forwards"}).onfinish=()=>el.remove();setTimeout(()=>el.remove(),ms+300);};
     if(go){   // la home esce scivolando giù (la porta via swap) e arriva la ricerca; la tastiera si apre subito, finché il tocco vale ancora come gesto dell'utente
       bye(1.25,280);NAV=0;TDX=0;clearTimeout(NAVT);
-      searchPage();
+      searchPage("pull");
       const q=$("sq");if(q)try{q.focus({preventScroll:true});}catch(x){}
       return;
     }
