@@ -240,7 +240,7 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 /* caricamento: parete di locandine che scorrono (solo transform/opacity) */
 .load{position:relative;overflow:hidden;margin:-10px calc(var(--gut)*-1) -20px;min-height:calc(100% + 30px)}
 .load::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(62% 30% at 50% 50%,rgba(var(--bgrgb),.96) 0,rgba(var(--bgrgb),.62) 62%,transparent 100%),linear-gradient(var(--bg),transparent 16%,transparent 84%,var(--bg))}
-.load p{position:relative;z-index:2;padding:0 var(--gut);text-shadow:0 2px 20px rgba(0,0,0,.85)}
+.load p{position:relative;z-index:2;padding:0 var(--gut);text-shadow:0 1px 2px rgba(0,0,0,.8),0 0 10px rgba(0,0,0,.6),0 0 22px rgba(0,0,0,.35)}   /* niente alone scuro al centro del muro: solo un'ombra stretta sulle lettere */
 .load p span{display:inline-block}   /* cambia frase: si anima solo il testo, non il riquadro che lo contiene */
 .wall{position:absolute;left:-30%;right:-30%;top:50%;display:flex;flex-direction:column;gap:12px;pointer-events:none;transform:translate3d(0,-50%,0) rotate(-9deg);animation:wallIn 1.1s var(--ease) backwards}
 @keyframes wallIn{from{opacity:0;transform:translate3d(0,-47%,0) rotate(-9deg) scale(1.12)}}
@@ -523,7 +523,7 @@ body.pre #app{opacity:0}
 .ldw .prow2{height:var(--ph)}
 .ldw .pc{width:calc(var(--ph)*2/3);height:var(--ph);border-radius:calc(var(--ph)*.08);box-shadow:none;animation:none;overflow:visible}
 .ldw .pc img{border-radius:inherit}   /* il ritaglio ad angoli tondi sta sull'immagine, non su ogni cella con overflow:hidden (centinaia di maschere di ritaglio sulle righe in movimento): stesso aspetto, meno lavoro per il rendering */
-.ldw::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(44% 22% at 50% 50%,rgba(var(--bgrgb),.96) 0,rgba(var(--bgrgb),.6) 62%,transparent 100%),linear-gradient(to bottom,rgba(var(--shade),.88) 0,rgba(var(--shade),.72) calc(var(--sat) + 90px),rgba(var(--shade),.38) calc(var(--sat) + 170px),transparent 33%,transparent 66%,rgba(var(--shade),.3) 77%,rgba(var(--shade),.62) 89%,rgba(var(--shade),.86) 100%)}
+.ldw::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(to bottom,rgba(var(--shade),.88) 0,rgba(var(--shade),.72) calc(var(--sat) + 90px),rgba(var(--shade),.38) calc(var(--sat) + 170px),transparent 33%,transparent 66%,rgba(var(--shade),.3) 77%,rgba(var(--shade),.62) 89%,rgba(var(--shade),.86) 100%)}
 
 /* ===== SCHEDA ATTORE: stessa struttura e stesso movimento della scheda risultato ===== */
 .res>.sech{margin:10px 2px -4px;font:700 .72rem var(--fb);letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
@@ -709,9 +709,10 @@ body.pre #app{opacity:0}
 
 /* ===== TEMA CHIARO: caricamento e sfondo del risultato ===== */
 /* caricamento: niente alone scuro sul testo e macchia chiara molto più leggera dietro la scritta */
-:root[data-theme="light"] .load p{text-shadow:none}
+:root[data-theme="light"] .load p{text-shadow:0 1px 2px rgba(var(--bgrgb),.95),0 0 10px rgba(var(--bgrgb),.8),0 0 22px rgba(var(--bgrgb),.5)}   /* testo scuro: ombra chiara (stretta + morbida) che lo stacca dalle locandine, come quella scura sul testo bianco */
 /* tema chiaro: niente alone al centro; tutte le locandine del muro più trasparenti, così la scritta scura si legge ovunque */
-:root[data-theme="light"] .ldw .wall{opacity:.3}   /* trasparenza su tutto il muro (un solo livello): messa su ogni locandina, centinaia in movimento, faceva sfarfallare e scattare */
+:root[data-theme="light"] .ldw .wall{opacity:.4}   /* trasparenza su tutto il muro (un solo livello): messa su ogni locandina, centinaia in movimento, faceva sfarfallare e scattare */
+:root:not([data-theme="light"]) .ldw .wall{opacity:.5}   /* tema scuro: muro un po' più tenue, la scritta risalta meglio */
 :root[data-theme="light"] .ldw::after{background:linear-gradient(to bottom,rgb(var(--bgrgb)) 0,rgba(var(--bgrgb),.96) calc(var(--sat) + 60px),rgba(var(--bgrgb),.84) calc(var(--sat) + 110px),rgba(var(--bgrgb),.62) calc(var(--sat) + 160px),rgba(var(--bgrgb),.36) calc(var(--sat) + 215px),rgba(var(--bgrgb),.14) calc(var(--sat) + 270px),rgba(var(--bgrgb),0) 40%,rgba(var(--bgrgb),0) 60%,rgba(var(--bgrgb),.14) 69%,rgba(var(--bgrgb),.36) 77%,rgba(var(--bgrgb),.62) 85%,rgba(var(--bgrgb),.86) 92%,rgb(var(--bgrgb)) 100%)}
 /* risultato: sfondo sfocato più tenue e dissolvenza lunga e morbida verso il colore del tema (niente fascia grigia) */
 :root[data-theme="light"] #bd.on{opacity:.6}
