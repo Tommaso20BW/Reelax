@@ -171,10 +171,14 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 #app.onset #dock{padding-top:0;padding-bottom:max(14px,var(--sab))}
 .srow.out{margin-top:auto;flex:none}
 /* home: indicatore "Cerca" che scende trascinando la pagina verso il basso */
-.pull{position:fixed;left:50%;top:calc(var(--sat) + 70px);z-index:4;display:flex;align-items:center;gap:8px;padding:6px 16px 6px 6px;border-radius:999px;background:var(--s2);border:1px solid var(--line2);box-shadow:0 10px 30px rgba(0,0,0,.22);font-weight:700;font-size:.9rem;white-space:nowrap;color:var(--fg);pointer-events:none;opacity:0;transform:translate3d(-50%,-24px,0) scale(.6);will-change:transform,opacity;transition:background .25s,border-color .25s,color .25s,box-shadow .25s}
+.pull{position:fixed;left:50%;top:calc(var(--sat) + 70px);z-index:4;display:flex;align-items:center;gap:8px;padding:6px 16px 6px 6px;border-radius:999px;background:var(--s2);border:1px solid var(--line2);box-shadow:0 10px 30px rgba(0,0,0,.22);font-weight:700;font-size:.9rem;white-space:nowrap;color:var(--fg);pointer-events:none;overflow:hidden;opacity:0;transform:translate3d(-50%,-24px,0) scale(.6);will-change:transform,opacity;transition:background .25s,border-color .25s,color .25s,box-shadow .25s}
 .pull i{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--soft);transition:background .25s}
 .pull i svg{width:17px;height:17px}
-.pull.on{background:var(--grad);border-color:transparent;color:#fff;box-shadow:0 10px 30px rgba(255,61,82,.35)}
+.pull::before{content:"";position:absolute;inset:-1px;border-radius:inherit;background:var(--grad);opacity:0;transition:opacity .3s ease}   /* il gradiente sfuma dentro (un gradiente non si può animare direttamente) */
+.pull>*{position:relative;z-index:1}
+.pull span{display:inline-block}
+.pull.on{border-color:transparent;color:#fff;box-shadow:0 10px 30px rgba(255,61,82,.35)}
+.pull.on::before{opacity:1}
 .pull.on i{background:rgba(255,255,255,.22)}
 .ghost{position:absolute;z-index:1;box-sizing:border-box;overflow:hidden;padding:10px var(--gut) 20px;pointer-events:none;will-change:transform,opacity}
 
@@ -3629,7 +3633,11 @@ addEventListener("touchend",()=>{EDGEX=-1;},true);addEventListener("touchcancel"
     pg.style.transform="translate3d(0,"+off+"px,0)";pg.style.opacity=String(1-.35*p);
     ind.style.opacity=String(Math.min(1,p*1.4));ind.style.transform=tf(off,.6+.4*p);
     const a=off>=TH;
-    if(a!==armed){armed=a;ind.classList.toggle("on",a);ind.lastChild.textContent=a?"Rilascia per cercare":"Cerca";
+    if(a!==armed){armed=a;ind.classList.toggle("on",a);
+      const sp=ind.lastChild,w0=ind.offsetWidth;sp.textContent=a?"Rilascia per cercare":"Cerca";const w1=ind.offsetWidth;   // la pillola si allarga/stringe piano e la scritta nuova entra in dissolvenza
+      if(!RM()&&ind.animate){ind.getAnimations().forEach(x=>{if(x.effect&&x.effect.getKeyframes().some(k=>k.width))x.cancel();});
+        ind.animate([{width:w0+"px"},{width:w1+"px"}],{duration:320,easing:E});
+        sp.animate([{opacity:0,transform:"translate3d(0,"+(a?6:-6)+"px,0)"},{opacity:1,transform:"none"}],{duration:280,easing:E});}
       if(a&&!RM()&&ind.firstChild.animate)ind.firstChild.animate([{transform:"scale(1)"},{transform:"scale(1.22)"},{transform:"scale(1)"}],{duration:340,easing:"cubic-bezier(.34,1.56,.64,1)"});}
   };
   const reset=()=>{on=false;pull=false;armed=false;off=0;pg=null;ind=null;};
