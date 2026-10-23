@@ -180,11 +180,11 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .toast button{flex:none;margin-left:4px;height:32px;padding:0 14px;border-radius:999px;background:var(--soft);color:var(--acc);font-weight:800;font-size:.88rem;transition:transform .1s,background .2s}
 .toast button:active{transform:scale(.94);background:var(--soft2)}
 /* pillola che diventa il campo di ricerca (e viceversa) */
-.morph{position:fixed;z-index:6;overflow:hidden;pointer-events:none;box-sizing:border-box;background:var(--s2);border:1px solid var(--line2);box-shadow:0 10px 30px rgba(0,0,0,.18)}
+.morph{position:fixed;z-index:6;overflow:hidden;pointer-events:none;box-sizing:border-box;background:var(--s2);border:1px solid var(--line2);transform-origin:0 0;will-change:transform}
 .morph u{position:absolute;inset:-1px;background:var(--grad)}
-.morph i{position:absolute;left:5px;top:50%;width:30px;height:30px;margin-top:-15px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.22);color:#fff}
+.morph i{position:absolute;left:5px;top:50%;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.22);color:#fff;transform:translateY(-50%);transform-origin:0 50%}
 .morph i svg{width:17px;height:17px}
-.morph b{position:absolute;left:43px;top:50%;transform:translateY(-50%);white-space:nowrap;color:#fff;font-weight:700;font-size:.9rem}
+.morph b{position:absolute;left:43px;top:50%;transform:translateY(-50%);transform-origin:0 50%;white-space:nowrap;color:#fff;font-weight:700;font-size:.9rem}
 /* home: indicatore "Cerca" che scende trascinando la pagina verso il basso */
 .pull{position:fixed;left:50%;top:calc(var(--sat) + 70px);z-index:4;display:flex;align-items:center;gap:8px;padding:6px 16px 6px 6px;border-radius:999px;background:var(--s2);border:1px solid var(--line2);box-shadow:0 10px 30px rgba(0,0,0,.22);font-weight:700;font-size:.9rem;white-space:nowrap;color:var(--fg);pointer-events:none;overflow:hidden;opacity:0;transform:translate3d(-50%,-24px,0) scale(.6);will-change:transform,opacity}
 .pull i{display:grid;place-items:center;width:30px;height:30px;border-radius:50%}
@@ -444,6 +444,13 @@ body.locked #app,body.locked #bd{visibility:hidden}
 .lgi{display:block;width:100%;height:56px;border-radius:18px;border:1px solid var(--line2);background:var(--s2);color:var(--fg);font:600 16px var(--fb);padding:0 18px;outline:none;transition:border-color .2s,box-shadow .2s}
 .lgi:focus{border-color:var(--vio);box-shadow:0 0 0 3px rgba(143,98,248,.25)}
 .lgi::placeholder{color:var(--dim);font-weight:500}
+/* campi compilati in automatico (password salvate): niente sfondo giallo/azzurro del sistema, restano del colore dell'app */
+.lgi:-webkit-autofill,.lgi:-webkit-autofill:hover{-webkit-box-shadow:0 0 0 100px var(--s2) inset;box-shadow:0 0 0 100px var(--s2) inset;-webkit-text-fill-color:var(--fg);caret-color:var(--fg);transition:background-color 100000s 0s,border-color .2s}
+.lgi:-webkit-autofill:focus{-webkit-box-shadow:0 0 0 100px var(--s2) inset,0 0 0 3px rgba(143,98,248,.25);box-shadow:0 0 0 100px var(--s2) inset,0 0 0 3px rgba(143,98,248,.25)}
+.lgi:autofill{box-shadow:0 0 0 100px var(--s2) inset;-webkit-text-fill-color:var(--fg);caret-color:var(--fg)}   /* regole separate: un browser che non conosce uno dei due nomi non scarta l'altra */
+.lgi:autofill:focus{box-shadow:0 0 0 100px var(--s2) inset,0 0 0 3px rgba(143,98,248,.25)}
+@keyframes rxAutofill{from{opacity:1}to{opacity:1}}   /* animazione "finta": serve solo a sapere quando il campo è stato compilato in automatico */
+.lgi:-webkit-autofill{animation:rxAutofill .01s}
 .lgerr{margin:0;min-height:1.3em;text-align:center;font-size:.86rem;color:var(--red)}
 #lg .btn{flex:none;width:100%}
 #lg .btn:disabled{opacity:.6}
@@ -1077,17 +1084,22 @@ function routeFromHash(force){
   }catch(e){}
   S.step=0;home();
 }
-/* pillola "Cerca" <-> campo di ricerca: un unico elemento che cambia posizione, misure e angoli; il gradiente sfuma nel colore del campo (o viceversa).
-   a,b = {x,y,w,h,r}; open=true dalla pillola al campo. Restituisce l'elemento a fine corsa (chi chiama decide come toglierlo) */
-function pillMorph(a,b,open){
+/* pillola "Cerca" -> campo di ricerca. L'elemento ha già le misure FINALI del campo e si muove solo con transform (scheda grafica, niente ricalcolo
+   della pagina a ogni fotogramma): parte rimpicciolito sulla pillola e si allarga fino al campo. Gli angoli sono corretti per la scala in ogni momento
+   e icona e scritta sono "controscalate", così non si deformano. a,b = {x,y,w,h,r}. Restituisce l'elemento a fine corsa */
+function pillMorph(a,b){
   const m=document.createElement("div");m.className="morph";m.setAttribute("aria-hidden","true");
-  m.innerHTML='<u></u><i>'+IC.search+'</i><b></b>';m.lastChild.textContent=trStr(open?"Rilascia per cercare":"Cerca");
+  m.innerHTML='<u></u><i>'+IC.search+'</i><b></b>';m.lastChild.textContent=trStr("Rilascia per cercare");
+  m.style.cssText="left:"+b.x+"px;top:"+b.y+"px;width:"+b.w+"px;height:"+b.h+"px";
   document.body.appendChild(m);
-  const box=r=>({left:r.x+"px",top:r.y+"px",width:r.w+"px",height:r.h+"px",borderRadius:r.r+"px"}),D=560,EM="cubic-bezier(.65,0,.25,1)";
-  const an=m.animate([box(a),box(b)],{duration:D,easing:EM,fill:"forwards"});
-  m.children[0].animate(open?[{opacity:1},{opacity:0}]:[{opacity:0},{opacity:1}],{duration:D,easing:EM,fill:"forwards"});   // gradiente della pillola
-  const fx=open?[{opacity:1},{opacity:0,offset:.35},{opacity:0}]:[{opacity:0},{opacity:0,offset:.6},{opacity:1}];   // icona e scritta: spariscono presto aprendo, tornano alla fine chiudendo
-  m.children[1].animate(fx,{duration:D,fill:"forwards"});m.children[2].animate(fx,{duration:D,fill:"forwards"});
+  const N=14,D=520,EM="cubic-bezier(.65,0,.25,1)",K=[],KI=[];
+  for(let i=0;i<=N;i++){const p=i/N,L=(u,v)=>u+(v-u)*p,x=L(a.x,b.x),y=L(a.y,b.y),w=L(a.w,b.w),h=L(a.h,b.h),r=L(a.r,b.r),sx=w/b.w,sy=h/b.h;
+    K.push({offset:p,transform:"translate3d("+(x-b.x).toFixed(2)+"px,"+(y-b.y).toFixed(2)+"px,0) scale("+sx.toFixed(4)+","+sy.toFixed(4)+")",borderRadius:(r/sx).toFixed(2)+"px / "+(r/sy).toFixed(2)+"px"});
+    KI.push({offset:p,transform:"translateY(-50%) scale("+(1/sx).toFixed(4)+","+(1/sy).toFixed(4)+")"});}
+  const an=m.animate(K,{duration:D,easing:EM,fill:"forwards"});
+  m.children[0].animate([{opacity:1},{opacity:0}],{duration:D,easing:EM,fill:"forwards"});   // il gradiente della pillola sfuma nel colore del campo
+  const fx=[{opacity:1},{opacity:0,offset:.35},{opacity:0}];   // icona e scritta spariscono presto
+  [m.children[1],m.children[2]].forEach(c=>{c.animate(KI,{duration:D,easing:EM,fill:"forwards"});c.animate(fx,{duration:D,fill:"forwards",composite:"replace"});});
   return an.finished.catch(()=>{}).then(()=>m);
 }
 function swap(h,anim){
@@ -1095,9 +1107,8 @@ function swap(h,anim){
   const old=stage.innerHTML,app=$("app");
   document.querySelectorAll(".ghost").forEach(g=>g.remove());
   let vy=(anim===false)?0:VY;VY=0;
-  if(!vy&&anim!==false&&SPULL&&stage.querySelector("#sq")&&h.indexOf('class="opts')>=0){vy=-1;SPULL=false;}   // ricerca aperta trascinando giù: tornando alla home il campo torna pillola e le schermate si scambiano sfumando
+  if(!vy&&anim!==false&&SPULL&&stage.querySelector("#sq")&&h.indexOf('class="opts')>=0){vy=-1;SPULL=false;}   // ricerca aperta trascinando giù: tornando alla home le schermate si scambiano solo sfumando
   const dxs=(anim===false||vy)?0:(TDX||NAV);TDX=0;NAV=0;
-  const sqEl=vy===-1&&!RM()?stage.querySelector("#sq"):null,sqR=sqEl?sqEl.getBoundingClientRect():null;   // chiusura: da qui il campo torna pillola
   let ghost=null;
   const fadeOut=!dxs&&anim!==false&&old.trim()&&old.indexOf('class="load"')<0;
   if((dxs||fadeOut)&&old.trim()){
@@ -1129,13 +1140,10 @@ function swap(h,anim){
     return;
   }
   if(!RM()&&stage.animate){
-    if(vy){   // ricerca aperta col gesto: le due schermate si scambiano solo sfumando (il movimento lo fa la pillola che diventa il campo, o il campo che torna pillola)
+    if(vy){   // ricerca aperta col gesto: le due schermate si scambiano solo sfumando (all'apertura il movimento lo fa la pillola che diventa il campo)
       (stage.firstElementChild||stage).animate([{opacity:0},{opacity:1}],{duration:380,delay:160,easing:"ease-out",fill:"backwards"});
-      if(ghost){const g=ghost;const gi=g.querySelector(".sin");if(gi&&sqR)gi.style.opacity="0";
+      if(ghost){const g=ghost;
         g.animate([{opacity:1},{opacity:0}],{duration:260,easing:"ease-in",fill:"forwards"}).onfinish=()=>g.remove();setTimeout(()=>g.remove(),700);}
-      if(sqR){const tp=document.querySelector(".top"),y=tp?tp.getBoundingClientRect().bottom+8:80,w=112,hh=40;
-        pillMorph({x:sqR.left,y:sqR.top,w:sqR.width,h:sqR.height,r:parseFloat(getComputedStyle(sqEl).borderTopLeftRadius)||18},{x:(innerWidth-w)/2,y:y,w:w,h:hh,r:hh/2},false)
-          .then(m=>{m.animate([{opacity:1,transform:"none"},{opacity:0,transform:"scale(.85)"}],{duration:220,easing:"ease-in",fill:"forwards"}).onfinish=()=>m.remove();setTimeout(()=>m.remove(),500);});}
     }else if(dxs){   // tra due domande: la vecchia sfuma e scivola un poco via, la nuova arriva dalla parte giusta (avanti da destra, indietro da sinistra)
       const D=22,mv=x=>"translate3d("+x+"px,0,0)";
       const h1=stage.querySelector("h1"),isOpts=!!stage.querySelector(".opts");
@@ -2425,7 +2433,7 @@ async function doRevokeAll(){   // dopo la conferma nel popup: questo dispositiv
    Ogni voce: d (data), t (elenco di novità in italiano, brevi). La versione (v) e APP_VER si calcolano da sole: vedi "VERSIONE AUTOMATICA" sotto CHANGELOG. La pagina Impostazioni > Novità le mostra da sola. */
 let APP_VER="";   // si calcola da sola dal CHANGELOG (vedi sotto): non va scritta a mano
 const CHANGELOG=[
-  {d:"23 ottobre 2026",t:["La scelta Novità, Recenti o Classici ora viene sempre rispettata, anche quando i titoli arrivano da fonti diverse da TMDB","Nella prima domanda ogni categoria ha una breve descrizione","Anche le voglie e le cose da evitare hanno una breve descrizione","Trovati di recente senza limite di titoli: ognuno resta 7 giorni","Dalla prima domanda trascina la pagina verso il basso per aprire subito Cerca","«Esci da tutti i dispositivi» e «Svuota la cronologia» confermano con un breve avviso in basso; la cronologia svuotata si può recuperare con Annulla","Caricamento più leggero e leggibile con il tema chiaro, sfondo della scheda più morbido con il tema scuro","Nuova locandina con i colori Reelax per i titoli senza immagine","Avvio più rapido e controllo degli aggiornamenti molto più leggero","Migliorie e correzioni"]},
+  {d:"23 ottobre 2026",t:["La scelta Novità, Recenti o Classici ora viene sempre rispettata, anche quando i titoli arrivano da fonti diverse da TMDB","Nella prima domanda ogni categoria ha una breve descrizione","Anche le voglie e le cose da evitare hanno una breve descrizione","Trovati di recente senza limite di titoli: ognuno resta 7 giorni","Dalla prima domanda trascina la pagina verso il basso per aprire subito Cerca","Accesso: i campi compilati in automatico non diventano più gialli e, se completi, la tastiera si chiude e si entra da soli","«Esci da tutti i dispositivi» e «Svuota la cronologia» confermano con un breve avviso in basso; la cronologia svuotata si può recuperare con Annulla","Caricamento più leggero e leggibile con il tema chiaro, sfondo della scheda più morbido con il tema scuro","Nuova locandina con i colori Reelax per i titoli senza immagine","Avvio più rapido e controllo degli aggiornamenti molto più leggero","Migliorie e correzioni"]},
   {d:"22 ottobre 2026",t:["Nuova animazione di accesso e uscita: un'onda circolare parte dal tasto e rivela la schermata successiva, ora più fluida","Schermata di accesso rinnovata: scritta REELAX animata con i colori sfumati dell'app e lo stesso sfondo dell'app, nel tema chiaro e in quello scuro","Su smartphone l'app resta in verticale: ruotando il telefono compare l'invito a raddrizzarlo","Account di prova isolato: non vede né modifica liste, «Già visti», cronologia, paese e piattaforme dell'account vero, e nelle Impostazioni non mostra più username, password e dispositivi","Lista «Le mie piattaforme» più viva: le righe entrano a cascata e la selezione ha una piccola animazione con segno di spunta che rimbalza","Conferma di uscita più chiara: il tasto ora dice «Sì, esci dall'account»; anche «Esci da tutti i dispositivi» apre lo stesso popup di conferma","Traduzioni completate: intestazioni delle schede, condivisione, errori, impostazioni e frasi di «Perché fa per te» ora seguono la lingua della regione"]},
   {d:"22 ottobre 2026",t:["Nuova pagina Novità con la versione dell'app","Impostazioni rifatte: sezioni più chiare, su PC menu laterale con pannello e anteprime del tema","Su PC tutte le pagine usano tutta la larghezza dello schermo","Tema chiaro e scuro neutri, con accento rosso Reelax","Cronologia fino a 100 titoli, ogni titolo scade dopo 7 giorni; svuotarla ora cancella davvero, anche tra dispositivi"]},
   {d:"21 ottobre 2026",t:["Il logo Reelax in alto ora si può toccare e ha una nuova animazione con una linea sfumata","Cambio tema più fluido, con transizione e interruttore rifatti","Il caricamento si può annullare e la posizione di scorrimento viene ricordata","Migliorie e correzioni"]},
@@ -3730,7 +3738,7 @@ addEventListener("touchend",()=>{EDGEX=-1;},true);addEventListener("touchcancel"
     const go=armed&&e.type==="touchend"&&can(),el=ind,p=pg,o=off,fast=RM()||!el.animate;
     reset();
     const bye=(sc,ms)=>{if(fast){el.remove();return;}el.animate([{opacity:el.style.opacity,transform:el.style.transform},{opacity:0,transform:tf(o,sc)}],{duration:ms,easing:"ease-out",fill:"forwards"}).onfinish=()=>el.remove();setTimeout(()=>el.remove(),ms+300);};
-    if(go){   // la pillola diventa il campo di ricerca mentre le schermate si scambiano sfumando; la tastiera si apre subito, finché il tocco vale ancora come gesto dell'utente
+    if(go){   // la pillola diventa il campo di ricerca mentre le schermate si scambiano sfumando
       const pr=el.getBoundingClientRect();
       NAV=0;TDX=0;clearTimeout(NAVT);
       searchPage("pull");
@@ -3738,10 +3746,9 @@ addEventListener("touchend",()=>{EDGEX=-1;},true);addEventListener("touchcancel"
       if(q){
         if(!fast){q.style.opacity="0";el.remove();   // il campo vero resta invisibile finché la pillola non ci arriva sopra
           const qr=q.getBoundingClientRect();
-          pillMorph({x:pr.left,y:pr.top,w:pr.width,h:pr.height,r:pr.height/2},{x:qr.left,y:qr.top,w:qr.width,h:qr.height,r:parseFloat(getComputedStyle(q).borderTopLeftRadius)||18},true)
+          pillMorph({x:pr.left,y:pr.top,w:pr.width,h:pr.height,r:pr.height/2},{x:qr.left,y:qr.top,w:qr.width,h:qr.height,r:parseFloat(getComputedStyle(q).borderTopLeftRadius)||18})
             .then(m=>{q.style.opacity="";m.animate([{opacity:1},{opacity:0}],{duration:160,easing:"ease-out",fill:"forwards"}).onfinish=()=>m.remove();setTimeout(()=>m.remove(),500);});
-        }else bye(1,0);
-        try{q.focus({preventScroll:true});}catch(x){}
+        }else bye(1,0);   // la tastiera NON si apre da sola: si tocca il campo quando si vuole scrivere
       }else bye(1.25,280);
       return;
     }
@@ -3881,6 +3888,26 @@ $("lgf").addEventListener("submit",async e=>{
   c.classList.remove("busy");btn.disabled=false;er.textContent=fail||"Nome utente o password non corretti.";
   void c.offsetWidth;c.classList.add("bad");$("lgp").value="";try{$("lgp").focus();}catch(x){}
 });
+/* compilazione automatica (password salvate): quando i campi si riempiono da soli, prima si chiude la tastiera e poi parte l'accesso.
+   Due segnali, così almeno uno scatta su ogni telefono: lo stato "compilato automaticamente" del campo (animazione finta su :-webkit-autofill)
+   e l'inserimento "in un colpo" (evento senza tipo o insertReplacementText). Scrivendo a mano, lettera per lettera, non succede nulla */
+(function(){
+  const f=$("lgf"),u=$("lgu"),p=$("lgp");let t=null,run=false;
+  const ready=()=>!lgBusy&&!run&&!lg.hidden&&!!u.value.trim()&&!!p.value;
+  const keyboardDown=()=>new Promise(r=>{   // aspetto che l'area visibile smetta di cambiare (tastiera giù), al massimo poco più di mezzo secondo
+    const vv=window.visualViewport;if(!vv){setTimeout(r,350);return;}
+    let h=vv.height,n=0;const iv=setInterval(()=>{if(Math.abs(vv.height-h)<1){if(++n>=3){clearInterval(iv);r();}}else{h=vv.height;n=0;}},60);
+    setTimeout(()=>{clearInterval(iv);r();},600);});
+  const go=()=>{clearTimeout(t);t=setTimeout(async()=>{
+    if(!ready())return;run=true;
+    try{if(document.activeElement)document.activeElement.blur();}catch(e){}
+    await keyboardDown();run=false;
+    if(!ready())return;
+    if(f.requestSubmit)f.requestSubmit();else $("lgb").click();
+  },150);};
+  f.addEventListener("animationstart",e=>{if(e.animationName==="rxAutofill")go();});
+  [u,p].forEach(el=>el.addEventListener("input",e=>{if(!e.inputType||e.inputType==="insertReplacementText")go();}));
+})();
 const boot=()=>{document.body.classList.remove("pre");try{if(!(history.state&&typeof history.state.d==="number"))history.replaceState({d:0},"");}catch(e){}if(isAuthed()){routeFromHash(true);syncPull();}else lockApp();};
 /* avvio: si aspettano solo i font (max 1,2 s), non tutto il resto della pagina. Il foglio dei font arriva senza bloccare: prima si attende che sia applicato, poi che i font siano scaricati */
 const cssOk=()=>new Promise(r=>{const l=document.querySelector('link[href*="fonts.googleapis.com/css2"][media]');if(!l||l.media==="all")return r();l.addEventListener("load",r,{once:true});l.addEventListener("error",r,{once:true});});
