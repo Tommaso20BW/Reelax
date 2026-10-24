@@ -1216,19 +1216,17 @@ const FWD={news:1,cast:1,seasons:1,saga:1,recent:1,seenp:1,pfpick:1,reg:1,acuser
 const trTb=d=>d&&d.ytKey?'<a class="tb" href="https://www.youtube.com/watch?v='+esc(d.ytKey)+'" data-yt="'+esc(d.ytKey)+'" target="_blank" rel="noopener" aria-label="Trailer">'+IC.play+'</a>':'';
 const tbtn=(act,ic,label)=>'<button type="button" class="tb" data-act="'+act+'" aria-label="'+label+'">'+IC[ic]+'</button>';
 const bb=(act,label,cls)=>'<button type="button" class="btn'+(cls?' '+cls:'')+'" data-act="'+act+'">'+label+'</button>';
-/* tasti in basso che spariscono: una copia su un livello grafico suo sfuma via (la gestisce la scheda grafica) mentre al loro posto arrivano i nuovi.
-   Va fatta partire PRIMA del lavoro pesante della pagina nuova: una volta avviata non si blocca più, anche se il telefono è occupato */
+/* tasti in basso che spariscono (Impostazioni e lente della ricerca): si sfumano i tasti VERI, lì dove sono, e si tolgono solo a dissolvenza finita.
+   Niente copia sopra: su iPhone una copia "fissa" dentro l'app poteva comparire qualche pixel più in basso (lo scatto).
+   Parte al tocco, PRIMA del lavoro pesante della pagina nuova: una volta avviata la dissolvenza non si blocca più */
 function dockFadeOut(){
   const dk=$("dockin");
   if(RM()||!dk||!dk.firstChild||!dk.animate||dk._pre)return false;
-  const c=dk.cloneNode(true);c.removeAttribute("id");c.classList.add("out");c.setAttribute("aria-hidden","true");
-  const rc=dk.getBoundingClientRect();c.style.cssText="position:fixed;left:"+rc.left+"px;top:"+rc.top+"px;width:"+rc.width+"px;margin:0;z-index:7;will-change:opacity;transform:translateZ(0);pointer-events:none;";
-  c.querySelectorAll(".rpl").forEach(x=>x.remove());
-  dk.parentNode.appendChild(c);dk.style.visibility="hidden";   // i tasti veri si nascondono sotto la copia (niente doppio tocco)
-  const rm=()=>{c.remove();};
-  c.animate([{opacity:1},{opacity:0}],{duration:260,easing:"ease-in-out",fill:"forwards"}).onfinish=rm;
-  setTimeout(rm,800);
-  dk._pre=c;setTimeout(()=>{if(dk._pre===c){dk._pre=null;dk.style.visibility="";}},700);
+  dk.getAnimations().forEach(a=>a.cancel());
+  {const d=dk.parentNode,cs=getComputedStyle(d);d.style.padding=cs.paddingTop+" "+cs.paddingRight+" "+cs.paddingBottom+" "+cs.paddingLeft;}   // margini della barra bloccati: la pagina nuova li cambia (es. Impostazioni) e spingeva giù di 2 px i tasti che sfumano
+  dk._fade=dk.animate([{opacity:1},{opacity:0}],{duration:260,easing:"ease-in-out",fill:"forwards"});
+  dk.style.pointerEvents="none";dk._pre=true;
+  setTimeout(()=>{if(dk._pre){dk._pre=false;if(dk._fade)dk._fade.cancel();dk._fade=null;dk.style.pointerEvents="";dk.parentNode.style.padding="";}},900);   // se la pagina non cambiasse, i tasti tornano
   return true;
 }
 function ui(o){
@@ -1237,13 +1235,27 @@ function ui(o){
   if(tl._h!==o.l){fade(tl,o.l);tl._h=o.l;}
   if(tr._h!==o.r){fade(tr,o.r);tr._h=o.r;}
   if(dk._h!==o.d){
-    const pre=!!dk._pre;   // dissolvenza già partita al tocco (dockFadeOut)
-    if(pre){dk._pre=null;dk.style.visibility="";}
-    if(!RM()&&dk.firstChild&&dk.animate&&(pre||dockFadeOut())){   // i vecchi pulsanti sfumano via mentre arrivano i nuovi (dissolvenza incrociata)
-      dk._pre=null;dk.style.visibility="";
-      dk.classList.add("xf");clearTimeout(dk._xf);dk._xf=setTimeout(()=>dk.classList.remove("xf"),900);   // i nuovi tasti entrano solo dopo che i vecchi sono quasi spariti
+    const a=dk._fade;
+    if(dk._pre&&!o.d){   // dissolvenza già partita al tocco e la pagina nuova non ha tasti: si svuota a dissolvenza finita
+      dk._pre=false;dk._fade=null;dk._h=o.d;
+      let ok=false;const done=()=>{if(ok)return;ok=true;if(dk._h!==o.d)return;if(a)a.cancel();dk.style.pointerEvents="";dk.innerHTML="";dk.parentNode.style.padding="";};
+      if(a)a.finished.then(done,done);else done();
+      setTimeout(done,400);
+    }else{
+      if(dk._pre){dk._pre=false;dk._fade=null;if(a)a.cancel();dk.parentNode.style.padding="";}
+      dk.getAnimations().forEach(x=>x.cancel());dk.style.pointerEvents="";
+      if(!RM()&&dk.firstChild&&dk.animate){   // i vecchi pulsanti sfumano via mentre arrivano i nuovi (dissolvenza incrociata)
+        const c=dk.cloneNode(true);c.removeAttribute("id");c.classList.add("out");c.setAttribute("aria-hidden","true");
+        const rc=dk.getBoundingClientRect();c.style.cssText="position:fixed;left:"+rc.left+"px;top:"+rc.top+"px;width:"+rc.width+"px;margin:0;z-index:7;";
+        c.querySelectorAll(".rpl").forEach(x=>x.remove());
+        dk.parentNode.appendChild(c);
+        const rm=()=>c.remove();
+        c.animate([{opacity:1},{opacity:0}],{duration:260,easing:"ease-in-out",fill:"forwards"}).onfinish=rm;
+        setTimeout(rm,800);
+        dk.classList.add("xf");clearTimeout(dk._xf);dk._xf=setTimeout(()=>dk.classList.remove("xf"),900);   // i nuovi tasti entrano solo dopo che i vecchi sono quasi spariti
+      }
+      dk.innerHTML=o.d||"";dk._h=o.d;
     }
-    dk.innerHTML=o.d||"";dk._h=o.d;
   }
   if(o.p){
     let nb=false;
