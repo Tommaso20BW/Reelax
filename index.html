@@ -187,9 +187,9 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .pring i{position:absolute;inset:0;display:grid;place-items:center;color:#fff;opacity:0}
 .pring i svg{position:static;width:24px;height:24px;transform:none}
 /* cerchio -> campo di ricerca: resta tondo mentre scende, poi si apre verso sinistra */
-.cbar{position:fixed;z-index:7;pointer-events:none;overflow:hidden;border-radius:999px;background:var(--s2);border:1px solid var(--line2);box-sizing:border-box}
-.cbar u{position:absolute;inset:-1px;background:var(--grad)}
-.cbar i{position:absolute;right:0;top:0;bottom:0;aspect-ratio:1;display:grid;place-items:center;color:#fff}
+.cbar{position:fixed;z-index:7;pointer-events:none;background:var(--s2);will-change:transform,clip-path}
+.cbar u{position:absolute;inset:0;background:var(--grad)}
+.cbar i{position:absolute;right:0;top:0;bottom:0;aspect-ratio:1;display:grid;place-items:center;color:#fff;will-change:transform,opacity}
 .cbar i svg{width:24px;height:24px}
 .ghost{position:absolute;z-index:1;box-sizing:border-box;overflow:hidden;padding:10px var(--gut) 20px;pointer-events:none;will-change:transform,opacity}
 
@@ -1152,9 +1152,9 @@ function swap(h,anim){
   if(!RM()&&stage.animate){
     if(vy===2){   // ricerca aperta col gesto: la home continua a scendere nella direzione del dito e sparisce, la pagina Cerca arriva dall'alto (il campo lo porta il cerchio)
       const pg=stage.firstElementChild||stage;
-      [...pg.children].forEach((el,i)=>{if(el.id!=="sq")el.animate([{opacity:0,transform:"translate3d(0,-14px,0)"},{opacity:1,transform:"none"}],{duration:420,delay:180+i*60,easing:E,fill:"backwards"});});
+      [...pg.children].forEach((el,i)=>{if(el.id!=="sq")el.animate([{opacity:0,transform:"translate3d(0,-10px,0)"},{opacity:1,transform:"none"}],{duration:620,delay:420+i*120,easing:E,fill:"backwards"});});
       if(ghost){const g=ghost;
-        g.animate([{opacity:1,transform:"none"},{opacity:0,transform:"translate3d(0,90px,0) scale(.96)"}],{duration:380,easing:"cubic-bezier(.4,0,.7,1)",fill:"forwards"}).onfinish=()=>g.remove();setTimeout(()=>g.remove(),800);}
+        g.animate([{opacity:1,transform:"none"},{opacity:0,transform:"translate3d(0,48px,0) scale(.97)"}],{duration:600,easing:"cubic-bezier(.33,0,.2,1)",fill:"forwards"}).onfinish=()=>g.remove();setTimeout(()=>g.remove(),1000);}
     }else if(vy){   // tornando dalla ricerca alla home: le due schermate si scambiano solo sfumando
       (stage.firstElementChild||stage).animate([{opacity:0},{opacity:1}],{duration:380,delay:160,easing:"ease-out",fill:"backwards"});
       if(ghost){const g=ghost;
@@ -3727,20 +3727,28 @@ addEventListener("touchstart",e=>{const t=e.touches&&e.touches[0];if(!t)return;
 let EDGEX=-1;
 addEventListener("touchmove",e=>{const t=e.touches&&e.touches[0];if(EDGEX>=0&&t&&Math.abs(t.clientX-EDGEX)>4&&e.cancelable)e.preventDefault();},{passive:false,capture:true});
 addEventListener("touchend",()=>{EDGEX=-1;},true);addEventListener("touchcancel",()=>{EDGEX=-1;},true);
-/* il cerchio pieno diventa il campo di ricerca in due tempi, senza mai deformarsi:
-   1) resta un cerchio e scende all'estremità destra del campo (diventando alto quanto il campo)  2) si apre verso sinistra fino alla larghezza del campo,
-   mentre il gradiente sfuma nel colore del campo. c = riquadro del cerchio, q = riquadro del campo, r = raggio degli angoli del campo */
+/* il cerchio pieno diventa il campo di ricerca con UN solo movimento continuo (niente soste a metà):
+   il cerchio scende dalla lente verso l'estremità destra del campo e, prima ancora di arrivare, comincia ad aprirsi verso sinistra.
+   L'elemento ha già misure e posizione FINALI del campo: si muove solo con transform e la sua forma è un ritaglio (clip-path),
+   così il telefono non ricalcola la pagina a ogni fotogramma. c = riquadro del cerchio, q = riquadro del campo, r = raggio degli angoli del campo */
 function circleToBar(c,q,r){
   const m=document.createElement("div");m.className="cbar";m.setAttribute("aria-hidden","true");
+  m.style.cssText="left:"+q.left+"px;top:"+q.top+"px;width:"+q.width+"px;height:"+q.height+"px";
   m.innerHTML='<u></u><i>'+IC.search+'</i>';document.body.appendChild(m);
-  const h=q.height,d=c.width,px=v=>v.toFixed(1)+"px";
-  const K=[
-    {offset:0,left:px(c.left),top:px(c.top),width:px(d),height:px(d),borderRadius:px(d/2),easing:"cubic-bezier(.45,0,.2,1)"},
-    {offset:.46,left:px(q.right-h),top:px(q.top),width:px(h),height:px(h),borderRadius:px(h/2),easing:"cubic-bezier(.3,0,.1,1)"},
-    {offset:1,left:px(q.left),top:px(q.top),width:px(q.width),height:px(h),borderRadius:px(r)}];
-  const D=760,an=m.animate(K,{duration:D,fill:"forwards"});
-  m.firstChild.animate([{opacity:1},{opacity:1,offset:.5},{opacity:0}],{duration:D,easing:"ease-in-out",fill:"forwards"});   // il gradiente resta finché il cerchio arriva, poi sfuma nel colore del campo
-  m.lastChild.animate([{opacity:1},{opacity:1,offset:.46},{opacity:0,offset:.7},{opacity:0}],{duration:D,fill:"forwards"});   // la lente resta nel cerchio, poi sparisce mentre si apre
+  const h=q.height,w=q.width,d=c.width,cx0=c.left+d/2,cy0=c.top+d/2;
+  const cl=v=>Math.max(0,Math.min(1,v)),ss=v=>{v=cl(v);return v*v*v*(v*(v*6-15)+10);},L=(a,b,t)=>a+(b-a)*t;
+  const N=48,D=980,K=[],KI=[],KU=[];
+  for(let i=0;i<=N;i++){
+    const t=i/N,p=ss(t/.72),o=ss((t-.3)/.7),py=1-Math.pow(1-p,1.6);   // p: viaggio, o: apertura (parte prima che il viaggio finisca), py: in verticale arriva un filo prima -> leggera curva
+    const H=L(d,h,p),xr=L(cx0+d/2,q.right,p),yc=L(cy0,q.top+h/2,py),W=L(H,w,o),rad=L(H/2,r,o);
+    const tx=xr-q.right,ty=yc-(q.top+h/2),it=(h-H)/2;
+    K.push({offset:t,transform:"translate3d("+tx.toFixed(2)+"px,"+ty.toFixed(2)+"px,0)",clipPath:"inset("+it.toFixed(2)+"px 0px "+it.toFixed(2)+"px "+(w-W).toFixed(2)+"px round "+rad.toFixed(2)+"px)"});
+    KI.push({offset:t,transform:"translateX("+((h-H)/2).toFixed(2)+"px)",opacity:(1-cl((o-.05)/.35)).toFixed(3)});   // la lente resta al centro del cerchio, sparisce mentre si apre
+    KU.push({offset:t,opacity:(1-ss((o-.35)/.65)).toFixed(3)});   // il gradiente sfuma nel colore del campo solo a fine apertura
+  }
+  const an=m.animate(K,{duration:D,fill:"forwards"});
+  m.lastChild.animate(KI,{duration:D,fill:"forwards"});
+  m.firstChild.animate(KU,{duration:D,fill:"forwards"});
   return an.finished.catch(()=>{}).then(()=>m);
 }
 /* home: trascinando la prima domanda verso il basso, intorno alla lente in alto a destra si disegna un anello sfumato che segue il dito.
@@ -3760,7 +3768,7 @@ function circleToBar(c,q,r){
       ind._i.style.opacity=String(cl((rf-.5)*2));ind.style.transform="scale("+(1+.12*rf).toFixed(3)+")";}
     const a=off>=TH;
     if(a!==armed){armed=a;   // pieno: piccolo rimbalzo come conferma
-      if(a&&!RM()&&ind.animate)ind.firstChild.animate([{transform:"scale(1)"},{transform:"scale(1.16)"},{transform:"scale(1)"}],{duration:320,easing:"cubic-bezier(.34,1.56,.64,1)"});}
+      if(a&&!RM()&&ind.animate)ind.firstChild.animate([{transform:"scale(1)"},{transform:"scale(1.08)"},{transform:"scale(1)"}],{duration:420,easing:"ease-in-out"});}
   };
   const reset=()=>{on=false;pull=false;armed=false;off=0;pg=null;ind=null;};
   stage.addEventListener("touchstart",e=>{
@@ -3799,7 +3807,7 @@ function circleToBar(c,q,r){
       if(q&&!fast){q.style.opacity="0";el.remove();   // il campo vero resta invisibile finché il cerchio non ci arriva sopra
         const qr=q.getBoundingClientRect();
         circleToBar(cr,qr,parseFloat(getComputedStyle(q).borderTopLeftRadius)||18)
-          .then(m=>{q.style.opacity="";m.animate([{opacity:1},{opacity:0}],{duration:160,easing:"ease-out",fill:"forwards"}).onfinish=()=>m.remove();setTimeout(()=>m.remove(),500);});
+          .then(m=>{q.style.opacity="";m.animate([{opacity:1},{opacity:0}],{duration:220,easing:"ease-out",fill:"forwards"}).onfinish=()=>m.remove();setTimeout(()=>m.remove(),600);});
       }else bye();   // la tastiera NON si apre da sola: si tocca il campo quando si vuole scrivere
       return;
     }
