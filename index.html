@@ -1216,20 +1216,31 @@ const FWD={news:1,cast:1,seasons:1,saga:1,recent:1,seenp:1,pfpick:1,reg:1,acuser
 const trTb=d=>d&&d.ytKey?'<a class="tb" href="https://www.youtube.com/watch?v='+esc(d.ytKey)+'" data-yt="'+esc(d.ytKey)+'" target="_blank" rel="noopener" aria-label="Trailer">'+IC.play+'</a>':'';
 const tbtn=(act,ic,label)=>'<button type="button" class="tb" data-act="'+act+'" aria-label="'+label+'">'+IC[ic]+'</button>';
 const bb=(act,label,cls)=>'<button type="button" class="btn'+(cls?' '+cls:'')+'" data-act="'+act+'">'+label+'</button>';
+/* tasti in basso che spariscono: una copia su un livello grafico suo sfuma via (la gestisce la scheda grafica) mentre al loro posto arrivano i nuovi.
+   Va fatta partire PRIMA del lavoro pesante della pagina nuova: una volta avviata non si blocca più, anche se il telefono è occupato */
+function dockFadeOut(){
+  const dk=$("dockin");
+  if(RM()||!dk||!dk.firstChild||!dk.animate||dk._pre)return false;
+  const c=dk.cloneNode(true);c.removeAttribute("id");c.classList.add("out");c.setAttribute("aria-hidden","true");
+  const rc=dk.getBoundingClientRect();c.style.cssText="position:fixed;left:"+rc.left+"px;top:"+rc.top+"px;width:"+rc.width+"px;margin:0;z-index:7;will-change:opacity;transform:translateZ(0);pointer-events:none;";
+  c.querySelectorAll(".rpl").forEach(x=>x.remove());
+  dk.parentNode.appendChild(c);dk.style.visibility="hidden";   // i tasti veri si nascondono sotto la copia (niente doppio tocco)
+  const rm=()=>{c.remove();};
+  c.animate([{opacity:1},{opacity:0}],{duration:260,easing:"ease-in-out",fill:"forwards"}).onfinish=rm;
+  setTimeout(rm,800);
+  dk._pre=c;setTimeout(()=>{if(dk._pre===c){dk._pre=null;dk.style.visibility="";}},700);
+  return true;
+}
 function ui(o){
   const tl=$("tl"),tr=$("tr"),dk=$("dockin"),pg=$("prog");
   const fade=(el,h)=>{el.innerHTML=h||"";if(h&&!RM()&&el.animate&&el._seen)el.animate([{opacity:0},{opacity:1}],{duration:300,easing:"ease-out"});el._seen=1;};
   if(tl._h!==o.l){fade(tl,o.l);tl._h=o.l;}
   if(tr._h!==o.r){fade(tr,o.r);tr._h=o.r;}
   if(dk._h!==o.d){
-    if(!RM()&&dk.firstChild&&dk.animate){   // i vecchi pulsanti sfumano via mentre arrivano i nuovi (dissolvenza incrociata)
-      const c=dk.cloneNode(true);c.removeAttribute("id");c.classList.add("out");c.setAttribute("aria-hidden","true");
-      const rc=dk.getBoundingClientRect();c.style.cssText="position:fixed;left:"+rc.left+"px;top:"+rc.top+"px;width:"+rc.width+"px;margin:0;z-index:7;will-change:opacity;transform:translateZ(0);";   // livello grafico suo: la dissolvenza non ridisegna l'ombra dei tasti a ogni fotogramma
-      c.querySelectorAll(".rpl").forEach(x=>x.remove());
-      dk.parentNode.appendChild(c);
-      const rm=()=>c.remove();
-      c.animate([{opacity:1},{opacity:0}],{duration:260,easing:"ease-in-out",fill:"forwards"}).onfinish=rm;   // stessa durata e curva della pagina che sfuma
-      setTimeout(rm,800);
+    const pre=!!dk._pre;   // dissolvenza già partita al tocco (dockFadeOut)
+    if(pre){dk._pre=null;dk.style.visibility="";}
+    if(!RM()&&dk.firstChild&&dk.animate&&(pre||dockFadeOut())){   // i vecchi pulsanti sfumano via mentre arrivano i nuovi (dissolvenza incrociata)
+      dk._pre=null;dk.style.visibility="";
       dk.classList.add("xf");clearTimeout(dk._xf);dk._xf=setTimeout(()=>dk.classList.remove("xf"),900);   // i nuovi tasti entrano solo dopo che i vecchi sono quasi spariti
     }
     dk.innerHTML=o.d||"";dk._h=o.d;
@@ -1252,7 +1263,9 @@ document.addEventListener("click",e=>{
   if(y){openYt(e,y.dataset.yt);return;}
   const b=e.target.closest&&e.target.closest("[data-act]");
   if(!b||b.disabled)return;
-  const f=ACT[b.dataset.act];if(f){tap();const an=b.dataset.act;if(an==="back"||an==="cancel")BTAP=Date.now();NAV=0;const onHome=!!stage.querySelector(".opts");if(an==="settings"&&onHome)NAV=-1;else if(an==="search"&&onHome)NAV=1;else if(FWD[an])NAV=1;else if(an==="back"||an==="cancel"){NAV=stage.querySelector(".srow.out")?1:-1;}clearTimeout(NAVT);NAVT=setTimeout(()=>{NAV=0;},700);try{if(an==="back"){if(f.pre)f.pre();goBack(f);}else f();}catch(x){}}
+  const f=ACT[b.dataset.act];if(f){tap();const an=b.dataset.act;if(an==="back"||an==="cancel")BTAP=Date.now();NAV=0;const onHome=!!stage.querySelector(".opts");if(an==="settings"&&onHome)NAV=-1;else if(an==="search"&&onHome)NAV=1;else if(FWD[an])NAV=1;else if(an==="back"||an==="cancel"){NAV=stage.querySelector(".srow.out")?1:-1;}clearTimeout(NAVT);NAVT=setTimeout(()=>{NAV=0;},700);
+    if((an==="settings"||an==="search")&&dockFadeOut()){requestAnimationFrame(()=>requestAnimationFrame(()=>{try{f();}catch(x){}}));return;}   // prima parte la dissolvenza dei tasti, poi (2 fotogrammi dopo) si costruisce la pagina
+    try{if(an==="back"){if(f.pre)f.pre();goBack(f);}else f();}catch(x){}}
 });
 const tap=()=>{};   // vibrazione al tocco rimossa
 /* ripple: ogni pulsante, riga o scelta "risponde" al tocco con un'onda che parte dal punto toccato */
