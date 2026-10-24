@@ -185,17 +185,14 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .morph i{position:absolute;left:5px;top:50%;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.22);color:#fff;transform:translateY(-50%);transform-origin:0 50%}
 .morph i svg{width:17px;height:17px}
 .morph b{position:absolute;left:43px;top:50%;transform:translateY(-50%);transform-origin:0 50%;white-space:nowrap;color:#fff;font-weight:700;font-size:.9rem}
-/* home: indicatore "Cerca" che scende trascinando la pagina verso il basso */
-.pull{position:fixed;left:50%;top:calc(var(--sat) + 70px);z-index:4;display:flex;align-items:center;gap:8px;padding:6px 16px 6px 6px;border-radius:999px;background:var(--s2);border:1px solid var(--line2);box-shadow:0 10px 30px rgba(0,0,0,.22);font-weight:700;font-size:.9rem;white-space:nowrap;color:var(--fg);pointer-events:none;overflow:hidden;opacity:0;transform:translate3d(-50%,-24px,0) scale(.6);will-change:transform,opacity}
-.pull i{display:grid;place-items:center;width:30px;height:30px;border-radius:50%}
-.pull i svg{width:17px;height:17px}
-.pull{--k:0;color:color-mix(in srgb,#fff calc(var(--k)*100%),var(--fg));border-color:color-mix(in srgb,transparent calc(var(--k)*100%),var(--line2));box-shadow:0 10px 30px color-mix(in srgb,rgba(255,61,82,.35) calc(var(--k)*100%),rgba(0,0,0,.22))}
-.pull::before{content:"";position:absolute;inset:-1px;border-radius:inherit;background:var(--grad);opacity:var(--k)}   /* il gradiente entra un po' alla volta, insieme al dito */
-.pull>*{position:relative;z-index:1}
-.pull i{background:color-mix(in srgb,rgba(255,255,255,.22) calc(var(--k)*100%),var(--soft))}
-.pull .tx{--m:0;position:relative;display:block;height:1.25em;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 16px*var(--m)),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 16px*var(--m)),transparent)}   /* a metà passaggio il bordo destro della scritta sfuma invece di tagliarsi */
-.pull .tx b{position:absolute;left:0;top:0;font:inherit;line-height:1.25em;white-space:nowrap;transform-origin:0 50%;will-change:opacity,transform,filter}
-.pull .tx b+b{opacity:0}
+/* home: trascinando la pagina verso il basso, intorno alla lente in alto si disegna un anello sfumato; chiuso l'anello, il cerchio cresce e si riempie di gradiente.
+   --rp = anello (0-1), --rf = riempimento (0-1). Rilasciando a cerchio pieno il cerchio diventa il campo di ricerca */
+.pring{position:fixed;z-index:7;pointer-events:none;--rp:0;--rf:0;transform:scale(calc(1 + var(--rf)*.32));will-change:transform}
+.pring u{position:absolute;inset:0;border-radius:50%;background:var(--grad);opacity:var(--rf);transform:scale(calc(.55 + var(--rf)*.45));box-shadow:0 8px 24px rgba(255,61,82,calc(var(--rf)*.4))}
+.pring svg.rg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg);overflow:visible}
+.pring svg.rg circle{fill:none;stroke-width:2.6;stroke-linecap:round;stroke-dasharray:var(--rc);stroke-dashoffset:calc(var(--rc)*(1 - var(--rp)));opacity:calc(min(1,var(--rp)*6) * (1 - var(--rf)))}
+.pring i{position:absolute;inset:0;display:grid;place-items:center;color:#fff;opacity:var(--rf)}
+.pring i svg{width:24px;height:24px}
 .ghost{position:absolute;z-index:1;box-sizing:border-box;overflow:hidden;padding:10px var(--gut) 20px;pointer-events:none;will-change:transform,opacity}
 
 /* dock inferiore: resta SOPRA la zona della home-indicator, così i tasti si toccano sempre */
@@ -1120,15 +1117,16 @@ function routeFromHash(force){
 /* pillola "Cerca" -> campo di ricerca. L'elemento ha già le misure FINALI del campo e si muove solo con transform (scheda grafica, niente ricalcolo
    della pagina a ogni fotogramma): parte rimpicciolito sulla pillola e si allarga fino al campo. Gli angoli sono corretti per la scala in ogni momento
    e icona e scritta sono "controscalate", così non si deformano. a,b = {x,y,w,h,r}. Restituisce l'elemento a fine corsa */
-function pillMorph(a,b){
+function pillMorph(a,b,round){   // round: parte dal cerchio della lente (senza scritta, icona al centro)
   const m=document.createElement("div");m.className="morph";m.setAttribute("aria-hidden","true");
-  m.innerHTML='<u></u><i>'+IC.search+'</i><b></b>';m.lastChild.textContent=trStr("Rilascia per cercare");
+  m.innerHTML='<u></u><i>'+IC.search+'</i><b></b>';if(!round)m.lastChild.textContent=trStr("Rilascia per cercare");
   m.style.cssText="left:"+b.x+"px;top:"+b.y+"px;width:"+b.w+"px;height:"+b.h+"px";
   document.body.appendChild(m);
   const N=14,D=520,EM="cubic-bezier(.65,0,.25,1)",K=[],KI=[];
   for(let i=0;i<=N;i++){const p=i/N,L=(u,v)=>u+(v-u)*p,x=L(a.x,b.x),y=L(a.y,b.y),w=L(a.w,b.w),h=L(a.h,b.h),r=L(a.r,b.r),sx=w/b.w,sy=h/b.h;
     K.push({offset:p,transform:"translate3d("+(x-b.x).toFixed(2)+"px,"+(y-b.y).toFixed(2)+"px,0) scale("+sx.toFixed(4)+","+sy.toFixed(4)+")",borderRadius:(r/sx).toFixed(2)+"px / "+(r/sy).toFixed(2)+"px"});
-    KI.push({offset:p,transform:"translateY(-50%) scale("+(1/sx).toFixed(4)+","+(1/sy).toFixed(4)+")"});}
+    const ix=round?(1-p)*(w/2-20):0;   // dal cerchio: l'icona parte centrata e scivola al suo posto a sinistra
+    KI.push({offset:p,transform:"translate("+(ix/sx).toFixed(2)+"px,-50%) scale("+(1/sx).toFixed(4)+","+(1/sy).toFixed(4)+")"});}
   const an=m.animate(K,{duration:D,easing:EM,fill:"forwards"});
   m.children[0].animate([{opacity:1},{opacity:0}],{duration:D,easing:EM,fill:"forwards"});   // il gradiente della pillola sfuma nel colore del campo
   const fx=[{opacity:1},{opacity:0,offset:.35},{opacity:0}];   // icona e scritta spariscono presto
@@ -2470,7 +2468,7 @@ async function doRevokeAll(){   // dopo la conferma nel popup: questo dispositiv
    Ogni voce: d (data), t (elenco di novità in italiano, brevi). La versione (v) e APP_VER si calcolano da sole: vedi "VERSIONE AUTOMATICA" sotto CHANGELOG. La pagina Impostazioni > Novità le mostra da sola. */
 let APP_VER="";   // si calcola da sola dal CHANGELOG (vedi sotto): non va scritta a mano
 const CHANGELOG=[
-  {d:"24 ottobre 2026",t:["Nuova intro all'apertura, come nelle app di streaming: il logo si accende, si apre un portale e la scritta vola nella schermata di accesso"]},
+  {d:"24 ottobre 2026",t:["Nuova intro all'apertura, come nelle app di streaming: il logo si accende, si apre un portale e la scritta vola nella schermata di accesso","Trascinando giù dalla home, intorno alla lente di ricerca si disegna un anello: quando il cerchio è pieno, rilasciando diventa il campo di ricerca"]},
   {d:"23 ottobre 2026",t:["La scelta Novità, Recenti o Classici ora viene sempre rispettata, anche quando i titoli arrivano da fonti diverse da TMDB","Nella prima domanda ogni categoria ha una breve descrizione","Anche le voglie e le cose da evitare hanno una breve descrizione","Trovati di recente senza limite di titoli: ognuno resta 7 giorni","Dalla prima domanda trascina la pagina verso il basso per aprire subito Cerca","Ricerca: toccando un titolo la locandina vola nella scheda, e tornando indietro i risultati sono subito pronti","Accesso: i campi compilati in automatico non diventano più gialli e la tastiera si chiude da sola","«Esci da tutti i dispositivi» e «Svuota la cronologia» confermano con un breve avviso in basso; la cronologia svuotata si può recuperare con Annulla","Caricamento più leggero e leggibile con il tema chiaro, sfondo della scheda più morbido con il tema scuro","Nuova locandina con i colori Reelax per i titoli senza immagine","Avvio più rapido e controllo degli aggiornamenti molto più leggero","Migliorie e correzioni"]},
   {d:"22 ottobre 2026",t:["Nuova animazione di accesso e uscita: un'onda circolare parte dal tasto e rivela la schermata successiva, ora più fluida","Schermata di accesso rinnovata: scritta REELAX animata con i colori sfumati dell'app e lo stesso sfondo dell'app, nel tema chiaro e in quello scuro","Su smartphone l'app resta in verticale: ruotando il telefono compare l'invito a raddrizzarlo","Account di prova isolato: non vede né modifica liste, «Già visti», cronologia, paese e piattaforme dell'account vero, e nelle Impostazioni non mostra più username, password e dispositivi","Lista «Le mie piattaforme» più viva: le righe entrano a cascata e la selezione ha una piccola animazione con segno di spunta che rimbalza","Conferma di uscita più chiara: il tasto ora dice «Sì, esci dall'account»; anche «Esci da tutti i dispositivi» apre lo stesso popup di conferma","Traduzioni completate: intestazioni delle schede, condivisione, errori, impostazioni e frasi di «Perché fa per te» ora seguono la lingua della regione"]},
   {d:"22 ottobre 2026",t:["Nuova pagina Novità con la versione dell'app","Impostazioni rifatte: sezioni più chiare, su PC menu laterale con pannello e anteprime del tema","Su PC tutte le pagine usano tutta la larghezza dello schermo","Tema chiaro e scuro neutri, con accento rosso Reelax","Cronologia fino a 100 titoli, ogni titolo scade dopo 7 giorni; svuotarla ora cancella davvero, anche tra dispositivi"]},
@@ -3745,34 +3743,22 @@ addEventListener("touchstart",e=>{const t=e.touches&&e.touches[0];if(!t)return;
 let EDGEX=-1;
 addEventListener("touchmove",e=>{const t=e.touches&&e.touches[0];if(EDGEX>=0&&t&&Math.abs(t.clientX-EDGEX)>4&&e.cancelable)e.preventDefault();},{passive:false,capture:true});
 addEventListener("touchend",()=>{EDGEX=-1;},true);addEventListener("touchcancel",()=>{EDGEX=-1;},true);
-/* home: trascinando la prima domanda verso il basso compare "Cerca" (come la ricerca di iPhone). La pagina scende con resistenza;
-   oltre la soglia l'indicatore si colora e, rilasciando, si apre la ricerca con la tastiera già pronta. Prima della soglia tutto torna su morbido */
+/* home: trascinando la prima domanda verso il basso, intorno alla lente in alto a destra si disegna un anello sfumato che segue il dito.
+   Chiuso l'anello, il cerchio cresce e si riempie di gradiente: pieno = pronto. Rilasciando, il cerchio diventa il campo di ricerca.
+   La pagina scende con resistenza; prima della soglia tutto torna com'era */
 (function(){
-  const TH=68,MAX=140,E="cubic-bezier(.2,.85,.25,1)";
+  const TH=72,MAX=140,RING=.55,E="cubic-bezier(.2,.85,.25,1)";
   let on=false,pull=false,armed=false,y0=0,x0=0,off=0,pg=null,ind=null;
   const can=()=>tmdbOn()&&!LB&&S.step===0&&!document.body.classList.contains("locked")&&!!stage.querySelector(".opts:not(.sel)")&&stage.scrollTop<=0;
-  /* la pillola sta nello spazio che si apre tra la barra alta e il titolo (G = spazio che c'è già da fermo): è centrata lì e non è mai più alta di quello spazio,
-     così non tocca né la barra né "Cosa guardi stasera?" */
-  const G=16,H=()=>(ind&&ind._h)||42;
-  const fit=o=>Math.max(.3,Math.min(1,(o+G-8)/H()));
-  const tf=(o,sc)=>"translate3d(-50%,"+((o+G)/2-H()/2).toFixed(1)+"px,0) scale("+sc+")";
+  const cl=v=>Math.max(0,Math.min(1,v)),sm=v=>v*v*(3-2*v);
   const paint=()=>{
     const p=Math.min(1,off/TH);
     pg.style.transform="translate3d(0,"+off+"px,0)";pg.style.opacity=String(1-.35*p);
-    {const sc=fit(off);ind.style.opacity=String(Math.max(0,Math.min(1,(sc-.45)/.4)));ind.style.transform=tf(off,sc);}
-    /* il passaggio "Cerca" -> "Rilascia per cercare" segue il dito: parte a metà strada e si completa sulla soglia (risalendo torna indietro allo stesso modo).
-       k da 0 a 1 guida insieme gradiente, colori, larghezza e le due scritte che si danno il cambio */
-    let k=Math.max(0,Math.min(1,(off-TH*.5)/(TH*.5)));k=k*k*(3-2*k);
-    ind.style.setProperty("--k",k.toFixed(3));
-    const tx=ind.lastChild,A=tx.firstChild,B=tx.lastChild;
-    tx.style.width=(ind._wa+(ind._wb-ind._wa)*k).toFixed(1)+"px";tx.style.setProperty("--m",(4*k*(1-k)).toFixed(3));
-    {   // le scritte si danno il cambio sul posto: "Cerca" si sfoca e sparisce nella prima metà, "Rilascia per cercare" passa da sfocata a nitida nella seconda (mai insieme)
-      const ka=Math.min(1,k*2),kb=Math.max(0,k*2-1);
-      A.style.opacity=String(1-ka);A.style.filter="blur("+(ka*4).toFixed(2)+"px)";A.style.transform="scale("+(1-.06*ka).toFixed(3)+")";
-      B.style.opacity=String(kb);B.style.filter="blur("+((1-kb)*4).toFixed(2)+"px)";B.style.transform="scale("+(.94+.06*kb).toFixed(3)+")";}
+    ind.style.setProperty("--rp",sm(cl(off/(TH*RING))).toFixed(3));                 // prima l'anello si chiude
+    ind.style.setProperty("--rf",sm(cl((off-TH*RING)/(TH*(1-RING)))).toFixed(3));   // poi il cerchio cresce e si riempie
     const a=off>=TH;
-    if(a!==armed){armed=a;   // sulla soglia: solo un piccolo "tic" dell'icona come conferma
-      if(a&&!RM()&&ind.firstChild.animate)ind.firstChild.animate([{transform:"scale(1)"},{transform:"scale(1.14)"},{transform:"scale(1)"}],{duration:300,easing:"cubic-bezier(.34,1.56,.64,1)"});}
+    if(a!==armed){armed=a;   // pieno: piccolo rimbalzo come conferma
+      if(a&&!RM()&&ind.firstChild.animate)ind.firstChild.animate([{transform:"scale(1)"},{transform:"scale(1.16)"},{transform:"scale(1)"}],{duration:320,easing:"cubic-bezier(.34,1.56,.64,1)"});}
   };
   const reset=()=>{on=false;pull=false;armed=false;off=0;pg=null;ind=null;};
   stage.addEventListener("touchstart",e=>{
@@ -3784,13 +3770,13 @@ addEventListener("touchend",()=>{EDGEX=-1;},true);addEventListener("touchcancel"
     const t=e.touches[0],dy=t.clientY-y0,dx=t.clientX-x0;
     if(!pull){
       if(dy>8&&dy>Math.abs(dx)*1.2){
-        pg=stage.querySelector(".page");if(!pg){on=false;return;}
+        pg=stage.querySelector(".page");const sb=document.querySelector('#tr [data-act="search"]');if(!pg||!sb){on=false;return;}
         pull=true;pg.style.transition="none";pg.getAnimations().forEach(a=>a.cancel());
-        ind=document.createElement("div");ind.className="pull";ind.setAttribute("aria-hidden","true");
-        {const tp=document.querySelector(".top");if(tp)ind.style.top=Math.round(tp.getBoundingClientRect().bottom)+"px";}   // parte dal bordo basso della barra alta (su iPhone con la tacca è più in basso)   // sempre SOTTO la barra alta (su iPhone con la tacca la barra è più in basso)
-        ind.innerHTML='<i>'+IC.search+'</i><span class="tx"><b></b><b></b></span>';
-        ind.lastChild.firstChild.textContent=trStr("Cerca");ind.lastChild.lastChild.textContent=trStr("Rilascia per cercare");
-        document.body.appendChild(ind);ind._wa=ind.lastChild.firstChild.offsetWidth;ind._wb=ind.lastChild.lastChild.offsetWidth;ind._h=ind.offsetHeight||42;   // larghezze delle due scritte: la pillola passa dall'una all'altra seguendo il dito
+        const r=sb.getBoundingClientRect(),R=r.width/2-1;
+        ind=document.createElement("div");ind.className="pring";ind.setAttribute("aria-hidden","true");
+        ind.style.cssText="left:"+r.left+"px;top:"+r.top+"px;width:"+r.width+"px;height:"+r.height+"px;--rc:"+(2*Math.PI*R).toFixed(2);
+        ind.innerHTML='<u></u><svg class="rg" viewBox="0 0 '+r.width+' '+r.height+'"><defs><linearGradient id="prg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff3d52"/><stop offset=".6" stop-color="#c13bd9"/><stop offset="1" stop-color="#8f62f8"/></linearGradient></defs><circle cx="'+r.width/2+'" cy="'+r.height/2+'" r="'+R+'" stroke="url(#prg)"/></svg><i>'+IC.search+'</i>';
+        document.body.appendChild(ind);
       }else{if(Math.abs(dx)>10||dy<-8)on=false;return;}
     }
     if(e.cancelable)e.preventDefault();
@@ -3798,24 +3784,22 @@ addEventListener("touchend",()=>{EDGEX=-1;},true);addEventListener("touchcancel"
   },{passive:false});
   const end=e=>{
     if(!on||!pull){on=false;return;}
-    const go=armed&&e.type==="touchend"&&can(),el=ind,p=pg,o=off,fast=RM()||!el.animate;
+    const go=armed&&e.type==="touchend"&&can(),el=ind,p=pg,fast=RM()||!el.animate;
     reset();
-    const bye=(sc,ms)=>{if(fast){el.remove();return;}el.animate([{opacity:el.style.opacity,transform:el.style.transform},{opacity:0,transform:tf(o,sc)}],{duration:ms,easing:"ease-out",fill:"forwards"}).onfinish=()=>el.remove();setTimeout(()=>el.remove(),ms+300);};
-    if(go){   // la pillola diventa il campo di ricerca mentre le schermate si scambiano sfumando
-      const pr=el.getBoundingClientRect();
+    const bye=()=>{if(fast){el.remove();return;}el.animate([{opacity:1,transform:getComputedStyle(el).transform},{opacity:0,transform:"scale(.7)"}],{duration:240,easing:"ease-out",fill:"forwards"}).onfinish=()=>el.remove();setTimeout(()=>el.remove(),600);};
+    if(go){   // il cerchio pieno diventa il campo di ricerca mentre le schermate si scambiano sfumando
+      const cr=el.getBoundingClientRect();
       NAV=0;TDX=0;clearTimeout(NAVT);
       searchPage("pull");
       const q=$("sq");
-      if(q){
-        if(!fast){q.style.opacity="0";el.remove();   // il campo vero resta invisibile finché la pillola non ci arriva sopra
-          const qr=q.getBoundingClientRect();
-          pillMorph({x:pr.left,y:pr.top,w:pr.width,h:pr.height,r:pr.height/2},{x:qr.left,y:qr.top,w:qr.width,h:qr.height,r:parseFloat(getComputedStyle(q).borderTopLeftRadius)||18})
-            .then(m=>{q.style.opacity="";m.animate([{opacity:1},{opacity:0}],{duration:160,easing:"ease-out",fill:"forwards"}).onfinish=()=>m.remove();setTimeout(()=>m.remove(),500);});
-        }else bye(1,0);   // la tastiera NON si apre da sola: si tocca il campo quando si vuole scrivere
-      }else bye(1.25,280);
+      if(q&&!fast){q.style.opacity="0";el.remove();   // il campo vero resta invisibile finché il cerchio non ci arriva sopra
+        const qr=q.getBoundingClientRect();
+        pillMorph({x:cr.left,y:cr.top,w:cr.width,h:cr.height,r:cr.height/2},{x:qr.left,y:qr.top,w:qr.width,h:qr.height,r:parseFloat(getComputedStyle(q).borderTopLeftRadius)||18},true)
+          .then(m=>{q.style.opacity="";m.animate([{opacity:1},{opacity:0}],{duration:160,easing:"ease-out",fill:"forwards"}).onfinish=()=>m.remove();setTimeout(()=>m.remove(),500);});
+      }else bye();   // la tastiera NON si apre da sola: si tocca il campo quando si vuole scrivere
       return;
     }
-    bye(.6,220);   // sotto la soglia: tutto torna su
+    bye();   // sotto la soglia: l'anello sparisce e la pagina torna su
     if(fast||!p.animate){p.style.transform="";p.style.opacity="";return;}
     const a=p.animate([{transform:p.style.transform,opacity:p.style.opacity},{transform:"none",opacity:1}],{duration:380,easing:E});
     p.style.transform="";p.style.opacity="";a.onfinish=()=>{p.style.transition="";};
