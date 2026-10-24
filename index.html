@@ -207,7 +207,8 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
   border:1px solid var(--line2);background:var(--s2);font-weight:700;font-size:1rem;white-space:nowrap;text-decoration:none;color:var(--fg);transition:transform .1s,filter .15s}
 .btn:active{transform:scale(.96);filter:brightness(1.2)}
 .btn svg{width:20px;height:20px;flex:none}
-.dock-in:not(.out) .btn{animation:btnIn .42s cubic-bezier(.22,1,.36,1) backwards;animation-delay:.05s}
+.dock-in:not(.out) .btn{animation:dkIn .36s ease-out backwards;animation-delay:.05s}   /* tasti in basso: solo dissolvenza */
+@keyframes dkIn{from{opacity:0}}
 .dock-in:not(.out) .btn:nth-child(2){animation-delay:.09s}
 .dock-in:not(.out) .btn:nth-child(3){animation-delay:.13s}
 .dock-in.out{pointer-events:none}
@@ -457,7 +458,7 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 @keyframes iGlow{0%{opacity:0}10%{opacity:1}18%{opacity:0}30%{opacity:.9}37%{opacity:0}56%{opacity:1}63%{opacity:.4}72%,100%{opacity:1}}
 @keyframes iHaze{to{opacity:1}}
 /* versione chiara (tema chiaro): l'insegna si accende di giorno, su una parete chiara. Un neon bianco sul bianco non si vedrebbe:
-   i tubi spenti sono vetro grigio, accesi prendono lo sfumato pieno dell'app con aloni più leggeri */
+   i tubi spenti sono neri, accesi prendono lo sfumato pieno dell'app con aloni più leggeri */
 :root[data-theme="light"] #intro .idk{background:radial-gradient(ellipse 80% 60% at 50% 50%,#ffffff,#f7f3f8 62%,#ece5ef)}
 :root[data-theme="light"] #intro .ihz{background:radial-gradient(closest-side,rgba(255,61,180,.13),rgba(193,59,217,.05) 45%,transparent 70%)}
 :root[data-theme="light"] #intro .ilg u.l{background:linear-gradient(90deg,#ff3d52,#c13bd9 50%,#8f62f8) var(--bp)}
@@ -466,7 +467,7 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 :root[data-theme="light"] #intro .ilg .g2{filter:blur(12px)}
 :root[data-theme="light"] #intro .ilg .g2 u{opacity:.35}
 :root[data-theme="light"] #intro.go .ilg u.c{animation-name:iUnlitL}
-@keyframes iUnlitL{to{color:rgba(110,90,120,.22)}}
+@keyframes iUnlitL{to{color:#1a141f}}   /* di giorno i tubi spenti sono neri */
 body.intro .lgc>*{animation:none;opacity:0}
 /* barra di stato di iPhone: iOS ne colora la fascia guardando lo sfondo della PAGINA (html), non l'intro che le sta sopra.
    Finché c'è l'intro lo sfondo della pagina segue quello che si vede: il rosso della splash in alto, poi il buio dell'insegna */
@@ -962,10 +963,10 @@ try{if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;}catch(e){}
 </div>
 <div id="lg" hidden>
   <div class="lgbg" aria-hidden="true"><i></i><i></i><i></i></div>
-  <form class="lgc" id="lgf" autocomplete="on">
+  <form class="lgc" id="lgf" autocomplete="off" inert>
     <div class="lgword" role="img" aria-label="Reelax"><span aria-hidden="true">Reelax</span></div>
-    <input class="lgi" id="lgu" name="username" type="text" placeholder="Nome utente" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required>
-    <input class="lgi" id="lgp" name="password" type="password" placeholder="Password" autocomplete="current-password" required>
+    <input class="lgi" id="lgu" name="username" type="text" placeholder="Nome utente" autocomplete="off" data-ac="username" readonly autocapitalize="none" autocorrect="off" spellcheck="false" required>
+    <input class="lgi" id="lgp" name="password" type="text" data-t="password" placeholder="Password" autocomplete="off" data-ac="current-password" readonly required>
     <p class="lgerr" id="lge" role="alert"></p>
     <button type="submit" class="btn primary" id="lgb">Entra</button>
   </form>
@@ -1192,16 +1193,10 @@ function swap(h,anim){
       (stage.firstElementChild||stage).animate([{opacity:0},{opacity:1}],{duration:380,delay:160,easing:"ease-out",fill:"backwards"});
       if(ghost){const g=ghost;
         g.animate([{opacity:1},{opacity:0}],{duration:260,easing:"ease-in",fill:"forwards"}).onfinish=()=>g.remove();setTimeout(()=>g.remove(),700);}
-    }else if(dxs){   // tra due domande: la vecchia sfuma e scivola un poco via, la nuova arriva dalla parte giusta (avanti da destra, indietro da sinistra)
-      const D=22,mv=x=>"translate3d("+x+"px,0,0)";
-      const h1=stage.querySelector("h1"),isOpts=!!stage.querySelector(".opts");
-      if(!isOpts){const pg=stage.querySelector(".page")||stage;pg.animate([{opacity:0,transform:mv(dxs*D*1.6)},{opacity:1,transform:"none"}],{duration:380,delay:70,easing:E,fill:"backwards"});}
-      else if(h1)h1.animate([{opacity:0,transform:mv(dxs*D)},{opacity:1,transform:"none"}],{duration:320,easing:E,fill:"backwards"});
-      stage.querySelectorAll(".opt").forEach((el,i)=>el.animate([{opacity:0,transform:mv(dxs*D)},{opacity:1,transform:"none"}],{duration:340,delay:30+i*28,easing:E,fill:"backwards"}));
-      if(ghost){const g=ghost;g.animate([{opacity:1,transform:"none"},{opacity:0,transform:mv(-dxs*D)}],{duration:isOpts?170:220,easing:"cubic-bezier(.4,0,1,1)",fill:"forwards"}).onfinish=()=>g.remove();setTimeout(()=>g.remove(),600);}
-    }else{
-      (stage.firstElementChild||stage).animate([{opacity:0,transform:"translate3d(0,10px,0)"},{opacity:1,transform:"none"}],{duration:340,easing:E});
-      if(ghost){const g=ghost;g.animate([{opacity:1,transform:"none"},{opacity:0,transform:"translate3d(0,-10px,0) scale(.96)"}],{duration:200,easing:"cubic-bezier(.4,0,1,1)",fill:"forwards"}).onfinish=()=>g.remove();setTimeout(()=>g.remove(),700);}
+    }else{   // ogni altro cambio pagina (domande, impostazioni, schede...): solo dissolvenza incrociata, niente movimento.
+             // La vecchia pagina sfuma via mentre la nuova appare, sovrapposte per un attimo
+      (stage.firstElementChild||stage).animate([{opacity:0},{opacity:1}],{duration:360,delay:60,easing:"ease-out",fill:"backwards"});
+      if(ghost){const g=ghost;g.animate([{opacity:1},{opacity:0}],{duration:260,easing:"ease-in-out",fill:"forwards"}).onfinish=()=>g.remove();setTimeout(()=>g.remove(),700);}
     }
   }else if(ghost)ghost.remove();
 }
@@ -1212,7 +1207,7 @@ const tbtn=(act,ic,label)=>'<button type="button" class="tb" data-act="'+act+'" 
 const bb=(act,label,cls)=>'<button type="button" class="btn'+(cls?' '+cls:'')+'" data-act="'+act+'">'+label+'</button>';
 function ui(o){
   const tl=$("tl"),tr=$("tr"),dk=$("dockin"),pg=$("prog");
-  const fade=(el,h)=>{el.innerHTML=h||"";if(h&&!RM()&&el.animate&&el._seen)el.animate([{opacity:0,transform:"scale(.88)"},{opacity:1,transform:"none"}],{duration:300,easing:"cubic-bezier(.22,1,.36,1)"});el._seen=1;};
+  const fade=(el,h)=>{el.innerHTML=h||"";if(h&&!RM()&&el.animate&&el._seen)el.animate([{opacity:0},{opacity:1}],{duration:300,easing:"ease-out"});el._seen=1;};
   if(tl._h!==o.l){fade(tl,o.l);tl._h=o.l;}
   if(tr._h!==o.r){fade(tr,o.r);tr._h=o.r;}
   if(dk._h!==o.d){
@@ -2495,7 +2490,7 @@ async function doRevokeAll(){   // dopo la conferma nel popup: questo dispositiv
    Ogni voce: d (data), t (elenco di novità in italiano, brevi). La versione (v) e APP_VER si calcolano da sole: vedi "VERSIONE AUTOMATICA" sotto CHANGELOG. La pagina Impostazioni > Novità le mostra da sola. */
 let APP_VER="";   // si calcola da sola dal CHANGELOG (vedi sotto): non va scritta a mano
 const CHANGELOG=[
-  {d:"24 ottobre 2026",t:["Nuova intro all'apertura: le luci si spengono e REELAX si accende come l'insegna al neon di un vecchio cinema","Trascinando giù dalla home, intorno alla lente di ricerca si disegna un anello: quando il cerchio è pieno, rilasciando diventa il campo di ricerca"]},
+  {d:"24 ottobre 2026",t:["Nuova intro all'apertura: le luci si spengono e REELAX si accende come l'insegna al neon di un vecchio cinema","Trascinando giù dalla home, intorno alla lente di ricerca si disegna un anello: quando il cerchio è pieno, rilasciando diventa il campo di ricerca","Cambi pagina più calmi: le pagine si scambiano con una dissolvenza, senza scorrere di lato","Accesso: la proposta delle password salvate compare solo dopo l'animazione di apertura"]},
   {d:"23 ottobre 2026",t:["La scelta Novità, Recenti o Classici ora viene sempre rispettata, anche quando i titoli arrivano da fonti diverse da TMDB","Nella prima domanda ogni categoria ha una breve descrizione","Anche le voglie e le cose da evitare hanno una breve descrizione","Trovati di recente senza limite di titoli: ognuno resta 7 giorni","Dalla prima domanda trascina la pagina verso il basso per aprire subito Cerca","Ricerca: toccando un titolo la locandina vola nella scheda, e tornando indietro i risultati sono subito pronti","Accesso: i campi compilati in automatico non diventano più gialli e la tastiera si chiude da sola","«Esci da tutti i dispositivi» e «Svuota la cronologia» confermano con un breve avviso in basso; la cronologia svuotata si può recuperare con Annulla","Caricamento più leggero e leggibile con il tema chiaro, sfondo della scheda più morbido con il tema scuro","Nuova locandina con i colori Reelax per i titoli senza immagine","Avvio più rapido e controllo degli aggiornamenti molto più leggero","Migliorie e correzioni"]},
   {d:"22 ottobre 2026",t:["Nuova animazione di accesso e uscita: un'onda circolare parte dal tasto e rivela la schermata successiva, ora più fluida","Schermata di accesso rinnovata: scritta REELAX animata con i colori sfumati dell'app e lo stesso sfondo dell'app, nel tema chiaro e in quello scuro","Su smartphone l'app resta in verticale: ruotando il telefono compare l'invito a raddrizzarlo","Account di prova isolato: non vede né modifica liste, «Già visti», cronologia, paese e piattaforme dell'account vero, e nelle Impostazioni non mostra più username, password e dispositivi","Lista «Le mie piattaforme» più viva: le righe entrano a cascata e la selezione ha una piccola animazione con segno di spunta che rimbalza","Conferma di uscita più chiara: il tasto ora dice «Sì, esci dall'account»; anche «Esci da tutti i dispositivi» apre lo stesso popup di conferma","Traduzioni completate: intestazioni delle schede, condivisione, errori, impostazioni e frasi di «Perché fa per te» ora seguono la lingua della regione"]},
   {d:"22 ottobre 2026",t:["Nuova pagina Novità con la versione dell'app","Impostazioni rifatte: sezioni più chiare, su PC menu laterale con pannello e anteprime del tema","Su PC tutte le pagine usano tutta la larghezza dello schermo","Tema chiaro e scuro neutri, con accento rosso Reelax","Cronologia fino a 100 titoli, ogni titolo scade dopo 7 giorni; svuotarla ora cancella davvero, anche tra dispositivi"]},
@@ -4020,9 +4015,9 @@ const INTRO_MIN=2050;
 function introOut(toLogin){
   const it=$("intro"),B=document.body;
   const focusU=()=>{if(toLogin&&!/iphone|ipad|ipod|android/i.test(navigator.userAgent))try{$("lgu").focus();}catch(e){}};   // sui telefoni niente tastiera aperta da sola
-  if(!it){B.classList.remove("intro");return;}
+  if(!it){B.classList.remove("intro");lgRelease();return;}
   const H=document.documentElement,tm=document.querySelector('meta[name="theme-color"]'),bgTo=()=>H.getAttribute("data-theme")==="light"?"#f5f5f6":"#0b0b0d";   // colore della pagina a intro finita
-  const gone=()=>{if(!it.parentNode)return;it.remove();B.classList.remove("intro");H.classList.remove("rxi","go");H.getAnimations().forEach(a=>a.cancel());if(tm)tm.setAttribute("content",bgTo());focusU();};
+  const gone=()=>{if(!it.parentNode)return;it.remove();B.classList.remove("intro");H.classList.remove("rxi","go");H.getAnimations().forEach(a=>a.cancel());if(tm)tm.setAttribute("content",bgTo());setTimeout(()=>{lgRelease();focusU();},1000);};
   if(RM()||!it.animate){B.classList.remove("intro");if(it.animate)it.animate([{opacity:1},{opacity:0}],{duration:250,fill:"forwards"}).finished.then(gone,gone);else gone();setTimeout(gone,600);return;}
   const go=()=>{
     it.style.pointerEvents="none";
@@ -4037,6 +4032,10 @@ function introOut(toLogin){
   };
   setTimeout(()=>nextPaint(go),Math.max(0,(window.RX_INTRO_T||0)+INTRO_MIN-Date.now()));
 }
+/* proposta delle password salvate (iPhone, browser): il modulo di accesso parte "nascosto" ai gestori di password (vedi l'HTML: inert, readonly,
+   autocomplete off, password come testo) e si sblocca solo 1 s dopo la fine dell'intro, così la richiesta non compare sopra l'animazione */
+function lgRelease(){const f=$("lgf");if(!f||!f.hasAttribute("inert"))return;f.setAttribute("autocomplete","on");f.removeAttribute("inert");
+  [$("lgu"),$("lgp")].forEach(i=>{if(!i)return;i.setAttribute("autocomplete",i.dataset.ac||"on");i.readOnly=false;if(i.dataset.t)i.type=i.dataset.t;});}
 const boot=()=>{document.body.classList.remove("pre");try{if(!(history.state&&typeof history.state.d==="number"))history.replaceState({d:0},"");}catch(e){}const au=isAuthed();if(au){routeFromHash(true);syncPull();}else lockApp(null,null,!!$("intro"));introOut(!au);};
 /* avvio: si aspettano solo i font (max 1,2 s), non tutto il resto della pagina. Il foglio dei font arriva senza bloccare: prima si attende che sia applicato, poi che i font siano scaricati */
 const cssOk=()=>new Promise(r=>{const l=document.querySelector('link[href*="fonts.googleapis.com/css2"][media]');if(!l||l.media==="all")return r();l.addEventListener("load",r,{once:true});l.addEventListener("error",r,{once:true});});
