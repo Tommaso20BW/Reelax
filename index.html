@@ -1204,10 +1204,10 @@ function swap(h,anim){
       (stage.firstElementChild||stage).animate([{opacity:0},{opacity:1}],{duration:380,delay:160,easing:"ease-out",fill:"backwards"});
       if(ghost){const g=ghost;
         g.animate([{opacity:1},{opacity:0}],{duration:260,easing:"ease-in",fill:"forwards"}).onfinish=()=>g.remove();setTimeout(()=>g.remove(),700);}
-    }else{   // ogni altro cambio pagina (domande, impostazioni, schede...): solo dissolvenza incrociata, niente movimento.
-             // La vecchia pagina sfuma via mentre la nuova appare, sovrapposte per un attimo
-      (stage.firstElementChild||stage).animate([{opacity:0},{opacity:1}],{duration:360,delay:60,easing:"ease-out",fill:"backwards"});
-      if(ghost){const g=ghost;g.animate([{opacity:1},{opacity:0}],{duration:260,easing:"ease-in-out",fill:"forwards"}).onfinish=()=>g.remove();setTimeout(()=>g.remove(),700);}
+    }else{   // ogni altro cambio pagina (domande, impostazioni, schede...): solo dissolvenza, niente movimento.
+             // Prima la vecchia pagina sfuma via, poi appare la nuova: le due non si vedono mai mescolate (testi sovrapposti)
+      (stage.firstElementChild||stage).animate([{opacity:0},{opacity:1}],{duration:320,delay:ghost?160:0,easing:"ease-out",fill:"backwards"});
+      if(ghost){const g=ghost;g.animate([{opacity:1},{opacity:0}],{duration:180,easing:"ease-in",fill:"forwards"}).onfinish=()=>g.remove();setTimeout(()=>g.remove(),700);}
     }
   }else if(ghost)ghost.remove();
 }
@@ -1238,7 +1238,8 @@ function ui(o){
     const a=dk._fade;
     if(dk._pre&&!o.d){   // dissolvenza già partita al tocco e la pagina nuova non ha tasti: si svuota a dissolvenza finita
       dk._pre=false;dk._fade=null;dk._h=o.d;
-      let ok=false;const done=()=>{if(ok)return;ok=true;if(dk._h!==o.d)return;if(a)a.cancel();dk.style.pointerEvents="";dk.innerHTML="";dk.parentNode.style.padding="";};
+      const D=dk.parentNode;D.style.position="absolute";D.style.left=D.style.right=D.style.bottom="0";   // la barra esce dal flusso: la pagina nuova ha subito tutta l'altezza, i tasti sfumano disegnati al loro posto
+      let ok=false;const done=()=>{if(ok)return;ok=true;D.style.position=D.style.left=D.style.right=D.style.bottom="";D.style.padding="";if(dk._h!==o.d)return;if(a)a.cancel();dk.style.pointerEvents="";dk.innerHTML="";};
       if(a)a.finished.then(done,done);else done();
       setTimeout(done,400);
     }else{
