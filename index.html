@@ -187,10 +187,10 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .pring i{position:absolute;inset:0;display:grid;place-items:center;color:#fff;opacity:0}
 .pring i svg{position:static;width:24px;height:24px;transform:none}
 /* cerchio -> campo di ricerca: resta tondo mentre scende, poi si apre verso sinistra */
-.cbar{position:fixed;z-index:7;pointer-events:none;background:var(--s2);will-change:transform,clip-path}
+.cbar{position:fixed;z-index:7;pointer-events:none;background:var(--s2)}
 .cbar u{position:absolute;inset:0;background:var(--grad)}
 .cbl{position:fixed;z-index:8;pointer-events:none;display:grid;place-items:center;color:#fff}
-.cbl svg{width:20px;height:20px}
+.cbl svg{width:100%;height:100%}
 .cbar b{position:absolute;left:55px;top:50%;transform:translateY(-50%);font:500 16px var(--fb);color:var(--dim);white-space:nowrap;opacity:0}
 .ghost{position:absolute;z-index:1;box-sizing:border-box;overflow:hidden;padding:10px var(--gut) 20px;pointer-events:none;will-change:transform,opacity}
 
@@ -1399,7 +1399,7 @@ function home(anim){
 let SQ="",SRUN=0,SLIST=[],SCACHE={q:null,list:[],t:0};
 let VY=0,SPULL=false;   // VY: prossimo cambio pagina in verticale; SPULL: la ricerca aperta è stata aperta trascinando giù dalla home
 function searchPage(how){
-  if(how==="pull"){SPULL=true;VY=2;SREADY=Date.now()+560;}else{SREADY=0;if(stage.querySelector(".opts"))SPULL=false;}   // dal tasto in alto: si chiude di lato come sempre
+  if(how==="pull"){SPULL=true;VY=2;SREADY=Date.now()+680;}else{SREADY=0;if(stage.querySelector(".opts"))SPULL=false;}   // dal tasto in alto: si chiude di lato come sempre
   RUN++;
   setBd(null);setRoute("/cerca"+(SQ?"/"+enc(SQ):""));
   swap('<div class="page"><h1>Cerca un titolo</h1><label class="sqw"><i class="sqi" aria-hidden="true">'+IC.search+'</i><input class="lgi sin" id="sq" type="search" placeholder="Film o serie" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="search" aria-label="Cerca un titolo"></label><div class="sres lib" id="sres"></div></div>',true);
@@ -1485,6 +1485,7 @@ async function trendTitles(){
   if(!r[0]&&!r[1])throw new Error("ricerca non disponibile");
   return (r[0]||[]).concat(r[1]||[]).sort((a,b)=>(b.popularity||0)-(a.popularity||0));
 }
+const untilReady=()=>new Promise(r=>setTimeout(r,Math.max(0,SREADY-Date.now())));   // si apre la ricerca col gesto: aspetto che la barra sia arrivata
 const trlReveal=box=>{const tl=box.querySelector(".trl");if(tl&&tl.animate&&!RM())tl.animate([{opacity:0,transform:"translate3d(0,10px,0)"},{opacity:1,transform:"none"}],{duration:700,delay:Math.max(0,SREADY-Date.now()),easing:"cubic-bezier(.16,1,.3,1)",fill:"backwards"});};
 async function doSearch(q){
   const my=++SRUN,box=$("sres");
@@ -1498,6 +1499,7 @@ async function doSearch(q){
   try{
     // TMDB mostra subito i suoi risultati; gli anime di AniList (più lento) arrivano dopo e si aggiungono in fondo
     if(!had&&SCACHE.q===q&&SCACHE.list.length&&Date.now()-SCACHE.t<6e5){   // tornando alla ricerca: gli stessi risultati di prima, subito (le locandine sono già in memoria)
+      await untilReady();if(my!==SRUN||!$("sres"))return;
       SLIST=SCACHE.list;const all={};SLIST.forEach(x=>{if(x.poster_path)all[x.poster_path]=1;});
       box.innerHTML=(trend?'<p class="trl">Di tendenza ora</p>':"")+SLIST.map((x,i)=>bkCard(x,i,all)).join("");bkReveal(box);trlReveal(box);return;}
     const mainP=(trend?trendTitles():searchTitles(q)).catch(()=>null);
@@ -1509,6 +1511,7 @@ async function doSearch(q){
     if(base===null&&!al.length)throw new Error("ricerca non disponibile");
     SLIST=mergeAl(base||[],al||[]).slice(0,22);
     const ok=await bkPreload(SLIST.slice(0,9),380);
+    await untilReady();   // aperta col gesto: i titoli si costruiscono solo a barra arrivata, così l'animazione non si inceppa
     if(my!==SRUN||!$("sres"))return;
     if((had||box.querySelector(".smsg"))&&box.animate&&!RM()){   // i vecchi titoli (o il testo di attesa) sfumano via prima che arrivino i nuovi
       await box.animate([{opacity:getComputedStyle(box).opacity},{opacity:0}],{duration:120,easing:"ease-in",fill:"forwards"}).finished.catch(()=>{});
@@ -3744,14 +3747,16 @@ addEventListener("touchend",()=>{EDGEX=-1;},true);addEventListener("touchcancel"
    1) il cerchio scende dritto dalla lente in alto fino all'estremità destra del campo  2) appena arrivato si allarga verso sinistra,
    e la lente scivola insieme al bordo sinistro fino al suo posto nel campo (rimpicciolisce e passa dal bianco al colore del campo).
    La lente è un elemento a parte, fuori dal ritaglio: su iPhone un elemento animato dentro un clip-path può sparire.
-   L'elemento ha già misure e posizione FINALI del campo: si muove solo con transform e la sua forma è un ritaglio (clip-path).
+   Pillola e lente si animano con left/top/width/height + clip-path, cioè TUTTO sullo stesso thread: se su iPhone una parte andasse
+   sulla scheda grafica (transform) e l'altra no, col telefono impegnato la lente scapperebbe fuori dalla pillola.
+   L'elemento ha già le misure FINALI del campo e la sua forma è un ritaglio (clip-path).
    c = riquadro del cerchio, q = riquadro del campo, r = raggio degli angoli del campo, col = colore finale della lente */
 function circleToBar(c,q,r,col,ph){   // ph: testo segnaposto del campo (compare mentre il cerchio si apre)
   const m=document.createElement("div");m.className="cbar";m.setAttribute("aria-hidden","true");
   m.style.cssText="left:"+q.left+"px;top:"+q.top+"px;width:"+q.width+"px;height:"+q.height+"px";
   m.innerHTML='<u></u><b></b>';m.children[1].textContent=ph||"";document.body.appendChild(m);
   const lz=document.createElement("div");lz.className="cbl";lz.setAttribute("aria-hidden","true");lz.innerHTML=IC.search;
-  lz.style.cssText="left:"+q.left+"px;top:"+q.top+"px;width:"+q.height+"px;height:"+q.height+"px";document.body.appendChild(lz);
+  lz.style.cssText="left:"+q.left+"px;top:"+q.top+"px;width:20px;height:20px";document.body.appendChild(lz);
   const h=q.height,w=q.width,d=c.width,cx0=c.left+d/2,cy0=c.top+d/2,cx1=q.right-h/2,cy1=q.top+h/2,s0=24*d/44/20;   // s0: la lente del tasto (24 px, più grande col cerchio) rispetto a quella del campo (20 px)
   const cl=v=>Math.max(0,Math.min(1,v)),ss=v=>{v=cl(v);return v*v*v*(v*(v*6-15)+10);},L=(a,b,t)=>a+(b-a)*t;
   const N=40,D=640,K=[],KI=[],KU=[];
@@ -3759,8 +3764,9 @@ function circleToBar(c,q,r,col,ph){   // ph: testo segnaposto del campo (compare
     const t=i/N,p=ss(t/.5),o=ss((t-.4)/.6);   // p: discesa, o: allargamento (parte proprio mentre il cerchio si posa, così non c'è una sosta)
     const H=L(d,h,p),xr=L(cx0,cx1,p)+H/2,yc=L(cy0,cy1,p),W=L(H,w,o),rad=L(H/2,r,o);
     const tx=xr-q.right,ty=yc-cy1,it=(h-H)/2,li=w-W;   // il bordo destro resta fermo, il sinistro si allarga
-    K.push({offset:t,transform:"translate3d("+tx.toFixed(2)+"px,"+ty.toFixed(2)+"px,0)",clipPath:"inset("+it.toFixed(2)+"px 0px "+it.toFixed(2)+"px "+li.toFixed(2)+"px round "+rad.toFixed(2)+"px)"});
-    KI.push({offset:t,transform:"translate3d("+(tx+li+H/2-h/2).toFixed(2)+"px,"+ty.toFixed(2)+"px,0) scale("+L(s0,1,p).toFixed(3)+")"});   // la lente viaggia col bordo sinistro: al centro del cerchio, poi al suo posto nel campo
+    K.push({offset:t,left:(q.left+tx).toFixed(2)+"px",top:(q.top+ty).toFixed(2)+"px",clipPath:"inset("+it.toFixed(2)+"px 0px "+it.toFixed(2)+"px "+li.toFixed(2)+"px round "+rad.toFixed(2)+"px)"});
+    {const sz=20*L(s0,1,p);   // la lente viaggia col bordo sinistro: al centro del cerchio, poi al suo posto nel campo
+      KI.push({offset:t,left:(q.left+tx+li+H/2-sz/2).toFixed(2)+"px",top:(yc-sz/2).toFixed(2)+"px",width:sz.toFixed(2)+"px",height:sz.toFixed(2)+"px"});}
     KU.push({offset:t,opacity:(1-ss((o-.15)/.85)).toFixed(3)});   // il gradiente sfuma nel colore del campo mentre si apre
   }
   const an=m.animate(K,{duration:D,fill:"forwards"});
