@@ -3733,31 +3733,31 @@ addEventListener("touchstart",e=>{const t=e.touches&&e.touches[0];if(!t)return;
 let EDGEX=-1;
 addEventListener("touchmove",e=>{const t=e.touches&&e.touches[0];if(EDGEX>=0&&t&&Math.abs(t.clientX-EDGEX)>4&&e.cancelable)e.preventDefault();},{passive:false,capture:true});
 addEventListener("touchend",()=>{EDGEX=-1;},true);addEventListener("touchcancel",()=>{EDGEX=-1;},true);
-/* il cerchio pieno diventa il campo di ricerca con UN solo movimento continuo, e la lente non sparisce mai:
-   il cerchio va dritto verso la lente del campo (a sinistra) e, prima ancora di arrivare, comincia ad aprirsi verso destra.
-   La lente resta al centro del cerchio per tutto il viaggio, rimpicciolisce alla misura del campo e passa dal bianco al colore del campo.
+/* il cerchio pieno diventa il campo di ricerca, e la lente non sparisce mai:
+   1) il cerchio scende dritto dalla lente in alto fino all'estremità destra del campo  2) appena arrivato si allarga verso sinistra,
+   e la lente scivola insieme al bordo sinistro fino al suo posto nel campo (rimpicciolisce e passa dal bianco al colore del campo).
    L'elemento ha già misure e posizione FINALI del campo: si muove solo con transform e la sua forma è un ritaglio (clip-path).
    c = riquadro del cerchio, q = riquadro del campo, r = raggio degli angoli del campo, col = colore finale della lente */
 function circleToBar(c,q,r,col,ph){   // ph: testo segnaposto del campo (compare mentre il cerchio si apre)
   const m=document.createElement("div");m.className="cbar";m.setAttribute("aria-hidden","true");
   m.style.cssText="left:"+q.left+"px;top:"+q.top+"px;width:"+q.width+"px;height:"+q.height+"px";
   m.innerHTML='<u></u><b></b><i>'+IC.search+'</i>';m.children[1].textContent=ph||"";document.body.appendChild(m);
-  const h=q.height,w=q.width,d=c.width,cx0=c.left+d/2,cy0=c.top+d/2,cx1=q.left+h/2,cy1=q.top+h/2,s0=24*d/44/20;   // s0: la lente del tasto (24 px, più grande col cerchio) rispetto a quella del campo (20 px)
+  const h=q.height,w=q.width,d=c.width,cx0=c.left+d/2,cy0=c.top+d/2,cx1=q.right-h/2,cy1=q.top+h/2,s0=24*d/44/20;   // s0: la lente del tasto (24 px, più grande col cerchio) rispetto a quella del campo (20 px)
   const cl=v=>Math.max(0,Math.min(1,v)),ss=v=>{v=cl(v);return v*v*v*(v*(v*6-15)+10);},L=(a,b,t)=>a+(b-a)*t;
-  const N=40,D=600,K=[],KI=[],KU=[];
+  const N=40,D=640,K=[],KI=[],KU=[];
   for(let i=0;i<=N;i++){
-    const t=i/N,p=ss(t/.78),o=ss((t-.32)/.68),py=1-Math.pow(1-p,1.5);   // p: viaggio, o: apertura (parte prima che il viaggio finisca), py: in verticale arriva un filo prima -> leggera curva
-    const H=L(d,h,p),xc=L(cx0,cx1,p),yc=L(cy0,cy1,py),W=L(H,w,o),rad=L(H/2,r,o);
-    const tx=xc-H/2-q.left,ty=yc-cy1,it=(h-H)/2;
-    K.push({offset:t,transform:"translate3d("+tx.toFixed(2)+"px,"+ty.toFixed(2)+"px,0)",clipPath:"inset("+it.toFixed(2)+"px "+(w-W).toFixed(2)+"px "+it.toFixed(2)+"px 0px round "+rad.toFixed(2)+"px)"});
-    KI.push({offset:t,transform:"translateX("+((H-h)/2).toFixed(2)+"px) scale("+L(s0,1,p).toFixed(3)+")"});   // la lente resta al centro del cerchio
+    const t=i/N,p=ss(t/.5),o=ss((t-.4)/.6);   // p: discesa, o: allargamento (parte proprio mentre il cerchio si posa, così non c'è una sosta)
+    const H=L(d,h,p),xr=L(cx0,cx1,p)+H/2,yc=L(cy0,cy1,p),W=L(H,w,o),rad=L(H/2,r,o);
+    const tx=xr-q.right,ty=yc-cy1,it=(h-H)/2,li=w-W;   // il bordo destro resta fermo, il sinistro si allarga
+    K.push({offset:t,transform:"translate3d("+tx.toFixed(2)+"px,"+ty.toFixed(2)+"px,0)",clipPath:"inset("+it.toFixed(2)+"px 0px "+it.toFixed(2)+"px "+li.toFixed(2)+"px round "+rad.toFixed(2)+"px)"});
+    KI.push({offset:t,transform:"translateX("+(li+H/2-h/2).toFixed(2)+"px) scale("+L(s0,1,p).toFixed(3)+")"});   // la lente viaggia col bordo sinistro: al centro del cerchio, poi al suo posto nel campo
     KU.push({offset:t,opacity:(1-ss((o-.15)/.85)).toFixed(3)});   // il gradiente sfuma nel colore del campo mentre si apre
   }
   const an=m.animate(K,{duration:D,fill:"forwards"});
   m.lastChild.animate(KI,{duration:D,fill:"forwards"});
   m.lastChild.animate([{color:"#fff"},{color:"#fff",offset:.35},{color:col||"#888"}],{duration:D,easing:"ease-in-out",fill:"forwards"});   // dal bianco al colore della lente del campo
   m.firstChild.animate(KU,{duration:D,fill:"forwards"});
-  m.children[1].animate([{opacity:0},{opacity:0,offset:.6},{opacity:1}],{duration:D,easing:"ease-out",fill:"forwards"});   // la scritta del campo arriva per ultima
+  m.children[1].animate([{opacity:0},{opacity:0,offset:.86},{opacity:1}],{duration:D,easing:"ease-out",fill:"forwards"});   // la scritta del campo arriva per ultima, quando la lente l'ha già superata
   return an.finished.catch(()=>{}).then(()=>m);
 }
 /* home: trascinando la prima domanda verso il basso, intorno alla lente in alto a destra si disegna un anello sfumato che segue il dito.
