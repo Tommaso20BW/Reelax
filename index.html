@@ -166,15 +166,9 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .bline{position:absolute;left:var(--gut);right:var(--gut);bottom:var(--pgb);height:3px;border-radius:3px;background:var(--grad);box-shadow:0 0 10px rgba(255,61,82,.6);transform:scaleX(0);opacity:0;pointer-events:none;z-index:6}
 .prog.off{opacity:0}
 .prog b{display:block;height:100%;width:0;border-radius:inherit;transition:width .65s cubic-bezier(.45,.05,.2,1)}
-/* barra in alto come un LED leggero: lo sfumato dell'app scorre piano lungo la parte piena, bagliore tenue (non più tagliato)
-   e un puntino luminoso in punta che "respira". Barra vuota (.z): niente puntino */
-.prog b{position:relative;background:linear-gradient(90deg,#ff3d52,#c13bd9,#8f62f8,#c13bd9,#ff3d52) 0 0/200% 100%;box-shadow:0 0 6px rgba(255,61,82,.4),0 0 14px rgba(193,59,217,.2);animation:pgFlow 5s linear infinite}
-.prog b::after{content:"";position:absolute;right:-2px;top:50%;width:6px;height:6px;margin-top:-3px;border-radius:50%;background:#fff;box-shadow:0 0 5px 1px rgba(255,140,220,.7),0 0 12px 3px rgba(193,59,217,.3);transition:opacity .3s;animation:pgLed 2.6s ease-in-out infinite}
-.prog.z b::after{opacity:0}
-:root[data-theme="light"] .prog b{box-shadow:0 0 5px rgba(255,61,82,.3),0 0 10px rgba(193,59,217,.12)}
-:root[data-theme="light"] .prog b::after{box-shadow:0 0 4px 1px rgba(255,61,82,.45),0 0 9px 2px rgba(193,59,217,.18)}
-@keyframes pgFlow{to{background-position:-200% 0}}
-@keyframes pgLed{50%{opacity:.6;transform:scale(.8)}}
+/* stessa linea che compare toccando REELAX (.bline): lo sfumato è steso su tutta la larghezza (--pw = larghezza della barra)
+   e la parte piena lo scopre man mano, con il bagliore intero (la barra non taglia più quello che esce) */
+.prog b{background:var(--grad) 0 0/var(--pw,100%) 100% no-repeat;box-shadow:0 0 10px rgba(255,61,82,.6)}
 
 /* il contenuto sfuma sotto la barra: nessun taglio netto */
 #stage{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch;padding:10px var(--gut) 20px;
@@ -1275,7 +1269,7 @@ function ui(o){
     let nb=false;
     if(!pg.firstChild){pg.innerHTML='<b></b>';nb=true;}
     if(!nb&&pg.classList.contains("off")){const q=pg.firstChild;q.style.transition="none";q.style.width="0";void q.offsetWidth;q.style.transition="";nb=true;}   // barra nascosta: riparte da zero invece di accorciarsi dal valore vecchio
-    pg.classList.remove("off");pg.classList.toggle("z",!o.p[1]);   // barra vuota: il puntino LED in punta non si vede
+    pg.classList.remove("off");pg.style.setProperty("--pw",pg.clientWidth+"px");   // sfumato lungo quanto tutta la barra, come la linea del tocco su REELAX
     const bar=pg.firstChild,w=(o.p[1]/o.p[0]*100)+"%";
     if(RM()){bar.style.transition="none";bar.style.width=w;void bar.offsetWidth;bar.style.transition="";}
     else if(nb)requestAnimationFrame(()=>requestAnimationFrame(()=>{bar.style.width=w;}));
@@ -2540,7 +2534,7 @@ async function doRevokeAll(){   // dopo la conferma nel popup: questo dispositiv
    Ogni voce: d (data), t (elenco di novità in italiano, brevi). La versione (v) e APP_VER si calcolano da sole: vedi "VERSIONE AUTOMATICA" sotto CHANGELOG. La pagina Impostazioni > Novità le mostra da sola. */
 let APP_VER="";   // si calcola da sola dal CHANGELOG (vedi sotto): non va scritta a mano
 const CHANGELOG=[
-  {d:"24 ottobre 2026",t:["Nuova intro all'apertura: le luci si spengono e REELAX si accende come l'insegna al neon di un vecchio cinema","Trascinando giù dalla home, intorno alla lente di ricerca si disegna un anello: quando il cerchio è pieno, rilasciando diventa il campo di ricerca","Cambi pagina più calmi: le pagine si scambiano con una dissolvenza, senza scorrere di lato","Accesso: la proposta delle password salvate compare solo dopo l'animazione di apertura","La barra in alto si accende come un LED, con i colori di Reelax"]},
+  {d:"24 ottobre 2026",t:["Nuova intro all'apertura: le luci si spengono e REELAX si accende come l'insegna al neon di un vecchio cinema","Trascinando giù dalla home, intorno alla lente di ricerca si disegna un anello: quando il cerchio è pieno, rilasciando diventa il campo di ricerca","Cambi pagina più calmi: le pagine si scambiano con una dissolvenza, senza scorrere di lato","Accesso: la proposta delle password salvate compare solo dopo l'animazione di apertura","La barra in alto ha lo sfumato steso su tutta la larghezza, come la linea che compare toccando REELAX"]},
   {d:"23 ottobre 2026",t:["La scelta Novità, Recenti o Classici ora viene sempre rispettata, anche quando i titoli arrivano da fonti diverse da TMDB","Nella prima domanda ogni categoria ha una breve descrizione","Anche le voglie e le cose da evitare hanno una breve descrizione","Trovati di recente senza limite di titoli: ognuno resta 7 giorni","Dalla prima domanda trascina la pagina verso il basso per aprire subito Cerca","Ricerca: toccando un titolo la locandina vola nella scheda, e tornando indietro i risultati sono subito pronti","Accesso: i campi compilati in automatico non diventano più gialli e la tastiera si chiude da sola","«Esci da tutti i dispositivi» e «Svuota la cronologia» confermano con un breve avviso in basso; la cronologia svuotata si può recuperare con Annulla","Caricamento più leggero e leggibile con il tema chiaro, sfondo della scheda più morbido con il tema scuro","Nuova locandina con i colori Reelax per i titoli senza immagine","Avvio più rapido e controllo degli aggiornamenti molto più leggero","Migliorie e correzioni"]},
   {d:"22 ottobre 2026",t:["Nuova animazione di accesso e uscita: un'onda circolare parte dal tasto e rivela la schermata successiva, ora più fluida","Schermata di accesso rinnovata: scritta REELAX animata con i colori sfumati dell'app e lo stesso sfondo dell'app, nel tema chiaro e in quello scuro","Su smartphone l'app resta in verticale: ruotando il telefono compare l'invito a raddrizzarlo","Account di prova isolato: non vede né modifica liste, «Già visti», cronologia, paese e piattaforme dell'account vero, e nelle Impostazioni non mostra più username, password e dispositivi","Lista «Le mie piattaforme» più viva: le righe entrano a cascata e la selezione ha una piccola animazione con segno di spunta che rimbalza","Conferma di uscita più chiara: il tasto ora dice «Sì, esci dall'account»; anche «Esci da tutti i dispositivi» apre lo stesso popup di conferma","Traduzioni completate: intestazioni delle schede, condivisione, errori, impostazioni e frasi di «Perché fa per te» ora seguono la lingua della regione"]},
   {d:"22 ottobre 2026",t:["Nuova pagina Novità con la versione dell'app","Impostazioni rifatte: sezioni più chiare, su PC menu laterale con pannello e anteprime del tema","Su PC tutte le pagine usano tutta la larghezza dello schermo","Tema chiaro e scuro neutri, con accento rosso Reelax","Cronologia fino a 100 titoli, ogni titolo scade dopo 7 giorni; svuotarla ora cancella davvero, anche tra dispositivi"]},
@@ -3645,6 +3639,7 @@ function fitPoster(){   // PC: la locandina occupa tutta l'altezza che avanza (m
   }catch(e){}
 }
 addEventListener("resize",()=>fitPoster());
+addEventListener("resize",()=>{const pg=$("prog");if(pg&&pg.clientWidth)pg.style.setProperty("--pw",pg.clientWidth+"px");});   // sfumato della barra in alto sempre lungo quanto la barra
 function fitChips(){
   const c=stage.querySelector(".chips.one");if(!c)return;
   let parts=[];try{parts=JSON.parse(c.dataset.parts||"[]");}catch(e){}
