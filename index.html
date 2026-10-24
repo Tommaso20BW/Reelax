@@ -1238,8 +1238,12 @@ function ui(o){
     const a=dk._fade;
     if(dk._pre&&!o.d){   // dissolvenza già partita al tocco e la pagina nuova non ha tasti: si svuota a dissolvenza finita
       dk._pre=false;dk._fade=null;dk._h=o.d;
-      const D=dk.parentNode;D.style.position="absolute";D.style.left=D.style.right=D.style.bottom="0";   // la barra esce dal flusso: la pagina nuova ha subito tutta l'altezza, i tasti sfumano disegnati al loro posto
-      let ok=false;const done=()=>{if(ok)return;ok=true;D.style.position=D.style.left=D.style.right=D.style.bottom="";D.style.padding="";if(dk._h!==o.d)return;if(a)a.cancel();dk.style.pointerEvents="";dk.innerHTML="";};
+      /* la barra prende SUBITO la forma finale (vuota): la pagina nuova ha da subito la sua altezza definitiva (prima cambiava a fine dissolvenza
+         e in fondo alle Impostazioni "Account" compariva e spariva). I tasti che sfumano si staccano e restano fermi, ancorati al fondo */
+      const D=dk.parentNode,dr=D.getBoundingClientRect(),r=dk.getBoundingClientRect();
+      dk.style.position="absolute";dk.style.left=(r.left-dr.left)+"px";dk.style.width=r.width+"px";dk.style.bottom=(dr.bottom-r.bottom)+"px";
+      D.style.padding="";
+      let ok=false;const done=()=>{if(ok)return;ok=true;dk.style.position=dk.style.left=dk.style.width=dk.style.bottom="";if(dk._h!==o.d)return;if(a)a.cancel();dk.style.pointerEvents="";dk.innerHTML="";};
       if(a)a.finished.then(done,done);else done();
       setTimeout(done,400);
     }else{
