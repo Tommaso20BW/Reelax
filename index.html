@@ -453,6 +453,11 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 @keyframes iGlow{0%{opacity:0}10%{opacity:1}18%{opacity:0}30%{opacity:.9}37%{opacity:0}56%{opacity:1}63%{opacity:.4}72%,100%{opacity:1}}
 @keyframes iHaze{to{opacity:1}}
 body.intro .lgc>*{animation:none;opacity:0}
+/* barra di stato di iPhone: iOS ne colora la fascia guardando lo sfondo della PAGINA (html), non l'intro che le sta sopra.
+   Finché c'è l'intro lo sfondo della pagina segue quello che si vede: il rosso della splash in alto, poi il buio dell'insegna */
+html.rxi{background-color:#c82f63}
+html.rxi.go{animation:iHtml .55s ease-in-out .25s forwards}
+@keyframes iHtml{to{background-color:#0c0910}}
 
 /* accesso */
 body.locked #app,body.locked #bd{visibility:hidden}
@@ -915,7 +920,8 @@ html.tt .snav button,html.tt .sw,html.tt .sw i{transition-property:transform,wid
 </head>
 <body class="pre intro">
 <div id="intro" aria-hidden="true"><div class="ibg"><i></i></div><div class="idk"></div><div class="ihz"></div><div class="ilg"><s style="--x0:0;--cw:121;--i:0"><span class="g g2"><u></u></span><span class="g"><u></u></span><u class="c"></u></s><s style="--x0:121;--cw:119;--i:1"><span class="g g2"><u></u></span><span class="g"><u></u></span><u class="c"></u></s><s style="--x0:240;--cw:121;--i:2"><span class="g g2"><u></u></span><span class="g"><u></u></span><u class="c"></u></s><s style="--x0:361;--cw:110;--i:3"><span class="g g2"><u></u></span><span class="g"><u></u></span><u class="c"></u></s><s style="--x0:471;--cw:151;--i:4"><span class="g g2"><u></u></span><span class="g"><u></u></span><u class="c"></u></s><s style="--x0:622;--cw:137;--i:5"><span class="g g2"><u></u></span><span class="g"><u></u></span><u class="c"></u></s></div></div>
-<script>(function(){window.RX_INTRO_T=Date.now();try{if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;}catch(e){}document.getElementById("intro").classList.add("go");})();</script>
+<script>(function(){window.RX_INTRO_T=Date.now();var h=document.documentElement,m=document.querySelector('meta[name="theme-color"]');h.classList.add("rxi");if(m)m.setAttribute("content","#c82f63");   /* colore della barra di stato = quello che si vede (vedi html.rxi nel CSS) */
+try{if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;}catch(e){}document.getElementById("intro").classList.add("go");h.classList.add("go");setTimeout(function(){if(m&&h.classList.contains("rxi"))m.setAttribute("content","#0c0910");},700);})();</script>
 <div id="bd"><i></i></div>
 <div id="app">
   <header class="top">
@@ -3998,13 +4004,16 @@ function introOut(toLogin){
   const it=$("intro"),B=document.body;
   const focusU=()=>{if(toLogin&&!/iphone|ipad|ipod|android/i.test(navigator.userAgent))try{$("lgu").focus();}catch(e){}};   // sui telefoni niente tastiera aperta da sola
   if(!it){B.classList.remove("intro");return;}
-  const gone=()=>{if(!it.parentNode)return;it.remove();B.classList.remove("intro");focusU();};
+  const H=document.documentElement,tm=document.querySelector('meta[name="theme-color"]'),bgTo=()=>H.getAttribute("data-theme")==="light"?"#f5f5f6":"#0b0b0d";   // colore della pagina a intro finita
+  const gone=()=>{if(!it.parentNode)return;it.remove();B.classList.remove("intro");H.classList.remove("rxi","go");H.getAnimations().forEach(a=>a.cancel());if(tm)tm.setAttribute("content",bgTo());focusU();};
   if(RM()||!it.animate){B.classList.remove("intro");if(it.animate)it.animate([{opacity:1},{opacity:0}],{duration:250,fill:"forwards"}).finished.then(gone,gone);else gone();setTimeout(gone,600);return;}
   const go=()=>{
     it.style.pointerEvents="none";
     const D=650;
     it.querySelector(".ilg").animate([{transform:"none"},{transform:"scale(1.04)"}],{duration:D,easing:"ease-out",fill:"forwards"});
     it.animate([{opacity:1},{opacity:0}],{duration:D,easing:"ease-in-out",fill:"forwards"}).finished.then(gone,gone);
+    H.animate([{backgroundColor:getComputedStyle(H).backgroundColor},{backgroundColor:bgTo()}],{duration:D,easing:"ease-in-out",fill:"forwards"});   // lo sfondo della pagina (e la barra di stato) sfuma insieme all'intro
+    if(tm)tm.setAttribute("content",bgTo());
     if(!toLogin)$("app").animate([{transform:"scale(.97)"},{transform:"none"}],{duration:900,easing:"cubic-bezier(.2,.8,.2,1)"});
     setTimeout(()=>B.classList.remove("intro"),120);   // i campi del login entrano mentre l'insegna sfuma
     setTimeout(gone,D+400);
