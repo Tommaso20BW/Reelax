@@ -313,9 +313,9 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .card h3{margin:0 0 12px;font:700 .7rem var(--fb);letter-spacing:.16em;text-transform:uppercase;color:var(--mut)}
 .card p{margin:0;font-size:.95rem}
 @property --f{syntax:'<length>';inherits:false;initial-value:0px}
-.card p#plot{overflow:hidden;--f:0px;transition:height .6s cubic-bezier(.25,.8,.25,1),--f .6s ease;
+.card p:is(#plot,[data-gid="plot"]){overflow:hidden;--f:0px;transition:height .6s cubic-bezier(.25,.8,.25,1),--f .6s ease;
   -webkit-mask-image:linear-gradient(#000 calc(100% - var(--f)),transparent);mask-image:linear-gradient(#000 calc(100% - var(--f)),transparent)}
-.card p#plot.clamp{--f:1.6em}
+.card p:is(#plot,[data-gid="plot"]).clamp{--f:1.6em}
 .card.tap{cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .2s}
 .card.tap:active{filter:brightness(1.08)}
 .card.compat{display:flex;align-items:center;gap:16px}
@@ -323,7 +323,7 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .ringw svg{width:100%;height:100%;transform:rotate(-90deg)}
 .ringw circle{fill:none;stroke-width:6;stroke-linecap:round}
 .ringw .bgc{stroke:rgba(255,255,255,.1)}
-.ringw .fgc{stroke:url(#rg);stroke-dasharray:169.65;stroke-dashoffset:169.65;transition:stroke-dashoffset 1.2s .35s var(--ease)}
+.ringw .fgc{stroke:url(:is(#rg,[data-gid="rg"]));stroke-dasharray:169.65;stroke-dashoffset:169.65;transition:stroke-dashoffset 1.2s .35s var(--ease)}
 .ringw .pn{position:absolute;inset:0;display:grid;place-items:center;font:800 1.05rem var(--fd)}
 .compat b{display:block;font:800 1.1rem var(--fd);letter-spacing:-.01em}
 .compat span.sub{font-size:.82rem;color:var(--mut)}
@@ -623,7 +623,7 @@ body.pre #app{opacity:0}
 /* ===== SCHEDA ATTORE: stessa struttura e stesso movimento della scheda risultato ===== */
 .res>.sech{margin:10px 2px -4px;font:700 .72rem var(--fb);letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
 .res>.sres{animation:none!important}          /* la griglia non si anima da sola: lo fanno i singoli titoli, con lo stesso "up" */
-.res #pchips{min-height:31px}                  /* spazio già riservato: niente salti quando arrivano i dati */
+.res :is(#pchips,[data-gid="pchips"]){min-height:31px}                  /* spazio già riservato: niente salti quando arrivano i dati */
 .res .sres.lib{margin-bottom:6px}
 .bk .s{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
 @media (min-width:900px) and (min-height:560px){.res .sres.lib{grid-template-columns:repeat(4,minmax(0,1fr));gap:22px 16px}}
@@ -702,11 +702,11 @@ body.pre #app{opacity:0}
 .srow.sm{min-height:52px;font-size:.95rem}
 .sblock .sh+.seg,.sblock .seg+.sh{margin-top:6px}
 .sblock.sin{animation:spIn .42s var(--ease) both}
-.sblock.sin .srow,.sblock.sin #thseg button{animation:spIn .55s var(--ease) backwards}
-.sblock.sin .srow:nth-child(2),.sblock.sin #thseg button:nth-child(2){animation-delay:.07s}
-.sblock.sin .srow:nth-child(3),.sblock.sin #thseg button:nth-child(3){animation-delay:.14s}
+.sblock.sin .srow,.sblock.sin :is(#thseg,[data-gid="thseg"]) button{animation:spIn .55s var(--ease) backwards}
+.sblock.sin .srow:nth-child(2),.sblock.sin :is(#thseg,[data-gid="thseg"]) button:nth-child(2){animation-delay:.07s}
+.sblock.sin .srow:nth-child(3),.sblock.sin :is(#thseg,[data-gid="thseg"]) button:nth-child(3){animation-delay:.14s}
 @keyframes spIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
-@media (prefers-reduced-motion:reduce){.sblock.sin,.sblock.sin .srow,.sblock.sin #thseg button{animation:none}}
+@media (prefers-reduced-motion:reduce){.sblock.sin,.sblock.sin .srow,.sblock.sin :is(#thseg,[data-gid="thseg"]) button{animation:none}}
 .seg.tp button{height:auto;display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 8px 16px;font-size:.92rem;text-align:center}
 .tpv{display:none;position:relative;width:100%;height:96px;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:var(--s3)}
 .tpv .m{position:absolute;inset:0;--pb:#0b0b0d;--ps:#2a2a2f;background:var(--pb)}
@@ -722,7 +722,7 @@ body.pre #app{opacity:0}
 .sblock.pcx{display:none}
 .vh{font:700 .72rem var(--fb);letter-spacing:.14em;text-transform:uppercase;color:var(--mut);padding:10px 6px 0}
 .srow .sv{flex:none;font-size:.85rem;font-weight:600;color:var(--mut);font-variant-numeric:tabular-nums}
-@media (min-width:1500px) and (min-height:560px){.sres.lib{grid-template-columns:repeat(8,minmax(0,1fr))}.page #rgl,.page #pfg{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media (min-width:1500px) and (min-height:560px){.sres.lib{grid-template-columns:repeat(8,minmax(0,1fr))}.page :is(#rgl,[data-gid="rgl"]),.page :is(#pfg,[data-gid="pfg"]){grid-template-columns:repeat(4,minmax(0,1fr))}}
 /* Impostazioni: telefono = una colonna di sezioni; PC = menu a sinistra + una sezione alla volta a destra, Esci sotto il menu */
 .sgrid{display:flex;flex-direction:column;gap:var(--pg)}
 .spanes{display:flex;flex-direction:column;gap:var(--pg)}
@@ -743,11 +743,11 @@ body.pre #app{opacity:0}
   .snav button.on{color:#fff}
   .spanes{overflow:hidden}
   .tpv{display:block}
-  .spanes #thseg{gap:18px}
-  .spanes #thseg button{padding:14px 14px 18px;gap:14px;border-radius:22px;transition:transform .25s var(--ease),border-color .15s,background .15s,box-shadow .2s}
-  .spanes #thseg button:hover{transform:translateY(-3px)}
-  .spanes #thseg .tl{flex-direction:row;gap:10px}
-  .spanes #thseg.seg.tp .tl svg{width:34px;height:34px;padding:7px}
+  .spanes :is(#thseg,[data-gid="thseg"]){gap:18px}
+  .spanes :is(#thseg,[data-gid="thseg"]) button{padding:14px 14px 18px;gap:14px;border-radius:22px;transition:transform .25s var(--ease),border-color .15s,background .15s,box-shadow .2s}
+  .spanes :is(#thseg,[data-gid="thseg"]) button:hover{transform:translateY(-3px)}
+  .spanes :is(#thseg,[data-gid="thseg"]) .tl{flex-direction:row;gap:10px}
+  .spanes :is(#thseg,[data-gid="thseg"]).seg.tp .tl svg{width:34px;height:34px;padding:7px}
   .spanes{grid-area:panes;max-width:960px;padding:34px;border:1px solid var(--line);border-radius:30px;background:linear-gradient(160deg,var(--s2),var(--s1));align-self:start}
   .spanes .sblock{display:none}
   .spanes .sblock.on{display:flex}
@@ -765,13 +765,13 @@ body.pre #app{opacity:0}
 }
 /* Regione e Piattaforme su PC: liste lunghe in griglia a 3 colonne, sottotitolo allineato al titolo */
 @media (min-width:900px) and (min-height:560px){
-  .page:has(#rgl),.page:has(#pfg){max-width:1500px}
-  .page:has(#rgl) .sub,.page:has(#pfg) .sub{text-align:left}
-  #rgl,#pfg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-  #pfg .lemp{grid-column:1/-1}
-  #rgl{overflow:visible;border:0;background:none;border-radius:0}
-  #rgl .srow{border:1px solid var(--line);border-radius:var(--r2);background:linear-gradient(160deg,var(--s2),var(--s1))}
-  #rgl .srow+.srow{border-top:1px solid var(--line)}
+  .page:has(:is(#rgl,[data-gid="rgl"])),.page:has(:is(#pfg,[data-gid="pfg"])){max-width:1500px}
+  .page:has(:is(#rgl,[data-gid="rgl"])) .sub,.page:has(:is(#pfg,[data-gid="pfg"])) .sub{text-align:left}
+  :is(#rgl,[data-gid="rgl"]),:is(#pfg,[data-gid="pfg"]){display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+  :is(#pfg,[data-gid="pfg"]) .lemp{grid-column:1/-1}
+  :is(#rgl,[data-gid="rgl"]){overflow:visible;border:0;background:none;border-radius:0}
+  :is(#rgl,[data-gid="rgl"]) .srow{border:1px solid var(--line);border-radius:var(--r2);background:linear-gradient(160deg,var(--s2),var(--s1))}
+  :is(#rgl,[data-gid="rgl"]) .srow+.srow{border-top:1px solid var(--line)}
 }
 .nws{margin:0;padding:14px 18px 14px 36px;font-size:.92rem;line-height:1.4}
 .nws li+li{margin-top:8px}
@@ -794,9 +794,9 @@ body.pre #app{opacity:0}
 .sgrp .srow>svg:first-child{width:34px;height:34px;padding:7px;border-radius:10px;background:var(--soft);color:var(--fg)}
 .sgrp .srow+.srow{border-top:1px solid var(--line);position:relative}
 .sgrp .srow>svg:last-child:not(:first-child){width:16px;height:16px;opacity:.6}
-#thseg{padding:0;gap:10px;border:0;border-radius:0;background:none}
-#thseg button{height:auto;min-height:0;border:1px solid var(--line);border-radius:18px;background:var(--s2)}
-#thseg button.on{background:linear-gradient(135deg,rgba(255,61,82,.28),rgba(143,98,248,.24));box-shadow:0 0 0 1px var(--red) inset}
+:is(#thseg,[data-gid="thseg"]){padding:0;gap:10px;border:0;border-radius:0;background:none}
+:is(#thseg,[data-gid="thseg"]) button{height:auto;min-height:0;border:1px solid var(--line);border-radius:18px;background:var(--s2)}
+:is(#thseg,[data-gid="thseg"]) button.on{background:linear-gradient(135deg,rgba(255,61,82,.28),rgba(143,98,248,.24));box-shadow:0 0 0 1px var(--red) inset}
 .srow.out{justify-content:center;min-height:56px;margin-top:auto;border-radius:18px;border:1px solid rgba(255,61,82,.45);background:rgba(255,61,82,.1)}
 .srow.out .sl{flex:none;text-align:center}
 .srow.out.ask{background:rgba(255,61,82,.22)}
@@ -884,18 +884,18 @@ body.pre #app{opacity:0}
 .btn.shr{flex:none;width:100%;height:50px;border-radius:16px;font-size:.92rem;gap:9px;font-weight:700}
 .btn.shr svg{width:18px;height:18px}
 .res>.btn.shr{margin-top:4px}
-#shs{position:fixed;inset:0;z-index:150;display:none}
-#shs.on{display:block}
-#shs .bgx{position:absolute;inset:0;background:rgba(0,0,0,.5);opacity:0;transition:opacity .45s ease}
-#shs.show .bgx{opacity:1}
-#shs .pan{position:absolute;left:0;right:0;bottom:0;margin:0 auto;max-width:560px;padding:10px var(--gut) calc(var(--sab) + 18px);border-radius:26px 26px 0 0;background:var(--s1);border:1px solid var(--line);border-bottom:0;transform:translate3d(0,100%,0);transition:transform .6s var(--ease);box-shadow:0 -20px 50px rgba(0,0,0,.35)}
-#shs.show .pan{transform:none}
-#shs .grab{width:38px;height:4px;border-radius:4px;background:var(--line2);margin:0 auto 14px}
-#shs .sgrp{background:var(--s2)}
+:is(#shs,[data-gid="shs"]){position:fixed;inset:0;z-index:150;display:none}
+:is(#shs,[data-gid="shs"]).on{display:block}
+:is(#shs,[data-gid="shs"]) .bgx{position:absolute;inset:0;background:rgba(0,0,0,.5);opacity:0;transition:opacity .45s ease}
+:is(#shs,[data-gid="shs"]).show .bgx{opacity:1}
+:is(#shs,[data-gid="shs"]) .pan{position:absolute;left:0;right:0;bottom:0;margin:0 auto;max-width:560px;padding:10px var(--gut) calc(var(--sab) + 18px);border-radius:26px 26px 0 0;background:var(--s1);border:1px solid var(--line);border-bottom:0;transform:translate3d(0,100%,0);transition:transform .6s var(--ease);box-shadow:0 -20px 50px rgba(0,0,0,.35)}
+:is(#shs,[data-gid="shs"]).show .pan{transform:none}
+:is(#shs,[data-gid="shs"]) .grab{width:38px;height:4px;border-radius:4px;background:var(--line2);margin:0 auto 14px}
+:is(#shs,[data-gid="shs"]) .sgrp{background:var(--s2)}
 @media (min-width:900px){
-  #shs .pan{left:50%;right:auto;top:50%;bottom:auto;margin:0;width:400px;max-width:calc(100vw - 40px);padding:22px;border-radius:26px;border:1px solid var(--line);opacity:0;transform:translate(-50%,-46%) scale(.96);transition:transform .5s var(--ease),opacity .4s ease;box-shadow:0 30px 80px rgba(0,0,0,.45)}
-  #shs.show .pan{opacity:1;transform:translate(-50%,-50%)}
-  #shs .grab{display:none}
+  :is(#shs,[data-gid="shs"]) .pan{left:50%;right:auto;top:50%;bottom:auto;margin:0;width:400px;max-width:calc(100vw - 40px);padding:22px;border-radius:26px;border:1px solid var(--line);opacity:0;transform:translate(-50%,-46%) scale(.96);transition:transform .5s var(--ease),opacity .4s ease;box-shadow:0 30px 80px rgba(0,0,0,.45)}
+  :is(#shs,[data-gid="shs"]).show .pan{opacity:1;transform:translate(-50%,-50%)}
+  :is(#shs,[data-gid="shs"]) .grab{display:none}
 }
 .castbtn .cs{display:block;font-size:.92rem}
 /* ripple al tocco e cambio tema morbido */
@@ -918,8 +918,8 @@ body.pre #app{opacity:0}
 html.tt{transition:--bg .55s ease,--s1 .55s ease,--s2 .55s ease,--s3 .55s ease,--line .55s ease,--line2 .55s ease,--fg .55s ease,--mut .55s ease,--dim .55s ease,--soft .55s ease,--soft2 .55s ease,--shade .55s ease,--bgrgb .55s ease,--bdb .55s ease}
 @media (prefers-reduced-motion:reduce){html.tt{transition:none}}
 /* cambio tema: gli elementi con transizioni proprie sui colori (tessere e simboli del selettore, menu laterale, interruttori) le sospendono finché dura la dissolvenza globale: seguono la stessa curva di tutto il resto invece di sommarsi e arrivare in ritardo */
-html.tt #thseg button{transition-property:transform,box-shadow}
-html.tt #thseg .tl svg{transition:none}
+html.tt :is(#thseg,[data-gid="thseg"]) button{transition-property:transform,box-shadow}
+html.tt :is(#thseg,[data-gid="thseg"]) .tl svg{transition:none}
 html.tt .snav button,html.tt .sw,html.tt .sw i{transition-property:transform,width}
 /* ingresso più calmo */
 .poster::before{display:none}
@@ -933,7 +933,7 @@ html.tt .snav button,html.tt .sw,html.tt .sw i{transition-property:transform,wid
 .dock-in.xf:not(.out) .btn:nth-child(3){animation-delay:.18s}
 
 /* ricerca: niente salti di altezza, feedback al tocco */
-#sres{min-height:55vh}
+:is(#sres,[data-gid="sres"]){min-height:55vh}
 .bk{transition:transform .15s,opacity .25s}
 .bk.pick{transform:none;opacity:1}
 .bk.pick .cv{animation:pickPop .5s cubic-bezier(.34,1.56,.64,1) both;box-shadow:0 14px 34px rgba(0,0,0,.5),0 0 0 2px rgba(255,90,107,.75)}   /* tocco: la locandina fa "pop", si solleva e si illumina */
@@ -1174,7 +1174,7 @@ function swap(h,anim){
     // sposto i nodi vivi nel "ghost" invece di duplicarli con innerHTML: le immagini restano già decodificate (un clone le ricarica da zero e per ~100 ms la locandina/gli avatar lampeggiavano vuoti)
     const sy=stage.scrollTop;
     while(stage.firstChild)ghost.appendChild(stage.firstChild);
-    ghost.querySelectorAll("[id]").forEach(e=>e.removeAttribute("id"));
+    ghost.querySelectorAll("[id]").forEach(e=>{e.dataset.gid=e.id;e.removeAttribute("id");});   // l'id diventa data-gid: gli stili legati all'id (es. #thseg) valgono anche per la pagina che sfuma (vedi :is(#x,[data-gid]) nel CSS)
     app.insertBefore(ghost,stage);ghost.scrollTop=sy;
   }
   stage.innerHTML=h;
