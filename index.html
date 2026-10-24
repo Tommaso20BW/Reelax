@@ -189,8 +189,8 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 /* cerchio -> campo di ricerca: resta tondo mentre scende, poi si apre verso sinistra */
 .cbar{position:fixed;z-index:7;pointer-events:none;background:var(--s2);will-change:transform,clip-path}
 .cbar u{position:absolute;inset:0;background:var(--grad)}
-.cbar i{position:absolute;left:0;top:0;bottom:0;aspect-ratio:1;display:grid;place-items:center;color:#fff;will-change:transform}
-.cbar i svg{width:20px;height:20px}
+.cbl{position:fixed;z-index:8;pointer-events:none;display:grid;place-items:center;color:#fff}
+.cbl svg{width:20px;height:20px}
 .cbar b{position:absolute;left:55px;top:50%;transform:translateY(-50%);font:500 16px var(--fb);color:var(--dim);white-space:nowrap;opacity:0}
 .ghost{position:absolute;z-index:1;box-sizing:border-box;overflow:hidden;padding:10px var(--gut) 20px;pointer-events:none;will-change:transform,opacity}
 
@@ -1399,7 +1399,7 @@ function home(anim){
 let SQ="",SRUN=0,SLIST=[],SCACHE={q:null,list:[],t:0};
 let VY=0,SPULL=false;   // VY: prossimo cambio pagina in verticale; SPULL: la ricerca aperta è stata aperta trascinando giù dalla home
 function searchPage(how){
-  if(how==="pull"){SPULL=true;VY=2;}else if(stage.querySelector(".opts"))SPULL=false;   // dal tasto in alto: si chiude di lato come sempre
+  if(how==="pull"){SPULL=true;VY=2;SREADY=Date.now()+560;}else{SREADY=0;if(stage.querySelector(".opts"))SPULL=false;}   // dal tasto in alto: si chiude di lato come sempre
   RUN++;
   setBd(null);setRoute("/cerca"+(SQ?"/"+enc(SQ):""));
   swap('<div class="page"><h1>Cerca un titolo</h1><label class="sqw"><i class="sqi" aria-hidden="true">'+IC.search+'</i><input class="lgi sin" id="sq" type="search" placeholder="Film o serie" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="search" aria-label="Cerca un titolo"></label><div class="sres lib" id="sres"></div></div>',true);
@@ -1463,7 +1463,13 @@ const bkPreload=async(list,ms)=>{   // max ~1,4 s: la griglia compare già compl
   ]);
   return ok;
 };
-const bkReveal=(box,delay,from)=>{if(RM())return;[].slice.call(box.querySelectorAll(".bk"),from||0).forEach((el,i)=>{if(el.animate)el.animate([{opacity:0,transform:"translate3d(0,8px,0)"},{opacity:1,transform:"none"}],{duration:800,delay:(delay||0)+Math.min(i,11)*45,easing:"cubic-bezier(.2,.85,.25,1)",fill:"backwards"});});};
+/* entrata dei titoli: un'onda in diagonale (dall'alto a sinistra verso il basso a destra); ogni locandina sale un poco e si ingrandisce appena.
+   Se la ricerca si sta aprendo col gesto, si aspetta che la barra sia arrivata (SREADY) */
+let SREADY=0;
+const bkReveal=(box,delay,from)=>{if(RM())return;
+  const cs=getComputedStyle(box),nc=Math.max(1,(cs.gridTemplateColumns||"").split(" ").filter(Boolean).length),w=Math.max(0,SREADY-Date.now());
+  [].slice.call(box.querySelectorAll(".bk"),from||0).forEach((el,i)=>{if(!el.animate)return;const r=Math.floor(i/nc),c=i%nc;
+    el.animate([{opacity:0,transform:"translate3d(0,26px,0) scale(.94)"},{opacity:1,transform:"none"}],{duration:760,delay:w+(delay||0)+Math.min(r*110+c*70,700),easing:"cubic-bezier(.16,1,.3,1)",fill:"backwards"});});};
 /* Più in voga ora: uso discover (già consentito dal proxy), ordinato per popolarità, film e serie mescolati */
 const ago=d=>new Date(Date.now()-d*864e5).toISOString().slice(0,10);
 async function trendTitles(){
@@ -1479,6 +1485,7 @@ async function trendTitles(){
   if(!r[0]&&!r[1])throw new Error("ricerca non disponibile");
   return (r[0]||[]).concat(r[1]||[]).sort((a,b)=>(b.popularity||0)-(a.popularity||0));
 }
+const trlReveal=box=>{const tl=box.querySelector(".trl");if(tl&&tl.animate&&!RM())tl.animate([{opacity:0,transform:"translate3d(0,10px,0)"},{opacity:1,transform:"none"}],{duration:700,delay:Math.max(0,SREADY-Date.now()),easing:"cubic-bezier(.16,1,.3,1)",fill:"backwards"});};
 async function doSearch(q){
   const my=++SRUN,box=$("sres");
   if(!box)return;
@@ -1492,7 +1499,7 @@ async function doSearch(q){
     // TMDB mostra subito i suoi risultati; gli anime di AniList (più lento) arrivano dopo e si aggiungono in fondo
     if(!had&&SCACHE.q===q&&SCACHE.list.length&&Date.now()-SCACHE.t<6e5){   // tornando alla ricerca: gli stessi risultati di prima, subito (le locandine sono già in memoria)
       SLIST=SCACHE.list;const all={};SLIST.forEach(x=>{if(x.poster_path)all[x.poster_path]=1;});
-      box.innerHTML=(trend?'<p class="trl">Di tendenza ora</p>':"")+SLIST.map((x,i)=>bkCard(x,i,all)).join("");return;}
+      box.innerHTML=(trend?'<p class="trl">Di tendenza ora</p>':"")+SLIST.map((x,i)=>bkCard(x,i,all)).join("");bkReveal(box);trlReveal(box);return;}
     const mainP=(trend?trendTitles():searchTitles(q)).catch(()=>null);
     const alP=trend?Promise.resolve([]):searchAniList(q).catch(()=>[]);
     const base=await mainP;
@@ -1511,7 +1518,7 @@ async function doSearch(q){
     SCACHE={q:q,list:SLIST,t:Date.now()};
     box.innerHTML=SLIST.length?(trend?'<p class="trl">Di tendenza ora</p>':"")+SLIST.map((x,i)=>bkCard(x,i,ok)).join(""):'<p class="smsg">Nessun risultato.</p>';
     if(SLIST.length)bkReveal(box);
-    {const tl=box.querySelector(".trl");if(tl&&tl.animate&&!RM())tl.animate([{opacity:0,transform:"translate3d(0,8px,0)"},{opacity:1,transform:"none"}],{duration:800,easing:"cubic-bezier(.2,.85,.25,1)",fill:"backwards"});}
+    trlReveal(box);
     if(al===null){
       al=await alP;
       if(my!==SRUN||!$("sres")||!al.length)return;
@@ -3736,12 +3743,15 @@ addEventListener("touchend",()=>{EDGEX=-1;},true);addEventListener("touchcancel"
 /* il cerchio pieno diventa il campo di ricerca, e la lente non sparisce mai:
    1) il cerchio scende dritto dalla lente in alto fino all'estremità destra del campo  2) appena arrivato si allarga verso sinistra,
    e la lente scivola insieme al bordo sinistro fino al suo posto nel campo (rimpicciolisce e passa dal bianco al colore del campo).
+   La lente è un elemento a parte, fuori dal ritaglio: su iPhone un elemento animato dentro un clip-path può sparire.
    L'elemento ha già misure e posizione FINALI del campo: si muove solo con transform e la sua forma è un ritaglio (clip-path).
    c = riquadro del cerchio, q = riquadro del campo, r = raggio degli angoli del campo, col = colore finale della lente */
 function circleToBar(c,q,r,col,ph){   // ph: testo segnaposto del campo (compare mentre il cerchio si apre)
   const m=document.createElement("div");m.className="cbar";m.setAttribute("aria-hidden","true");
   m.style.cssText="left:"+q.left+"px;top:"+q.top+"px;width:"+q.width+"px;height:"+q.height+"px";
-  m.innerHTML='<u></u><b></b><i>'+IC.search+'</i>';m.children[1].textContent=ph||"";document.body.appendChild(m);
+  m.innerHTML='<u></u><b></b>';m.children[1].textContent=ph||"";document.body.appendChild(m);
+  const lz=document.createElement("div");lz.className="cbl";lz.setAttribute("aria-hidden","true");lz.innerHTML=IC.search;
+  lz.style.cssText="left:"+q.left+"px;top:"+q.top+"px;width:"+q.height+"px;height:"+q.height+"px";document.body.appendChild(lz);
   const h=q.height,w=q.width,d=c.width,cx0=c.left+d/2,cy0=c.top+d/2,cx1=q.right-h/2,cy1=q.top+h/2,s0=24*d/44/20;   // s0: la lente del tasto (24 px, più grande col cerchio) rispetto a quella del campo (20 px)
   const cl=v=>Math.max(0,Math.min(1,v)),ss=v=>{v=cl(v);return v*v*v*(v*(v*6-15)+10);},L=(a,b,t)=>a+(b-a)*t;
   const N=40,D=640,K=[],KI=[],KU=[];
@@ -3750,12 +3760,13 @@ function circleToBar(c,q,r,col,ph){   // ph: testo segnaposto del campo (compare
     const H=L(d,h,p),xr=L(cx0,cx1,p)+H/2,yc=L(cy0,cy1,p),W=L(H,w,o),rad=L(H/2,r,o);
     const tx=xr-q.right,ty=yc-cy1,it=(h-H)/2,li=w-W;   // il bordo destro resta fermo, il sinistro si allarga
     K.push({offset:t,transform:"translate3d("+tx.toFixed(2)+"px,"+ty.toFixed(2)+"px,0)",clipPath:"inset("+it.toFixed(2)+"px 0px "+it.toFixed(2)+"px "+li.toFixed(2)+"px round "+rad.toFixed(2)+"px)"});
-    KI.push({offset:t,transform:"translateX("+(li+H/2-h/2).toFixed(2)+"px) scale("+L(s0,1,p).toFixed(3)+")"});   // la lente viaggia col bordo sinistro: al centro del cerchio, poi al suo posto nel campo
+    KI.push({offset:t,transform:"translate3d("+(tx+li+H/2-h/2).toFixed(2)+"px,"+ty.toFixed(2)+"px,0) scale("+L(s0,1,p).toFixed(3)+")"});   // la lente viaggia col bordo sinistro: al centro del cerchio, poi al suo posto nel campo
     KU.push({offset:t,opacity:(1-ss((o-.15)/.85)).toFixed(3)});   // il gradiente sfuma nel colore del campo mentre si apre
   }
   const an=m.animate(K,{duration:D,fill:"forwards"});
-  m.lastChild.animate(KI,{duration:D,fill:"forwards"});
-  m.lastChild.animate([{color:"#fff"},{color:"#fff",offset:.35},{color:col||"#888"}],{duration:D,easing:"ease-in-out",fill:"forwards"});   // dal bianco al colore della lente del campo
+  lz.animate(KI,{duration:D,fill:"forwards"});
+  lz.animate([{color:"#fff"},{color:"#fff",offset:.72},{color:col||"#888"}],{duration:D,easing:"ease-in-out",fill:"forwards"});   // resta bianca sul gradiente, prende il colore del campo solo alla fine
+  m._lz=lz;
   m.firstChild.animate(KU,{duration:D,fill:"forwards"});
   m.children[1].animate([{opacity:0},{opacity:0,offset:.86},{opacity:1}],{duration:D,easing:"ease-out",fill:"forwards"});   // la scritta del campo arriva per ultima, quando la lente l'ha già superata
   return an.finished.catch(()=>{}).then(()=>m);
@@ -3816,7 +3827,7 @@ function circleToBar(c,q,r,col,ph){   // ph: testo segnaposto del campo (compare
       if(q&&!fast){const f=q.parentNode,qi=f.querySelector(".sqi");f.style.opacity="0";el.remove();   // il campo vero (lente compresa) resta invisibile finché il cerchio non ci arriva sopra
         const qr=q.getBoundingClientRect();
         circleToBar(cr,qr,parseFloat(getComputedStyle(q).borderTopLeftRadius)||18,qi?getComputedStyle(qi).color:"",q.placeholder)
-          .then(m=>{f.style.opacity="";m.remove();});   // il cerchio è già identico al campo: scambio secco, niente dissolvenza
+          .then(m=>{f.style.opacity="";m.remove();if(m._lz)m._lz.remove();});   // cerchio e lente sono già identici al campo: scambio secco, niente dissolvenza
       }else bye();   // la tastiera NON si apre da sola: si tocca il campo quando si vuole scrivere
       return;
     }
