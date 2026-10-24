@@ -179,20 +179,18 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .toast.act{pointer-events:auto;padding-right:6px}
 .toast button{flex:none;margin-left:4px;height:32px;padding:0 14px;border-radius:999px;background:var(--soft);color:var(--acc);font-weight:800;font-size:.88rem;transition:transform .1s,background .2s}
 .toast button:active{transform:scale(.94);background:var(--soft2)}
-/* pillola che diventa il campo di ricerca (e viceversa) */
-.morph{position:fixed;z-index:6;overflow:hidden;pointer-events:none;box-sizing:border-box;background:var(--s2);border:1px solid var(--line2);transform-origin:0 0;will-change:transform}
-.morph u{position:absolute;inset:-1px;background:var(--grad)}
-.morph i{position:absolute;left:5px;top:50%;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.22);color:#fff;transform:translateY(-50%);transform-origin:0 50%}
-.morph i svg{width:17px;height:17px}
-.morph b{position:absolute;left:43px;top:50%;transform:translateY(-50%);transform-origin:0 50%;white-space:nowrap;color:#fff;font-weight:700;font-size:.9rem}
-/* home: trascinando la pagina verso il basso, intorno alla lente in alto si disegna un anello sfumato; chiuso l'anello, il cerchio cresce e si riempie di gradiente.
-   --rp = anello (0-1), --rf = riempimento (0-1). Rilasciando a cerchio pieno il cerchio diventa il campo di ricerca */
-.pring{position:fixed;z-index:7;pointer-events:none;--rp:0;--rf:0;transform:scale(calc(1 + var(--rf)*.32));will-change:transform}
-.pring u{position:absolute;inset:0;border-radius:50%;background:var(--grad);opacity:var(--rf);transform:scale(calc(.55 + var(--rf)*.45));box-shadow:0 8px 24px rgba(255,61,82,calc(var(--rf)*.4))}
-.pring svg.rg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg);overflow:visible}
-.pring svg.rg circle{fill:none;stroke-width:2.6;stroke-linecap:round;stroke-dasharray:var(--rc);stroke-dashoffset:calc(var(--rc)*(1 - var(--rp)));opacity:calc(min(1,var(--rp)*6) * (1 - var(--rf)))}
-.pring i{position:absolute;inset:0;display:grid;place-items:center;color:#fff;opacity:var(--rf)}
-.pring i svg{width:24px;height:24px}
+/* home: trascinando la pagina verso il basso, intorno alla lente in alto si disegna un anello sfumato; chiuso l'anello, il tratto si ingrossa verso l'interno
+   finché il cerchio è pieno (come una carica). Misure del tratto calcolate in JS. Rilasciando a cerchio pieno il cerchio scende e si apre nel campo di ricerca */
+.pring{position:fixed;z-index:7;pointer-events:none;will-change:transform}
+.pring svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg);overflow:visible}
+.pring circle{fill:none;stroke-linecap:round}
+.pring i{position:absolute;inset:0;display:grid;place-items:center;color:#fff;opacity:0}
+.pring i svg{position:static;width:24px;height:24px;transform:none}
+/* cerchio -> campo di ricerca: resta tondo mentre scende, poi si apre verso sinistra */
+.cbar{position:fixed;z-index:7;pointer-events:none;overflow:hidden;border-radius:999px;background:var(--s2);border:1px solid var(--line2);box-sizing:border-box}
+.cbar u{position:absolute;inset:-1px;background:var(--grad)}
+.cbar i{position:absolute;right:0;top:0;bottom:0;aspect-ratio:1;display:grid;place-items:center;color:#fff}
+.cbar i svg{width:24px;height:24px}
 .ghost{position:absolute;z-index:1;box-sizing:border-box;overflow:hidden;padding:10px var(--gut) 20px;pointer-events:none;will-change:transform,opacity}
 
 /* dock inferiore: resta SOPRA la zona della home-indicator, così i tasti si toccano sempre */
@@ -1114,25 +1112,6 @@ function routeFromHash(force){
   }catch(e){}
   S.step=0;home();
 }
-/* pillola "Cerca" -> campo di ricerca. L'elemento ha già le misure FINALI del campo e si muove solo con transform (scheda grafica, niente ricalcolo
-   della pagina a ogni fotogramma): parte rimpicciolito sulla pillola e si allarga fino al campo. Gli angoli sono corretti per la scala in ogni momento
-   e icona e scritta sono "controscalate", così non si deformano. a,b = {x,y,w,h,r}. Restituisce l'elemento a fine corsa */
-function pillMorph(a,b,round){   // round: parte dal cerchio della lente (senza scritta, icona al centro)
-  const m=document.createElement("div");m.className="morph";m.setAttribute("aria-hidden","true");
-  m.innerHTML='<u></u><i>'+IC.search+'</i><b></b>';if(!round)m.lastChild.textContent=trStr("Rilascia per cercare");
-  m.style.cssText="left:"+b.x+"px;top:"+b.y+"px;width:"+b.w+"px;height:"+b.h+"px";
-  document.body.appendChild(m);
-  const N=14,D=520,EM="cubic-bezier(.65,0,.25,1)",K=[],KI=[];
-  for(let i=0;i<=N;i++){const p=i/N,L=(u,v)=>u+(v-u)*p,x=L(a.x,b.x),y=L(a.y,b.y),w=L(a.w,b.w),h=L(a.h,b.h),r=L(a.r,b.r),sx=w/b.w,sy=h/b.h;
-    K.push({offset:p,transform:"translate3d("+(x-b.x).toFixed(2)+"px,"+(y-b.y).toFixed(2)+"px,0) scale("+sx.toFixed(4)+","+sy.toFixed(4)+")",borderRadius:(r/sx).toFixed(2)+"px / "+(r/sy).toFixed(2)+"px"});
-    const ix=round?(1-p)*(w/2-20):0;   // dal cerchio: l'icona parte centrata e scivola al suo posto a sinistra
-    KI.push({offset:p,transform:"translate("+(ix/sx).toFixed(2)+"px,-50%) scale("+(1/sx).toFixed(4)+","+(1/sy).toFixed(4)+")"});}
-  const an=m.animate(K,{duration:D,easing:EM,fill:"forwards"});
-  m.children[0].animate([{opacity:1},{opacity:0}],{duration:D,easing:EM,fill:"forwards"});   // il gradiente della pillola sfuma nel colore del campo
-  const fx=[{opacity:1},{opacity:0,offset:.35},{opacity:0}];   // icona e scritta spariscono presto
-  [m.children[1],m.children[2]].forEach(c=>{c.animate(KI,{duration:D,easing:EM,fill:"forwards"});c.animate(fx,{duration:D,fill:"forwards",composite:"replace"});});
-  return an.finished.catch(()=>{}).then(()=>m);
-}
 function swap(h,anim){
   if(h.indexOf('class="load"')<0)killWall();
   const old=stage.innerHTML,app=$("app");
@@ -1171,7 +1150,12 @@ function swap(h,anim){
     return;
   }
   if(!RM()&&stage.animate){
-    if(vy){   // ricerca aperta col gesto: le due schermate si scambiano solo sfumando (all'apertura il movimento lo fa la pillola che diventa il campo)
+    if(vy===2){   // ricerca aperta col gesto: la home continua a scendere nella direzione del dito e sparisce, la pagina Cerca arriva dall'alto (il campo lo porta il cerchio)
+      const pg=stage.firstElementChild||stage;
+      [...pg.children].forEach((el,i)=>{if(el.id!=="sq")el.animate([{opacity:0,transform:"translate3d(0,-14px,0)"},{opacity:1,transform:"none"}],{duration:420,delay:180+i*60,easing:E,fill:"backwards"});});
+      if(ghost){const g=ghost;
+        g.animate([{opacity:1,transform:"none"},{opacity:0,transform:"translate3d(0,90px,0) scale(.96)"}],{duration:380,easing:"cubic-bezier(.4,0,.7,1)",fill:"forwards"}).onfinish=()=>g.remove();setTimeout(()=>g.remove(),800);}
+    }else if(vy){   // tornando dalla ricerca alla home: le due schermate si scambiano solo sfumando
       (stage.firstElementChild||stage).animate([{opacity:0},{opacity:1}],{duration:380,delay:160,easing:"ease-out",fill:"backwards"});
       if(ghost){const g=ghost;
         g.animate([{opacity:1},{opacity:0}],{duration:260,easing:"ease-in",fill:"forwards"}).onfinish=()=>g.remove();setTimeout(()=>g.remove(),700);}
@@ -1409,7 +1393,7 @@ function home(anim){
 let SQ="",SRUN=0,SLIST=[],SCACHE={q:null,list:[],t:0};
 let VY=0,SPULL=false;   // VY: prossimo cambio pagina in verticale; SPULL: la ricerca aperta è stata aperta trascinando giù dalla home
 function searchPage(how){
-  if(how==="pull"){SPULL=true;VY=1;}else if(stage.querySelector(".opts"))SPULL=false;   // dal tasto in alto: si chiude di lato come sempre
+  if(how==="pull"){SPULL=true;VY=2;}else if(stage.querySelector(".opts"))SPULL=false;   // dal tasto in alto: si chiude di lato come sempre
   RUN++;
   setBd(null);setRoute("/cerca"+(SQ?"/"+enc(SQ):""));
   swap('<div class="page"><h1>Cerca un titolo</h1><input class="lgi sin" id="sq" type="search" placeholder="Film o serie TV" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="search" aria-label="Cerca un titolo"><div class="sres lib" id="sres"></div></div>',true);
@@ -3743,6 +3727,22 @@ addEventListener("touchstart",e=>{const t=e.touches&&e.touches[0];if(!t)return;
 let EDGEX=-1;
 addEventListener("touchmove",e=>{const t=e.touches&&e.touches[0];if(EDGEX>=0&&t&&Math.abs(t.clientX-EDGEX)>4&&e.cancelable)e.preventDefault();},{passive:false,capture:true});
 addEventListener("touchend",()=>{EDGEX=-1;},true);addEventListener("touchcancel",()=>{EDGEX=-1;},true);
+/* il cerchio pieno diventa il campo di ricerca in due tempi, senza mai deformarsi:
+   1) resta un cerchio e scende all'estremità destra del campo (diventando alto quanto il campo)  2) si apre verso sinistra fino alla larghezza del campo,
+   mentre il gradiente sfuma nel colore del campo. c = riquadro del cerchio, q = riquadro del campo, r = raggio degli angoli del campo */
+function circleToBar(c,q,r){
+  const m=document.createElement("div");m.className="cbar";m.setAttribute("aria-hidden","true");
+  m.innerHTML='<u></u><i>'+IC.search+'</i>';document.body.appendChild(m);
+  const h=q.height,d=c.width,px=v=>v.toFixed(1)+"px";
+  const K=[
+    {offset:0,left:px(c.left),top:px(c.top),width:px(d),height:px(d),borderRadius:px(d/2),easing:"cubic-bezier(.45,0,.2,1)"},
+    {offset:.46,left:px(q.right-h),top:px(q.top),width:px(h),height:px(h),borderRadius:px(h/2),easing:"cubic-bezier(.3,0,.1,1)"},
+    {offset:1,left:px(q.left),top:px(q.top),width:px(q.width),height:px(h),borderRadius:px(r)}];
+  const D=760,an=m.animate(K,{duration:D,fill:"forwards"});
+  m.firstChild.animate([{opacity:1},{opacity:1,offset:.5},{opacity:0}],{duration:D,easing:"ease-in-out",fill:"forwards"});   // il gradiente resta finché il cerchio arriva, poi sfuma nel colore del campo
+  m.lastChild.animate([{opacity:1},{opacity:1,offset:.46},{opacity:0,offset:.7},{opacity:0}],{duration:D,fill:"forwards"});   // la lente resta nel cerchio, poi sparisce mentre si apre
+  return an.finished.catch(()=>{}).then(()=>m);
+}
 /* home: trascinando la prima domanda verso il basso, intorno alla lente in alto a destra si disegna un anello sfumato che segue il dito.
    Chiuso l'anello, il cerchio cresce e si riempie di gradiente: pieno = pronto. Rilasciando, il cerchio diventa il campo di ricerca.
    La pagina scende con resistenza; prima della soglia tutto torna com'era */
@@ -3754,11 +3754,13 @@ addEventListener("touchend",()=>{EDGEX=-1;},true);addEventListener("touchcancel"
   const paint=()=>{
     const p=Math.min(1,off/TH);
     pg.style.transform="translate3d(0,"+off+"px,0)";pg.style.opacity=String(1-.35*p);
-    ind.style.setProperty("--rp",sm(cl(off/(TH*RING))).toFixed(3));                 // prima l'anello si chiude
-    ind.style.setProperty("--rf",sm(cl((off-TH*RING)/(TH*(1-RING)))).toFixed(3));   // poi il cerchio cresce e si riempie
+    {const rp=sm(cl(off/(TH*RING))),rf=sm(cl((off-TH*RING)/(TH*(1-RING)))),R=ind._R;   // prima l'anello si chiude, poi il tratto si ingrossa verso l'interno fino al cerchio pieno
+      const sw=2.6+rf*(2*R-2.6),r=Math.max(.01,R-sw/2),C=2*Math.PI*r,c=ind._c;
+      c.setAttribute("r",r.toFixed(2));c.setAttribute("stroke-width",sw.toFixed(2));c.style.strokeDasharray=C.toFixed(2);c.style.strokeDashoffset=(C*(1-rp)).toFixed(2);c.style.opacity=String(Math.min(1,rp*6));
+      ind._i.style.opacity=String(cl((rf-.5)*2));ind.style.transform="scale("+(1+.12*rf).toFixed(3)+")";}
     const a=off>=TH;
     if(a!==armed){armed=a;   // pieno: piccolo rimbalzo come conferma
-      if(a&&!RM()&&ind.firstChild.animate)ind.firstChild.animate([{transform:"scale(1)"},{transform:"scale(1.16)"},{transform:"scale(1)"}],{duration:320,easing:"cubic-bezier(.34,1.56,.64,1)"});}
+      if(a&&!RM()&&ind.animate)ind.firstChild.animate([{transform:"scale(1)"},{transform:"scale(1.16)"},{transform:"scale(1)"}],{duration:320,easing:"cubic-bezier(.34,1.56,.64,1)"});}
   };
   const reset=()=>{on=false;pull=false;armed=false;off=0;pg=null;ind=null;};
   stage.addEventListener("touchstart",e=>{
@@ -3772,10 +3774,12 @@ addEventListener("touchend",()=>{EDGEX=-1;},true);addEventListener("touchcancel"
       if(dy>8&&dy>Math.abs(dx)*1.2){
         pg=stage.querySelector(".page");const sb=document.querySelector('#tr [data-act="search"]');if(!pg||!sb){on=false;return;}
         pull=true;pg.style.transition="none";pg.getAnimations().forEach(a=>a.cancel());
+        {const tp=document.querySelector(".top");if(tp)tp.getAnimations({subtree:true}).forEach(a=>a.finish());$("app").getAnimations().forEach(a=>a.finish());}   // la lente ferma al suo posto prima di misurarla (anche se l'app sta ancora entrando)
         const r=sb.getBoundingClientRect(),R=r.width/2-1;
         ind=document.createElement("div");ind.className="pring";ind.setAttribute("aria-hidden","true");
-        ind.style.cssText="left:"+r.left+"px;top:"+r.top+"px;width:"+r.width+"px;height:"+r.height+"px;--rc:"+(2*Math.PI*R).toFixed(2);
-        ind.innerHTML='<u></u><svg class="rg" viewBox="0 0 '+r.width+' '+r.height+'"><defs><linearGradient id="prg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff3d52"/><stop offset=".6" stop-color="#c13bd9"/><stop offset="1" stop-color="#8f62f8"/></linearGradient></defs><circle cx="'+r.width/2+'" cy="'+r.height/2+'" r="'+R+'" stroke="url(#prg)"/></svg><i>'+IC.search+'</i>';
+        ind.style.cssText="left:"+r.left+"px;top:"+r.top+"px;width:"+r.width+"px;height:"+r.height+"px";
+        ind.innerHTML='<svg viewBox="0 0 '+r.width+' '+r.height+'"><defs><linearGradient id="prg" gradientUnits="userSpaceOnUse" x1="'+r.width+'" y1="0" x2="0" y2="'+r.height+'"><stop offset="0" stop-color="#ff3d52"/><stop offset=".6" stop-color="#c13bd9"/><stop offset="1" stop-color="#8f62f8"/></linearGradient></defs><circle cx="'+r.width/2+'" cy="'+r.height/2+'" r="'+R+'" stroke="url(#prg)"/></svg><i>'+IC.search+'</i>';
+        ind._R=R;ind._c=ind.querySelector("circle");ind._i=ind.lastChild;
         document.body.appendChild(ind);
       }else{if(Math.abs(dx)>10||dy<-8)on=false;return;}
     }
@@ -3794,7 +3798,7 @@ addEventListener("touchend",()=>{EDGEX=-1;},true);addEventListener("touchcancel"
       const q=$("sq");
       if(q&&!fast){q.style.opacity="0";el.remove();   // il campo vero resta invisibile finché il cerchio non ci arriva sopra
         const qr=q.getBoundingClientRect();
-        pillMorph({x:cr.left,y:cr.top,w:cr.width,h:cr.height,r:cr.height/2},{x:qr.left,y:qr.top,w:qr.width,h:qr.height,r:parseFloat(getComputedStyle(q).borderTopLeftRadius)||18},true)
+        circleToBar(cr,qr,parseFloat(getComputedStyle(q).borderTopLeftRadius)||18)
           .then(m=>{q.style.opacity="";m.animate([{opacity:1},{opacity:0}],{duration:160,easing:"ease-out",fill:"forwards"}).onfinish=()=>m.remove();setTimeout(()=>m.remove(),500);});
       }else bye();   // la tastiera NON si apre da sola: si tocca il campo quando si vuole scrivere
       return;
