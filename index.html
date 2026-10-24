@@ -2470,7 +2470,7 @@ async function doRevokeAll(){   // dopo la conferma nel popup: questo dispositiv
    Ogni voce: d (data), t (elenco di novità in italiano, brevi). La versione (v) e APP_VER si calcolano da sole: vedi "VERSIONE AUTOMATICA" sotto CHANGELOG. La pagina Impostazioni > Novità le mostra da sola. */
 let APP_VER="";   // si calcola da sola dal CHANGELOG (vedi sotto): non va scritta a mano
 const CHANGELOG=[
-  {d:"24 ottobre 2026",t:["Nuova intro all'apertura: le lettere di REELAX scoppiano come popcorn e lo schermo si riempie di popcorn che, cadendo, scoprono l'app","Trascinando giù dalla home, intorno alla lente di ricerca si disegna un anello: quando il cerchio è pieno, rilasciando diventa il campo di ricerca"]},
+  {d:"24 ottobre 2026",t:["Nuova intro all'apertura: le lettere di REELAX scoppiano come popcorn, ne escono altri e, mentre cadono, sotto compare l'app","Trascinando giù dalla home, intorno alla lente di ricerca si disegna un anello: quando il cerchio è pieno, rilasciando diventa il campo di ricerca"]},
   {d:"23 ottobre 2026",t:["La scelta Novità, Recenti o Classici ora viene sempre rispettata, anche quando i titoli arrivano da fonti diverse da TMDB","Nella prima domanda ogni categoria ha una breve descrizione","Anche le voglie e le cose da evitare hanno una breve descrizione","Trovati di recente senza limite di titoli: ognuno resta 7 giorni","Dalla prima domanda trascina la pagina verso il basso per aprire subito Cerca","Ricerca: toccando un titolo la locandina vola nella scheda, e tornando indietro i risultati sono subito pronti","Accesso: i campi compilati in automatico non diventano più gialli e la tastiera si chiude da sola","«Esci da tutti i dispositivi» e «Svuota la cronologia» confermano con un breve avviso in basso; la cronologia svuotata si può recuperare con Annulla","Caricamento più leggero e leggibile con il tema chiaro, sfondo della scheda più morbido con il tema scuro","Nuova locandina con i colori Reelax per i titoli senza immagine","Avvio più rapido e controllo degli aggiornamenti molto più leggero","Migliorie e correzioni"]},
   {d:"22 ottobre 2026",t:["Nuova animazione di accesso e uscita: un'onda circolare parte dal tasto e rivela la schermata successiva, ora più fluida","Schermata di accesso rinnovata: scritta REELAX animata con i colori sfumati dell'app e lo stesso sfondo dell'app, nel tema chiaro e in quello scuro","Su smartphone l'app resta in verticale: ruotando il telefono compare l'invito a raddrizzarlo","Account di prova isolato: non vede né modifica liste, «Già visti», cronologia, paese e piattaforme dell'account vero, e nelle Impostazioni non mostra più username, password e dispositivi","Lista «Le mie piattaforme» più viva: le righe entrano a cascata e la selezione ha una piccola animazione con segno di spunta che rimbalza","Conferma di uscita più chiara: il tasto ora dice «Sì, esci dall'account»; anche «Esci da tutti i dispositivi» apre lo stesso popup di conferma","Traduzioni completate: intestazioni delle schede, condivisione, errori, impostazioni e frasi di «Perché fa per te» ora seguono la lingua della regione"]},
   {d:"22 ottobre 2026",t:["Nuova pagina Novità con la versione dell'app","Impostazioni rifatte: sezioni più chiare, su PC menu laterale con pannello e anteprime del tema","Su PC tutte le pagine usano tutta la larghezza dello schermo","Tema chiaro e scuro neutri, con accento rosso Reelax","Cronologia fino a 100 titoli, ogni titolo scade dopo 7 giorni; svuotarla ora cancella davvero, anche tra dispositivi"]},
@@ -3990,7 +3990,7 @@ $("lgf").addEventListener("submit",async e=>{
   [u,p].forEach(el=>el.addEventListener("input",e=>{if(!e.inputType||e.inputType==="insertReplacementText")go();}));
 })();
 /* intro all'apertura (vedi #intro nel CSS): le lettere scoppiano da sole in CSS; qui, appena l'app è pronta e dopo almeno INTRO_MIN ms,
-   lo schermo si riempie di popcorn che partono dal logo, sotto si toglie la splash e i popcorn cadono scoprendo il login (o l'app) */
+   escono popcorn sparsi a onda partendo dal logo; mentre sono a mezz'aria la splash sfuma e sotto compare il login (o l'app), poi i popcorn cadono */
 const INTRO_MIN=1350;
 function introOut(toLogin){
   const it=$("intro"),B=document.body;
@@ -4001,27 +4001,31 @@ function introOut(toLogin){
   const go=()=>{
     it.style.pointerEvents="none";
     const W=innerWidth,H=innerHeight,lr=it.querySelector(".ilg").getBoundingClientRect(),cx=lr.left+lr.width/2,cy=lr.top+lr.height/2;
-    const R=(a,b)=>a+Math.random()*(b-a),pc=it.querySelector(".ipc"),cell=Math.max(42,Math.min(W,H)*.13);
+    const R=(a,b)=>a+Math.random()*(b-a),pc=it.querySelector(".ipc"),cell=Math.max(64,Math.min(W,H)*.2);
     const cols=Math.ceil(W/cell)+1,rows=Math.ceil(H/cell)+1,far=Math.hypot(Math.max(cx,W-cx),Math.max(cy,H-cy)),K=[];
-    /* una griglia con un po' di disordine: i popcorn coprono tutto lo schermo senza buchi, e scoppiano a onda partendo dal logo */
+    /* una griglia larga con disordine e qualche casella vuota: popcorn sparsi (circa 50 su un telefono), che scoppiano a onda partendo dal logo */
     for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
-      const z=cell*R(1.7,2.1),x=(c+R(-.3,.3))*cell,y=(r+R(-.3,.3))*cell,k=document.createElement("i");
+      if(Math.random()<.3)continue;
+      const z=cell*R(.85,1.2),x=(c+R(-.35,.35))*cell,y=(r+R(-.35,.35))*cell,k=document.createElement("i");
       k.className="abc"[Math.floor(R(0,3))];
       k.style.cssText="left:"+(x-z/2).toFixed(1)+"px;top:"+(y-z/2).toFixed(1)+"px;width:"+z.toFixed(1)+"px;height:"+(z*R(.9,1.05)).toFixed(1)+"px;transform:scale(0)";
       k._rot=R(-40,40);k._d=Math.hypot(x-cx,y-cy)/far*330+R(0,70);pc.appendChild(k);K.push(k);
     }
     let last=0;
     K.forEach(k=>{last=Math.max(last,k._d);k.animate([{transform:"scale(0) rotate(0deg)"},{transform:"scale(1.18) rotate("+k._rot+"deg)",offset:.65},{transform:"scale(1) rotate("+k._rot+"deg)"}],{duration:260,delay:k._d,easing:"cubic-bezier(.3,.7,.4,1)",fill:"forwards"});});
-    /* schermo coperto: via la splash; i popcorn cadono (quelli in basso escono per primi) e i campi del login entrano mentre si scopre */
+    /* mentre i popcorn escono, la splash sfuma: sotto compare già il login (i suoi campi entrano) o l'app */
     setTimeout(()=>{
-      it.querySelector(".ibg").style.display="none";it.querySelector(".ilg").style.display="none";
+      [it.querySelector(".ibg"),it.querySelector(".ilg")].forEach(e=>e.animate([{opacity:1},{opacity:0}],{duration:520,easing:"ease-in-out",fill:"forwards"}));
       if(!toLogin)$("app").animate([{transform:"scale(.97)"},{transform:"none"}],{duration:900,easing:"cubic-bezier(.2,.8,.2,1)"});
+      setTimeout(()=>B.classList.remove("intro"),180);
+    },Math.max(0,last*.45));
+    /* poi i popcorn cadono (quelli in basso escono per primi) */
+    setTimeout(()=>{
       let end=0;
       K.forEach(k=>{const dl=R(0,140),du=R(560,820),dx=R(-30,30);end=Math.max(end,dl+du);
         k.animate([{transform:"rotate("+k._rot+"deg)"},{transform:"translate("+dx.toFixed(0)+"px,"+(H+120).toFixed(0)+"px) rotate("+(k._rot+R(-160,160)).toFixed(0)+"deg)"}],{duration:du,delay:dl,easing:"cubic-bezier(.55,0,.9,.55)",fill:"forwards"});});
-      setTimeout(()=>B.classList.remove("intro"),260);
       setTimeout(gone,end+60);
-    },last+300);
+    },Math.max(last+300,last*.45+560));
   };
   setTimeout(()=>nextPaint(go),Math.max(0,(window.RX_INTRO_T||0)+INTRO_MIN-Date.now()));
 }
