@@ -875,6 +875,9 @@ body.pre #app{opacity:0}
 .chips.one{flex-wrap:wrap;overflow:visible;gap:8px;justify-content:center}
 .chips.one .chip{flex:none;white-space:nowrap}
 .chip.cert{min-width:30px;text-align:center;font-weight:700}
+.chip.cert.a{color:#ffb547;border-color:rgba(255,181,71,.45)}
+:root[data-theme="light"] .chip.cert.a{color:#a35f00;border-color:rgba(163,95,0,.4)}
+.info .cc{color:var(--mut)}
 .poster .rate{position:absolute;top:10px;right:10px;z-index:3;padding:4px 10px;border-radius:999px;font:700 .8rem var(--fb);color:var(--acc);background:rgba(var(--shade),.82);border:1px solid rgba(255,90,107,.45);pointer-events:none}
 :root[data-theme="light"] .poster .rate{background:rgba(255,255,255,.78)}
 #tr .tb svg{width:22px;height:22px}
@@ -2366,6 +2369,10 @@ Object.assign(I18N,{
 "Uscire dall'account?":["Sign out?","¿Cerrar sesión?","Se déconnecter ?","Abmelden?","Sair da conta?"]
 });
 Object.assign(I18N,{
+"Età consigliata":["Age rating","Edad recomendada","Âge conseillé","Altersfreigabe","Idade recomendada"],
+"Per tutti":["All ages","Para todos","Tous publics","Für alle","Para todos"],
+"Dai 14 anni":["Ages 14+","Desde 14 años","Dès 14 ans","Ab 14 Jahren","A partir de 14 anos"],
+"Dai 18 anni":["Ages 18+","Desde 18 años","Dès 18 ans","Ab 18 Jahren","A partir de 18 anos"],
 "Trama":["Plot","Sinopsis","Résumé","Handlung","Sinopse"],
 "Cast":["Cast","Reparto","Distribution","Besetzung","Elenco"],
 "Scheda":["Details","Ficha","Fiche","Details","Ficha técnica"],
@@ -2922,6 +2929,19 @@ async function provLogos(){
   if(Object.keys(m).length)PLOGO=m;
   return m;
 }
+/* età consigliata: ogni classificazione (italiana, tedesca, americana, inglese...) diventa un'età minima,
+   poi va su una scala unica a 3 livelli, arrotondando verso l'alto: fino a 10 anni "T", fino a 14 "14+", oltre "18+" */
+const CERT_AGE={T:0,G:0,U:0,L:0,A:0,TP:0,AL:0,ALL:0,APTA:0,PG:6,R:17,"NC-17":18,R18:18,"TV-Y":0,"TV-G":0,"TV-PG":6,"TV-MA":17};
+function certAge(s){
+  s=String(s||"").trim().toUpperCase().replace(/\s+/g,"");if(!s)return null;
+  if(CERT_AGE[s]!=null)return CERT_AGE[s];
+  const m=s.match(/(\d{1,2})/);return m?+m[1]:null;   // VM14, 14+, 12A, TV-14, FSK 16...
+}
+function ageInfo(d){
+  const a=d&&d.cert?certAge(d.cert):null;if(a==null)return null;
+  const p=a<=10?"T":a<=14?"14+":"18+";
+  return{p:p,t:p==="T"?"Per tutti":p==="14+"?"Dai 14 anni":"Dai 18 anni",cls:p==="T"?"":p==="14+"?" a":" r",from:d.certC&&d.certC!=="IT"?d.certC:""};
+}
 async function tmdbDetails(c,late){
   const base="/3/"+(c.movie?"movie":"tv")+"/"+c.tid;
   let d={};
@@ -2936,10 +2956,14 @@ async function tmdbDetails(c,late){
     const L=await provLogos();
     ["flat","ads","rent","buy"].forEach(g=>{prov[g]=prov[g].map(p=>CH_RE.test(p.provider_name||"")?Object.assign({},p,{logo_path:L[provKey(p.provider_name)]||null}):p);});
   }
-  let cert="";
+  // età consigliata: prima il paese scelto, poi Italia, Germania (quasi sempre presente), USA e Regno Unito
+  let cert="",certC="";
   try{
-    if(c.movie){const x=((d.release_dates&&d.release_dates.results)||[]).find(r=>r.iso_3166_1===REG());const y=x&&(x.release_dates||[]).find(z=>z.certification);cert=y?y.certification:"";}
-    else{const x=((d.content_ratings&&d.content_ratings.results)||[]).find(r=>r.iso_3166_1===REG());cert=x?x.rating:"";}
+    const pickC=cc=>{
+      if(c.movie){const x=((d.release_dates&&d.release_dates.results)||[]).find(r=>r.iso_3166_1===cc);const y=x&&(x.release_dates||[]).find(z=>certAge(z.certification)!=null);return y?y.certification:"";}
+      const x=((d.content_ratings&&d.content_ratings.results)||[]).find(r=>r.iso_3166_1===cc);return x&&certAge(x.rating)!=null?x.rating:"";
+    };
+    for(const cc of uniq([REG(),"IT","DE","US","GB"])){const v=pickC(cc);if(v){cert=v;certC=cc;break;}}
   }catch(e){}
   // saga: elenco dei film della collezione, in ordine di uscita (quelli senza data in fondo), compreso il film aperto
   let collParts=[];
@@ -2965,7 +2989,7 @@ async function tmdbDetails(c,late){
     sim:collParts,
     gids:(d.genres||[]).map(g=>g.id),tagline:d.tagline||"",orig:(orig&&!sameTitle(orig,c.title))?orig:"",dir:dir.join(", "),cast:cast.slice(0,6).map(x=>x.name).join(", "),castList:cast.slice(0,40).map(x=>({id:x.id,name:x.name,ch:x.character||"",img:x.profile_path||""})),
     nets:c.movie?"":(d.networks||[]).map(x=>x.name).slice(0,2).join(", "),countries:countries.join(", "),lang:d.original_language?lname(d.original_language):"",
-    date:fdate(c.movie?d.release_date:d.first_air_date),status:c.movie?"":(STAT[d.status]||d.status||""),cert:cert,
+    date:fdate(c.movie?d.release_date:d.first_air_date),status:c.movie?"":(STAT[d.status]||d.status||""),cert:cert,certC:certC,
     ytKey:tv?tv.key:"",prov:prov,provKnown:!!wpAll,
     tmdbUrl:"https://www.themoviedb.org/"+(c.movie?"movie":"tv")+"/"+c.tid};
 }
@@ -3289,15 +3313,16 @@ function sagaTile(d){
   return '<button type="button" class="card castbtn sagabtn" data-act="saga" aria-label="Saga: '+esc(d.coll)+'"><h3>Saga</h3><span class="sgm" data-cur="0">'+one+'<span class="sgd"><b></b><i></i></span></span></button>';
 }
 function infoHtml(d){
+  const A=ageInfo(d);
   const eps=(d.seasons?d.seasons+(d.seasons>1?' stagioni':' stagione'):'')+(d.episodes?(d.seasons?' · ':'')+d.episodes+' episodi':'');
   const rows=[
     ["Generi",d.gt],["Titolo originale",d.orig],[d.isTv?"Ideata da":"Regia",d.dir],
     ["Rete",d.nets],["Paese",d.countries],["Lingua originale",d.lang],[d.isTv?"Prima messa in onda":"Uscita",d.date],
-    ["Episodi",eps],["Stato",d.status],["Classificazione",d.cert],
+    ["Episodi",eps],["Stato",d.status],["Età consigliata",A?A.t:"",A&&A.from?cname(A.from):""],
     ["Voto pubblico",d.rv?(+d.rv).toFixed(1)+' / 10'+(d.vc?' · '+d.vc.toLocaleString(LANG())+' voti':''):'']
   ].filter(x=>x[1]);
   if(!rows.length)return "";
-  return '<section class="card"><h3>Scheda</h3><dl class="info">'+rows.map(x=>'<dt>'+esc(x[0])+'</dt><dd>'+esc(x[1])+'</dd>').join('')+'</dl></section>';
+  return '<section class="card"><h3>Scheda</h3><dl class="info">'+rows.map(x=>'<dt>'+esc(x[0])+'</dt><dd>'+esc(x[1])+(x[2]?' <span class="cc">('+esc(x[2])+')</span>':'')+'</dd>').join('')+'</dl></section>';
 }
 function attrTxt(d){
   if(d.rl==='TMDB')return 'Dati e immagini: TMDB'+(d.provKnown?' · Dove guardarlo: JustWatch':'')+'.\nQuesto prodotto usa le API di TMDB ma non è approvato né certificato da TMDB.';
@@ -3768,9 +3793,10 @@ function show(r,sur,man,quiet){
   const posterR=d.rv?poster.replace(/<\/div>$/,'<span class="rate">★ '+(+d.rv).toFixed(1)+'</span></div>'):poster;
   /* una sola riga: anno, stagioni (o Film/Serie per anime e cartoni), durata e classificazione stanno in un unico chip;
      se non c'è spazio, fitChips() toglie prima la classificazione, poi la durata, e riduce il trailer alla sola icona */
+  const AG=ageInfo(d);
   const kindTxt=(man?r.m.src==="anime":(S.cat==='anime'||S.cat==='cartoni'))?(d.movie?'Film':'Serie'):'';
-  const parts=[d.year&&!sur?String(d.year):'',d.seasons?d.seasons+(d.seasons>1?' stagioni':' stagione'):kindTxt,d.runtime&&!sur?d.runtime+' min'+(d.movie===false?'/ep.':''):'',d.cert?String(d.cert):''].filter(Boolean);
-  const chips=parts.map((x,i)=>'<span class="chip'+(d.cert&&i===parts.length-1&&x===String(d.cert)?' cert':'')+'">'+esc(x)+'</span>');
+  const parts=[d.year&&!sur?String(d.year):'',d.seasons?d.seasons+(d.seasons>1?' stagioni':' stagione'):kindTxt,d.runtime&&!sur?d.runtime+' min'+(d.movie===false?'/ep.':''):'',AG?AG.p:''].filter(Boolean);
+  const chips=parts.map((x,i)=>'<span class="chip'+(AG&&i===parts.length-1&&x===AG.p?' cert'+AG.cls:'')+'">'+esc(x)+'</span>');
   const long=(d.overview||'').length>220;
   const h='<div class="res">'+
     '<div class="hero">'+posterR+'<h2>'+esc(d.title)+'</h2>'+(d.tagline?'<p class="tag">'+esc(d.tagline)+'</p>':'')+'<div class="chips one" data-parts="'+esc(JSON.stringify(parts))+'">'+chips.join('')+'</div></div>'+
