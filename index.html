@@ -1211,10 +1211,10 @@ function swap(h,anim){
       (stage.firstElementChild||stage).animate([{opacity:0},{opacity:1}],{duration:380,delay:160,easing:"ease-out",fill:"backwards"});
       if(ghost){const g=ghost;
         g.animate([{opacity:1},{opacity:0}],{duration:260,easing:"ease-in",fill:"forwards"}).onfinish=()=>g.remove();setTimeout(()=>g.remove(),700);}
-    }else{   // ogni altro cambio pagina (domande, impostazioni, schede...): solo dissolvenza, niente movimento.
-             // Prima la vecchia pagina sfuma via, poi appare la nuova: le due non si vedono mai mescolate (testi sovrapposti)
-      (stage.firstElementChild||stage).animate([{opacity:0},{opacity:1}],{duration:320,delay:ghost?160:0,easing:"ease-out",fill:"backwards"});
-      if(ghost){const g=ghost;g.animate([{opacity:1},{opacity:0}],{duration:180,easing:"ease-in",fill:"forwards"}).onfinish=()=>g.remove();setTimeout(()=>g.remove(),700);}
+    }else{   // ogni altro cambio pagina (domande, impostazioni, schede...): dissolvenza con sfocatura, niente movimento.
+             // La vecchia si sfoca mentre sparisce, la nuova si mette a fuoco mentre compare (transizione "G" scelta dall'utente)
+      (stage.firstElementChild||stage).animate([{opacity:0,filter:"blur(8px)"},{opacity:1,filter:"blur(0px)"}],{duration:560,delay:ghost?80:0,easing:"cubic-bezier(.22,1,.36,1)",fill:"backwards"});
+      if(ghost){const g=ghost;g.animate([{opacity:1,filter:"blur(0px)"},{opacity:0,filter:"blur(8px)"}],{duration:420,easing:"cubic-bezier(.4,0,1,1)",fill:"forwards"}).onfinish=()=>g.remove();setTimeout(()=>g.remove(),900);}
     }
   }else if(ghost)ghost.remove();
 }
