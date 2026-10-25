@@ -200,6 +200,9 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .cbl svg{width:100%;height:100%}
 .cbar b{position:absolute;left:55px;top:50%;transform:translateY(-50%);font:500 16px var(--fb);color:var(--dim);white-space:nowrap;opacity:0}
 .ghost{position:absolute;z-index:1;box-sizing:border-box;overflow:hidden;padding:10px var(--gut) 20px;pointer-events:none;will-change:transform,opacity}
+/* la pagina che sfuma via non riparte con le sue animazioni d'ingresso: spostata nel "ghost", il browser le rifarebbe da capo
+   (es. i tasti Film/Serie/Indifferente risalivano mentre la pagina spariva) */
+.ghost,.ghost *{animation:none!important}
 
 /* dock inferiore: resta SOPRA la zona della home-indicator, così i tasti si toccano sempre */
 #dock{flex:none;position:relative;z-index:6;padding:12px var(--gut) max(16px,calc(var(--sab) + 6px))}
@@ -1213,8 +1216,8 @@ function swap(h,anim){
         g.animate([{opacity:1},{opacity:0}],{duration:260,easing:"ease-in",fill:"forwards"}).onfinish=()=>g.remove();setTimeout(()=>g.remove(),700);}
     }else{   // ogni altro cambio pagina (domande, impostazioni, schede...): dissolvenza con sfocatura, niente movimento.
              // La vecchia si sfoca mentre sparisce, la nuova si mette a fuoco mentre compare (transizione "G" scelta dall'utente)
-      (stage.firstElementChild||stage).animate([{opacity:0,filter:"blur(8px)"},{opacity:1,filter:"blur(0px)"}],{duration:560,delay:ghost?80:0,easing:"cubic-bezier(.22,1,.36,1)",fill:"backwards"});
-      if(ghost){const g=ghost;g.animate([{opacity:1,filter:"blur(0px)"},{opacity:0,filter:"blur(8px)"}],{duration:420,easing:"cubic-bezier(.4,0,1,1)",fill:"forwards"}).onfinish=()=>g.remove();setTimeout(()=>g.remove(),900);}
+      (stage.firstElementChild||stage).animate([{opacity:0,filter:"blur(8px)"},{opacity:1,filter:"blur(0px)"}],{duration:820,delay:ghost?130:0,easing:"cubic-bezier(.22,1,.36,1)",fill:"backwards"});
+      if(ghost){const g=ghost;g.animate([{opacity:1,filter:"blur(0px)"},{opacity:0,filter:"blur(8px)"}],{duration:620,easing:"cubic-bezier(.4,0,1,1)",fill:"forwards"}).onfinish=()=>g.remove();setTimeout(()=>g.remove(),1100);}
     }
   }else if(ghost)ghost.remove();
 }
