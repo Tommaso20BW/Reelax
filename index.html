@@ -165,9 +165,9 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 /* linea gradiente del tasto Reelax: sta sopra la barra di progresso, visibile solo durante l'effetto */
 .bline{position:absolute;left:var(--gut);right:var(--gut);bottom:var(--pgb);height:3px;border-radius:3px;background:var(--grad);box-shadow:0 0 10px rgba(255,61,82,.6);transform:scaleX(0);opacity:0;pointer-events:none;z-index:6}
 .prog.off{opacity:0}
-/* identica alla linea del tocco su REELAX (.bline): niente traccia grigia, stesso sfumato, bagliore e movimento.
-   La parte piena si allunga da sinistra (scaleX) con lo sfumato intero dentro, come la linea mentre corre */
-.prog b{display:block;height:100%;width:100%;border-radius:inherit;background:var(--grad);box-shadow:0 0 10px rgba(255,61,82,.6);transform:scaleX(0);transform-origin:left;transition:transform .65s cubic-bezier(.4,0,.2,1)}
+/* parte piena: stesso sfumato e bagliore della linea del tocco su REELAX (.bline). Si allunga cambiando la larghezza, non con scaleX:
+   scalata, il bagliore neon e gli angoli tondi venivano schiacciati (alone tagliato di netto in punta) */
+.prog b{display:block;height:100%;width:0;border-radius:inherit;background:var(--grad);box-shadow:0 0 10px rgba(255,61,82,.6);transition:width .65s cubic-bezier(.4,0,.2,1)}
 
 /* il contenuto sfuma sotto la barra: nessun taglio netto */
 #stage{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch;padding:10px var(--gut) 20px;
@@ -1267,13 +1267,13 @@ function ui(o){
   if(o.p){
     let nb=false;
     if(!pg.firstChild){pg.innerHTML='<b></b>';nb=true;}
-    if(!nb&&pg.classList.contains("off")){const q=pg.firstChild;q.style.transition="none";q.style.transform="scaleX(0)";void q.offsetWidth;q.style.transition="";nb=true;}   // barra nascosta: riparte da zero invece di accorciarsi dal valore vecchio
+    if(!nb&&pg.classList.contains("off")){const q=pg.firstChild;q.style.transition="none";q.style.width="0";void q.offsetWidth;q.style.transition="";nb=true;}   // barra nascosta: riparte da zero invece di accorciarsi dal valore vecchio
     pg.classList.remove("off");
-    const bar=pg.firstChild,w="scaleX("+(o.p[1]/o.p[0])+")";
-    if(RM()){bar.style.transition="none";bar.style.transform=w;void bar.offsetWidth;bar.style.transition="";}
-    else if(nb)requestAnimationFrame(()=>requestAnimationFrame(()=>{bar.style.transform=w;}));
-    else if(window.__PJ){bar.style.transition="none";bar.style.transform=w;void bar.offsetWidth;bar.style.transition="";}   // tocco su Reelax: la barra cambia di colpo, nascosta sotto la linea gradiente
-    else bar.style.transform=w;                                 // parte insieme allo scorrimento, avanti e indietro
+    const bar=pg.firstChild,w=(o.p[1]/o.p[0]*100)+"%";
+    if(RM()){bar.style.transition="none";bar.style.width=w;void bar.offsetWidth;bar.style.transition="";}
+    else if(nb)requestAnimationFrame(()=>requestAnimationFrame(()=>{bar.style.width=w;}));
+    else if(window.__PJ){bar.style.transition="none";bar.style.width=w;void bar.offsetWidth;bar.style.transition="";}   // tocco su Reelax: la barra cambia di colpo, nascosta sotto la linea gradiente
+    else bar.style.width=w;                                 // parte insieme allo scorrimento, avanti e indietro
   }else pg.classList.add("off");
   ACT=o.a||{};
 }
@@ -1356,20 +1356,20 @@ let HGEN=0;
     /* linea gradiente: corre da sinistra a destra e si ritira. Easing per tratto (quello globale sposterebbe gli offset):
        copre entro 40%, resta piena fino al 55%, poi si ritira */
     const E="cubic-bezier(.4,0,.2,1)";
-    const run=(el,from)=>el.animate([
-      {transform:"scaleX("+from+")",opacity:1,transformOrigin:"left",offset:0,easing:E},
-      {transform:"scaleX(1)",opacity:1,transformOrigin:"left",offset:.4},
-      {transform:"scaleX(1)",opacity:1,transformOrigin:"left",offset:.55},
-      {transform:"scaleX(1)",opacity:1,transformOrigin:"right",offset:.55,easing:E},
-      {transform:"scaleX(0)",opacity:1,transformOrigin:"right",offset:1}
+    /* stessa cosa animando larghezza e margine sinistro (non scaleX, che schiaccia il bagliore): W = larghezza piena in px */
+    const run=(el,from,W)=>el.animate([
+      {width:from*W+"px",marginLeft:"0px",opacity:1,offset:0,easing:E},
+      {width:W+"px",marginLeft:"0px",opacity:1,offset:.4},
+      {width:W+"px",marginLeft:"0px",opacity:1,offset:.55,easing:E},
+      {width:"0px",marginLeft:W+"px",opacity:1,offset:1}
     ],{duration:FXD,easing:"linear"});
     const top=document.querySelector(".top"),pg=$("prog"),pb=pg&&!pg.classList.contains("off")&&pg.firstChild;
     if(pb){
       /* barra delle domande visibile: è lei stessa a continuare fino in fondo e a ritirarsi (nessuna seconda linea sopra).
          Poi riparte da zero fino al valore della home */
       pb.getAnimations().forEach(x=>x.cancel());
-      const m=getComputedStyle(pb).transform,a=/matrix\(([^,]+)/.exec(m),p0=a?Math.max(0,Math.min(1,parseFloat(a[1])||0)):0;
-      const an=run(pb,p0),reg=()=>{if(!pb.isConnected)return;const tg=pb.style.transform;pb.style.transition="none";pb.style.transform="scaleX(0)";void pb.offsetWidth;pb.style.transition="";requestAnimationFrame(()=>{pb.style.transform=tg;});};
+      const W=pg.clientWidth,p0=W?Math.max(0,Math.min(1,pb.getBoundingClientRect().width/W)):0;
+      const an=run(pb,p0,W),reg=()=>{if(!pb.isConnected)return;const tg=pb.style.width;pb.style.transition="none";pb.style.width="0";void pb.offsetWidth;pb.style.transition="";requestAnimationFrame(()=>{pb.style.width=tg;});};
       an.finished.then(reg,()=>{});
     }else if(top&&pg){
       /* barra nascosta (schede, impostazioni…): la linea prende esattamente posto e misure della barra delle domande */
@@ -1377,8 +1377,8 @@ let HGEN=0;
       if(!ln){ln=document.createElement("div");ln.className="bline";top.appendChild(ln);}
       ln.getAnimations().forEach(x=>x.cancel());
       const rp=pg.getBoundingClientRect(),rt=top.getBoundingClientRect();
-      ln.style.cssText="left:"+(rp.left-rt.left)+"px;top:"+(rp.top-rt.top)+"px;width:"+rp.width+"px;height:"+rp.height+"px;right:auto;bottom:auto";
-      run(ln,0);
+      ln.style.cssText="left:"+(rp.left-rt.left)+"px;top:"+(rp.top-rt.top)+"px;width:0;height:"+rp.height+"px;right:auto;bottom:auto;transform:none";
+      run(ln,0,rp.width);
     }
   };
   let BFX=0;
