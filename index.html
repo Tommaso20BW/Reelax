@@ -1399,9 +1399,15 @@ function tasteAll(){
   S.fmt="";S.time="";S.era="";S.avoid=[];S.mood=mood;S.style="taste";
   S.step=steps().length-1;S.seen=[];S.cands=[];run(false,true);
 }
-function surpriseAll(){
+function surpriseAll(again){
   /* nessuna categoria scelta (schermata iniziale, senza selezioni): tutto a caso, categoria compresa.
-     Altrimenti le risposte già date restano e si sceglie a caso solo ciò che manca. */
+     Altrimenti le risposte già date restano e si sceglie a caso solo ciò che manca.
+     S.given = le risposte date davvero dall'utente prima della sorpresa: con again ("Un altro" dopo una sorpresa)
+     si torna a quelle e si rifà il sorteggio di tutto il resto, senza ripetere i titoli già visti */
+  if(again){
+    if(!S.given)S.given=S.style==="surprise"?{cat:"",fmt:"",mood:"",time:"",era:"",avoid:[]}:{cat:S.cat,fmt:S.fmt,mood:S.mood,time:S.time,era:S.era,avoid:S.avoid.slice()};
+    const g=S.given;S.cat=g.cat;S.fmt=g.fmt;S.mood=g.mood;S.time=g.time;S.era=g.era;S.avoid=g.avoid.slice();
+  }else S.given={cat:S.cat,fmt:S.fmt,mood:S.mood,time:S.time,era:S.era,avoid:S.avoid.slice()};
   const none=!S.cat;
   if(none){S.fmt="";S.mood="";S.time="";S.era="";S.avoid=[];S.cat=pick(CATS)[0];}
   if(isAnim()&&!S.fmt)S.fmt=pick(FMT)[0];
@@ -1410,7 +1416,7 @@ function surpriseAll(){
   if(!S.era)S.era=pick(ERA)[0];
   S.style=none?"surprise":"";   // "Sorpresa totale" solo se è davvero tutto a caso
   S.step=steps().length-1;
-  S.seen=[];S.cands=[];run(true,true);
+  if(!again)S.seen=[];S.cands=[];run(true,true);
 }
 function home(anim){
   setBd(null);wallIdle();
@@ -2534,6 +2540,7 @@ async function doRevokeAll(){   // dopo la conferma nel popup: questo dispositiv
    Ogni voce: d (data), t (elenco di novità in italiano, brevi). La versione (v) e APP_VER si calcolano da sole: vedi "VERSIONE AUTOMATICA" sotto CHANGELOG. La pagina Impostazioni > Novità le mostra da sola. */
 let APP_VER="";   // si calcola da sola dal CHANGELOG (vedi sotto): non va scritta a mano
 const CHANGELOG=[
+  {d:"25 ottobre 2026",t:["Scheda del titolo più semplice: niente più «Sorprendimi», e «Un altro» segue come ci sei arrivato (stesse risposte, sorpresa totale o un mix)"]},
   {d:"24 ottobre 2026",t:["Nuova intro all'apertura: le luci si spengono e REELAX si accende come l'insegna al neon di un vecchio cinema","Trascinando giù dalla home, intorno alla lente di ricerca si disegna un anello: quando il cerchio è pieno, rilasciando diventa il campo di ricerca","Cambi pagina più calmi: le pagine si scambiano con una dissolvenza, senza scorrere di lato","Accesso: la proposta delle password salvate compare solo dopo l'animazione di apertura","La barra in alto ha lo sfumato steso su tutta la larghezza, come la linea che compare toccando REELAX"]},
   {d:"23 ottobre 2026",t:["La scelta Novità, Recenti o Classici ora viene sempre rispettata, anche quando i titoli arrivano da fonti diverse da TMDB","Nella prima domanda ogni categoria ha una breve descrizione","Anche le voglie e le cose da evitare hanno una breve descrizione","Trovati di recente senza limite di titoli: ognuno resta 7 giorni","Dalla prima domanda trascina la pagina verso il basso per aprire subito Cerca","Ricerca: toccando un titolo la locandina vola nella scheda, e tornando indietro i risultati sono subito pronti","Accesso: i campi compilati in automatico non diventano più gialli e la tastiera si chiude da sola","«Esci da tutti i dispositivi» e «Svuota la cronologia» confermano con un breve avviso in basso; la cronologia svuotata si può recuperare con Annulla","Caricamento più leggero e leggibile con il tema chiaro, sfondo della scheda più morbido con il tema scuro","Nuova locandina con i colori Reelax per i titoli senza immagine","Avvio più rapido e controllo degli aggiornamenti molto più leggero","Migliorie e correzioni"]},
   {d:"22 ottobre 2026",t:["Nuova animazione di accesso e uscita: un'onda circolare parte dal tasto e rivela la schermata successiva, ora più fluida","Schermata di accesso rinnovata: scritta REELAX animata con i colori sfumati dell'app e lo stesso sfondo dell'app, nel tema chiaro e in quello scuro","Su smartphone l'app resta in verticale: ruotando il telefono compare l'invito a raddrizzarlo","Account di prova isolato: non vede né modifica liste, «Già visti», cronologia, paese e piattaforme dell'account vero, e nelle Impostazioni non mostra più username, password e dispositivi","Lista «Le mie piattaforme» più viva: le righe entrano a cascata e la selezione ha una piccola animazione con segno di spunta che rimbalza","Conferma di uscita più chiara: il tasto ora dice «Sì, esci dall'account»; anche «Esci da tutti i dispositivi» apre lo stesso popup di conferma","Traduzioni completate: intestazioni delle schede, condivisione, errori, impostazioni e frasi di «Perché fa per te» ora seguono la lingua della regione"]},
@@ -3796,8 +3803,10 @@ function show(r,sur,man,quiet){
   ui({
     l:tbtn('back','back','Modifica risposte'),
     r:trTb(d),
-    d:bb('re',IC.restart+'Ricomincia','v')+bb('sur',IC.dice+'Sorprendimi','v')+bb('oth',IC.next+'Un altro','v primary'),
-    a:{back:backToHome,share,seen:seenToggle,re:restart,sur:()=>run(true,false),oth:()=>run(!!sur,false),cast:()=>castPage(d),seasons:()=>seasonsPage(d),saga:()=>sagaPage(d)}
+    d:bb('re',IC.restart+'Ricomincia','v')+bb('oth',IC.next+'Un altro','v primary'),
+    /* "Un altro" segue il modo in cui si è arrivati qui: dalle domande = stesse risposte, titolo successivo;
+       da "Sorprendimi" = di nuovo a sorpresa (le risposte date restano, il resto si estrae da capo) */
+    a:{back:backToHome,share,seen:seenToggle,re:restart,oth:()=>{if(sur)surpriseAll(true);else run(false,false);},cast:()=>castPage(d),seasons:()=>seasonsPage(d),saga:()=>sagaPage(d)}
   });
 }
 
