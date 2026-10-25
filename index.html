@@ -1160,7 +1160,7 @@ function routeFromHash(force){
     if(a==="cerca"){SQ=b;return searchPage();}
     if(a==="t"||a==="r")return restoreTitle(b,seg[2]==="cast"?"cast":seg[2]==="saga"?"saga":seg[2]==="stagioni"?"stagioni":"",seg[3]);
     if(a==="p"&&/^\d+$/.test(b)){const c=PCACHE.get(+b);return personPage({id:+b,name:c?c.name:"",img:c&&c.profile_path||""},()=>{S.step=0;home();});}
-    if(a==="domanda"&&S.cat){S.step=Math.max(0,parseInt(b,10)||0);return home();}
+    if(a==="domanda"&&S.cat){const n=Math.max(0,parseInt(b,10)||0),cs=steps()[S.step];if(n<S.step&&cs&&cs.multi)S.avoid=[];S.step=n;return home();}
   }catch(e){}
   S.step=0;home();
 }
@@ -1330,7 +1330,7 @@ const resetAnswers=()=>Object.assign(S,{cat:"",fmt:"",mood:"",time:"",era:"",sty
 function restart(){resetAnswers();home();}
 /* indietro dal risultato: torna alla home con tutto deselezionato (pre = pulizia che gira sempre, anche quando si torna indietro tramite la cronologia del browser) */
 const backToHome=()=>restart();backToHome.pre=resetAnswers;
-/* indietro da una domanda: torna alla precedente e ne cancella la risposta */
+/* indietro da una domanda: torna alla precedente e ne cancella la risposta (uscendo da "cose da evitare" si tolgono anche quelle spunte) */
 function clearStep(i){
   const st=steps()[i];if(!st)return;
   if(st.k==="avoid")S.avoid=[];
@@ -1445,7 +1445,7 @@ function home(anim){
   const seg=st.k==="cat"?'<div class="segw'+(isAnim()?' show':'')+'" id="segw"><div class="segi"><span class="segq">Film o serie?</span><div class="seg">'+FMT.map(f=>'<button type="button" class="'+(S.fmt===f[0]?'on':'')+'" data-f="'+f[0]+'">'+({movie:"Film",tv:"Serie",any:"Indifferente"})[f[0]]+'</button>').join('')+'</div></div></div>':'';
   TDX=(stage.querySelector(".opts")&&LASTSTEP>=0&&S.step!==LASTSTEP)?(S.step>LASTSTEP?1:-1):0;LASTSTEP=S.step;
   swap('<div class="page"><h1>'+esc(q)+'</h1>'+(st.multi?'<p class="sub">Puoi sceglierne più di una</p>':'')+'<div class="opts g2 n'+n+(st.multi?' av':'')+'" role="group" aria-label="'+esc(q)+'">'+items.map((o,i)=>opt(st.k,o,st.multi?S.avoid.indexOf(o[0])>=0:S[st.k]===o[0],i)).join('')+'</div>'+seg+'</div>',anim);
-  const acts={back:()=>{if(S.step>0){S.step--;clearStep(S.step);home();}},sur:surpriseAll,tp:tasteAll,logout:doLogout,search:searchPage,settings:()=>settingsPage(),go:()=>{S.seen=[];S.cands=[];run(false,true);}};
+  const acts={back:()=>{if(S.step>0){if((steps()[S.step]||{}).multi)clearStep(S.step);S.step--;clearStep(S.step);home();}},sur:surpriseAll,tp:tasteAll,logout:doLogout,search:searchPage,settings:()=>settingsPage(),go:()=>{S.seen=[];S.cands=[];run(false,true);}};
   if(S.step===0)delete acts.back;else acts.back.pre=()=>{if(S.step>0)clearStep(S.step-1);};
   ui({
     l:S.step>0?tbtn('back','back','Indietro'):tbtn('settings','gear','Impostazioni'),
