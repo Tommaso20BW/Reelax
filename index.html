@@ -235,6 +235,11 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .opt{position:relative;display:flex;flex-direction:row;align-items:center;gap:14px;padding:8px 16px 8px 12px;text-align:left;min-height:60px;
   border-radius:var(--r2);border:1px solid var(--line);background:linear-gradient(160deg,var(--s2),var(--s1));transition:transform .1s,border-color .15s,background .15s,box-shadow .2s}
 .opt:active{transform:scale(.97)}
+/* niente "scatto di mezzo pixel" su iPhone: un elemento che sfuma o si ridimensiona viene disegnato su un livello a parte e, a fine animazione,
+   ridisegnato nella pagina con un arrotondamento diverso (testi e tasti si spostano un attimo). Tenendo il livello sempre attivo
+   il disegno resta identico: pagina (anche quella che sfuma via), tasti in basso, tasti in alto e risposte */
+#stage>*,.ghost>*,#dockin,#tl,#tr,.opt{will-change:opacity}
+.opt{will-change:transform,opacity}
 .opt .em{flex:none;width:40px;height:40px;display:grid;place-items:center;font-size:1.7rem;line-height:1}
 .opt .tx{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
 .opt .t{font-weight:700;font-size:1.08rem;line-height:1.15}
