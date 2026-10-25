@@ -1214,24 +1214,10 @@ function swap(h,anim){
       (stage.firstElementChild||stage).animate([{opacity:0},{opacity:1}],{duration:380,delay:160,easing:"ease-out",fill:"backwards"});
       if(ghost){const g=ghost;
         g.animate([{opacity:1},{opacity:0}],{duration:260,easing:"ease-in",fill:"forwards"}).onfinish=()=>g.remove();setTimeout(()=>g.remove(),700);}
-    }else if(dxs){   /* scorrimento come le app iPhone ("E"). Avanti: la nuova entra da destra, la vecchia arretra di un terzo e sfuma.
-                        Indietro: la vecchia esce verso destra, la precedente rientra da sinistra. Le pagine sono trasparenti (sotto c'è lo
-                        sfondo sfocato del film), quindi chi resta sotto sfuma presto per non far vedere i testi sovrapposti */
-      const pg=stage.firstElementChild||stage,D=520,E2="cubic-bezier(.32,.72,0,1)";
-      if(dxs>0){
-        pg.animate([{transform:"translate3d(100%,0,0)"},{transform:"none"}],{duration:D,easing:E2,fill:"backwards"});
-        if(ghost){const g=ghost;g.style.zIndex="0";   // sotto la pagina nuova
-          g.animate([{opacity:1},{opacity:0}],{duration:260,easing:"ease-out",fill:"forwards"});   // sfuma più o meno al passo con la nuova che la copre
-          g.animate([{transform:"none"},{transform:"translate3d(-30%,0,0)"}],{duration:D,easing:E2,fill:"forwards"}).onfinish=()=>g.remove();setTimeout(()=>g.remove(),D+400);}
-      }else{
-        pg.animate([{transform:"translate3d(-30%,0,0)"},{transform:"none"}],{duration:D,easing:E2,fill:"backwards"});
-        pg.animate([{opacity:0},{opacity:1}],{duration:300,delay:60,easing:"ease-out",fill:"backwards"});   // compare mentre la vecchia le libera il posto
-        if(ghost){const g=ghost;
-          g.animate([{transform:"none",opacity:1},{transform:"translate3d(100%,0,0)",opacity:1}],{duration:D,easing:E2,fill:"forwards"}).onfinish=()=>g.remove();setTimeout(()=>g.remove(),D+400);}
-      }
-    }else{   // cambi pagina senza una direzione (es. tocco su REELAX): dissolvenza incrociata breve
-      (stage.firstElementChild||stage).animate([{opacity:0},{opacity:1}],{duration:340,delay:ghost?60:0,easing:"ease-out",fill:"backwards"});
-      if(ghost){const g=ghost;g.animate([{opacity:1},{opacity:0}],{duration:240,easing:"ease-in",fill:"forwards"}).onfinish=()=>g.remove();setTimeout(()=>g.remove(),700);}
+    }else{   // ogni altro cambio pagina (domande, impostazioni, schede...): solo dissolvenza, niente movimento.
+             // Prima la vecchia pagina sfuma via, poi appare la nuova: le due non si vedono mai mescolate (testi sovrapposti)
+      (stage.firstElementChild||stage).animate([{opacity:0},{opacity:1}],{duration:320,delay:ghost?160:0,easing:"ease-out",fill:"backwards"});
+      if(ghost){const g=ghost;g.animate([{opacity:1},{opacity:0}],{duration:180,easing:"ease-in",fill:"forwards"}).onfinish=()=>g.remove();setTimeout(()=>g.remove(),700);}
     }
   }else if(ghost)ghost.remove();
 }
@@ -1304,7 +1290,7 @@ document.addEventListener("click",e=>{
   if(y){openYt(e,y.dataset.yt);return;}
   const b=e.target.closest&&e.target.closest("[data-act]");
   if(!b||b.disabled)return;
-  const f=ACT[b.dataset.act];if(f){tap();const an=b.dataset.act;if(an==="back"||an==="cancel")BTAP=Date.now();NAV=0;const onHome=!!stage.querySelector(".opts");if(an==="settings"&&onHome)NAV=1;else if(an==="search"&&onHome)NAV=1;else if(FWD[an])NAV=1;else if(an==="back"||an==="cancel")NAV=-1;clearTimeout(NAVT);NAVT=setTimeout(()=>{NAV=0;},700);
+  const f=ACT[b.dataset.act];if(f){tap();const an=b.dataset.act;if(an==="back"||an==="cancel")BTAP=Date.now();NAV=0;const onHome=!!stage.querySelector(".opts");if(an==="settings"&&onHome)NAV=-1;else if(an==="search"&&onHome)NAV=1;else if(FWD[an])NAV=1;else if(an==="back"||an==="cancel"){NAV=stage.querySelector(".srow.out")?1:-1;}clearTimeout(NAVT);NAVT=setTimeout(()=>{NAV=0;},700);
     if((an==="settings"||an==="search")&&dockFadeOut()){requestAnimationFrame(()=>requestAnimationFrame(()=>{try{f();}catch(x){}}));return;}   // prima parte la dissolvenza dei tasti, poi (2 fotogrammi dopo) si costruisce la pagina
     try{if(an==="back"){if(f.pre)f.pre();goBack(f);}else f();}catch(x){}}
 });
