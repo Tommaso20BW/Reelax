@@ -1116,7 +1116,7 @@ const stage=$("stage");
 
 /* ---------- UI: stage, barra alta, dock ---------- */
 /* regole: tra due domande scorrimento (avanti e indietro, come in origine). Ovunque altrove dissolvenza, sia in apertura che tornando indietro */
-let TDX=0,LASTSTEP=-1,NAV=0,NAVT=0;
+let TDX=0,LASTSTEP=-1,NAV=0,NAVT=0;let PBACK=false;
 /* scorrimento solo tra home e impostazioni (da sinistra, dov'è il tasto) o ricerca (da destra); indietro fa il contrario */
 /* ---------- Indirizzi delle pagine (#/...) ----------
    Ogni pagina ha il suo indirizzo: aggiornando la pagina (o aprendo il link) si torna lì; il tasto Indietro del browser funziona.
@@ -1171,6 +1171,7 @@ function routeFromHash(force){
   S.step=0;home();
 }
 function swap(h,anim){
+  PBACK=(TDX||NAV)<0||BKN;   // la barra di progresso deve sapere se si sta tornando indietro (ui() arriva dopo che NAV e BKN sono azzerati)
   if(h.indexOf('class="load"')<0)killWall();
   const old=stage.innerHTML,app=$("app");
   document.querySelectorAll(".ghost").forEach(g=>g.remove());
@@ -1278,7 +1279,7 @@ function ui(o){
   if(o.p){
     let nb=false;
     if(!pg.firstChild){pg.innerHTML='<b></b>';nb=true;}
-    if(!nb&&pg.classList.contains("off")){const q=pg.firstChild;q.style.transition="none";q.style.width="0";void q.offsetWidth;q.style.transition="";nb=true;}   // barra nascosta: riparte da zero invece di accorciarsi dal valore vecchio
+    if(!nb&&pg.classList.contains("off")){const q=pg.firstChild;q.style.transition="none";q.style.width=PBACK?"100%":"0";void q.offsetWidth;q.style.transition="";nb=true;}   // barra nascosta: andando avanti cresce da sinistra; tornando indietro (es. dalla scheda) parte piena e si ritira da destra
     pg.classList.remove("off");
     const bar=pg.firstChild,w=(o.p[1]/o.p[0]*100)+"%";
     if(RM()){bar.style.transition="none";bar.style.width=w;void bar.offsetWidth;bar.style.transition="";}
@@ -1286,6 +1287,7 @@ function ui(o){
     else if(window.__PJ){bar.style.transition="none";bar.style.width=w;void bar.offsetWidth;bar.style.transition="";}   // tocco su Reelax: la barra cambia di colpo, nascosta sotto la linea gradiente
     else bar.style.width=w;                                 // parte insieme allo scorrimento, avanti e indietro
   }else pg.classList.add("off");
+  PBACK=false;
   ACT=o.a||{};
 }
 document.addEventListener("click",e=>{
