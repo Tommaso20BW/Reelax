@@ -1335,7 +1335,20 @@ function opt(g,o,on,i){const sub=o[3]?'<span class="s">'+esc(o[3])+'</span>':'';
 const resetAnswers=()=>Object.assign(S,{cat:"",fmt:"",mood:"",time:"",era:"",style:"",step:0,seen:[],cands:[],cur:null,avoid:[]});
 function restart(){resetAnswers();home();}
 /* indietro dal risultato: torna alla home con tutto deselezionato (pre = pulizia che gira sempre, anche quando si torna indietro tramite la cronologia del browser) */
-const backToHome=()=>restart();backToHome.pre=resetAnswers;
+const backToHome=()=>{home();};
+/* indietro dalla scheda del film (pre = ripristino delle risposte, gira sempre, anche con la cronologia del browser):
+   - arrivati con "Sorprendimi" o "Per te": si torna alla domanda dove si era premuto il tasto, con le risposte di prima
+   - arrivati rispondendo all'ultima domanda: si torna a quell'ultima domanda (risposta tolta, come con il tasto indietro delle domande)
+   - titolo aperto da ricerca / recenti: come prima, risposte azzerate */
+backToHome.pre=()=>{
+  if(S.curMan){resetAnswers();return;}
+  if(S.curSur||S.style==="taste"){
+    const g=S.given;
+    if(g){S.cat=g.cat;S.fmt=g.fmt;S.mood=g.mood;S.time=g.time;S.era=g.era;S.avoid=(g.avoid||[]).slice();S.step=g.step||0;S.style="";S.seen=[];S.cands=[];S.cur=null;return;}
+    resetAnswers();return;
+  }
+  const n=Math.max(0,steps().length-1);S.step=n;clearStep(n);S.seen=[];S.cands=[];S.cur=null;
+};
 /* indietro da una domanda: torna alla precedente e ne cancella la risposta (uscendo da "cose da evitare" si tolgono anche quelle spunte) */
 function clearStep(i){
   const st=steps()[i];if(!st)return;
@@ -1411,6 +1424,7 @@ let HGEN=0;
 })();
 /* "Per te": consiglia qualcosa che potrebbe piacerti, in base alle stelle date ai titoli già visti (disponibile solo con "Adatta ai miei gusti" attivo) */
 function tasteAll(){
+  S.given={cat:S.cat,fmt:S.fmt,mood:S.mood,time:S.time,era:S.era,avoid:S.avoid.slice(),step:S.step};   // per tornare qui dalla scheda del film
   const tp=starsOn()?tasteProfile():null;
   let mv=0,tv=0;(L.seen||[]).forEach(x=>{if(x&&x.r>=4){if(x.mv)mv++;else tv++;}});
   S.cat=mv>tv?"film":tv>mv?"serie":pick(["film","serie"]);
@@ -1428,9 +1442,9 @@ function surpriseAll(again){
      S.given = le risposte date davvero dall'utente prima della sorpresa: con again ("Un altro" dopo una sorpresa)
      si torna a quelle e si rifà il sorteggio di tutto il resto, senza ripetere i titoli già visti */
   if(again){
-    if(!S.given)S.given=S.style==="surprise"?{cat:"",fmt:"",mood:"",time:"",era:"",avoid:[]}:{cat:S.cat,fmt:S.fmt,mood:S.mood,time:S.time,era:S.era,avoid:S.avoid.slice()};
+    if(!S.given)S.given=S.style==="surprise"?{cat:"",fmt:"",mood:"",time:"",era:"",avoid:[],step:0}:{cat:S.cat,fmt:S.fmt,mood:S.mood,time:S.time,era:S.era,avoid:S.avoid.slice(),step:S.step};
     const g=S.given;S.cat=g.cat;S.fmt=g.fmt;S.mood=g.mood;S.time=g.time;S.era=g.era;S.avoid=g.avoid.slice();
-  }else S.given={cat:S.cat,fmt:S.fmt,mood:S.mood,time:S.time,era:S.era,avoid:S.avoid.slice()};
+  }else S.given={cat:S.cat,fmt:S.fmt,mood:S.mood,time:S.time,era:S.era,avoid:S.avoid.slice(),step:S.step};
   const none=!S.cat;
   if(none){S.fmt="";S.mood="";S.time="";S.era="";S.avoid=[];S.cat=pick(CATS)[0];}
   if(isAnim()&&!S.fmt)S.fmt=pick(FMT)[0];
@@ -2567,6 +2581,7 @@ async function doRevokeAll(){   // dopo la conferma nel popup: questo dispositiv
    Ogni voce: d (data), t (elenco di novità in italiano, brevi). La versione (v) e APP_VER si calcolano da sole: vedi "VERSIONE AUTOMATICA" sotto CHANGELOG. La pagina Impostazioni > Novità le mostra da sola. */
 let APP_VER="";   // si calcola da sola dal CHANGELOG (vedi sotto): non va scritta a mano
 const CHANGELOG=[
+  {d:"26 ottobre 2026",t:["Dalla scheda del film, «Indietro» torna dove avevi premuto «Sorprendimi» o «Per te»; altrimenti all'ultima domanda"]},
   {d:"25 ottobre 2026",t:["Scheda del titolo più semplice: niente più «Sorprendimi», e «Un altro» segue come ci sei arrivato (stesse risposte, sorpresa totale o un mix)","Toccando REELAX mentre rispondi è la barra delle domande stessa ad arrivare in fondo e ritirarsi; altrove la linea compare esattamente al suo posto","Migliorie e correzioni"]},
   {d:"24 ottobre 2026",t:["Nuova intro all'apertura: le luci si spengono e REELAX si accende come l'insegna al neon di un vecchio cinema","Trascinando giù dalla home, intorno alla lente di ricerca si disegna un anello: quando il cerchio è pieno, rilasciando diventa il campo di ricerca","Cambi pagina più calmi: le pagine si scambiano con una dissolvenza, senza scorrere di lato","Accesso: la proposta delle password salvate compare solo dopo l'animazione di apertura","La barra in alto ha lo sfumato steso su tutta la larghezza, come la linea che compare toccando REELAX"]},
   {d:"23 ottobre 2026",t:["La scelta Novità, Recenti o Classici ora viene sempre rispettata, anche quando i titoli arrivano da fonti diverse da TMDB","Nella prima domanda ogni categoria ha una breve descrizione","Anche le voglie e le cose da evitare hanno una breve descrizione","Trovati di recente senza limite di titoli: ognuno resta 7 giorni","Dalla prima domanda trascina la pagina verso il basso per aprire subito Cerca","Ricerca: toccando un titolo la locandina vola nella scheda, e tornando indietro i risultati sono subito pronti","Accesso: i campi compilati in automatico non diventano più gialli e la tastiera si chiude da sola","«Esci da tutti i dispositivi» e «Svuota la cronologia» confermano con un breve avviso in basso; la cronologia svuotata si può recuperare con Annulla","Caricamento più leggero e leggibile con il tema chiaro, sfondo della scheda più morbido con il tema scuro","Nuova locandina con i colori Reelax per i titoli senza immagine","Avvio più rapido e controllo degli aggiornamenti molto più leggero","Migliorie e correzioni"]},
