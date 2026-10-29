@@ -645,7 +645,24 @@ body.pre #app{opacity:0}
 .opts.av .opt.on{border-color:var(--red);background:linear-gradient(135deg,rgba(255,61,82,.3),rgba(255,61,82,.12));box-shadow:0 0 0 1px var(--red) inset}
 .opts.av .opt.on .em{opacity:.45;filter:grayscale(1)}
 @media (max-width:899px){.opts.av .opt:last-child:nth-child(odd){grid-column:1/-1;justify-self:center;width:calc(50% - 6px)}}
-@media (max-width:899px) and (max-height:740px){.opts.g2.av{grid-auto-rows:minmax(78px,1fr);gap:10px}.opts.g2.av .opt{padding:8px 8px}.opts.g2.av .opt .em{font-size:1.9rem}.opts.g2.av .opt .t{font-size:.98rem}.opts.g2.av .opt .s{display:none}}
+/* ===== SMARTPHONE: ogni domanda sta SEMPRE intera nello schermo (niente righe tagliate sotto il tasto) =====
+   La pagina prende l'altezza esatta dello stage, le righe si dividono lo spazio in parti uguali (senza altezza minima fissa) e
+   emoji, testi e spazi si ridimensionano in base all'altezza di una riga (--h). Se la riga è troppo bassa, la descrizione sparisce. */
+@media not all and (min-width:900px) and (min-height:560px){
+  .page:has(>.opts){height:100%;min-height:0}
+  .page:has(>.opts) h1{font-size:clamp(1.5rem,min(8vw,5.4dvh),2.6rem)}
+  .page:has(>.opts) .sub{font-size:clamp(.78rem,2.1dvh,.9rem)}
+  .opts{min-height:0;container-type:size;--gp:10px;--rows:4;--h:calc((100cqh - (var(--rows) - 1)*var(--gp))/var(--rows))}
+  .opts.n1,.opts.n2{--rows:1}.opts.n3,.opts.n4{--rows:2}.opts.n5,.opts.n6{--rows:3}.opts.n7,.opts.n8{--rows:4}
+  .opts.g2{gap:var(--gp);grid-auto-rows:minmax(0,1fr)}
+  .opts.g2 .opt{min-height:0;min-width:0;padding:clamp(4px,calc(var(--h)*.1),14px) 8px;gap:clamp(2px,calc(var(--h)*.05),8px)}
+  .opts.g2 .opt .em{font-size:clamp(1.4rem,calc(var(--h)*.36),2.5rem)}
+  .opts.g2 .opt .t{font-size:clamp(.9rem,calc(var(--h)*.16),1.05rem)}
+  .opts.g2 .opt .s{font-size:clamp(.68rem,calc(var(--h)*.11),.76rem)}
+  @container (max-height:430px){.opts.n7 .opt .s,.opts.n8 .opt .s{display:none}}
+  @container (max-height:320px){.opts.n5 .opt .s,.opts.n6 .opt .s{display:none}}
+  @container (max-height:210px){.opts.n3 .opt .s,.opts.n4 .opt .s{display:none}}
+}
 @media (min-width:900px) and (min-height:560px){.page .sub{text-align:center;margin:-22px 0 0}.opts.g2.av{grid-template-columns:repeat(4,1fr)}}
 
 /* ===== LISTE: già visto / da vedere ===== */
@@ -2583,6 +2600,7 @@ async function doRevokeAll(){   // dopo la conferma nel popup: questo dispositiv
    Ogni voce: d (data), t (elenco di novità in italiano, brevi). La versione (v) e APP_VER si calcolano da sole: vedi "VERSIONE AUTOMATICA" sotto CHANGELOG. La pagina Impostazioni > Novità le mostra da sola. */
 let APP_VER="";   // si calcola da sola dal CHANGELOG (vedi sotto): non va scritta a mano
 const CHANGELOG=[
+  {d:"29 ottobre 2026",t:["Le domande si adattano all'altezza dello schermo: nessuna scelta resta più tagliata sotto il tasto"]},
   {d:"26 ottobre 2026",t:["Dalla scheda del film, «Indietro» torna dove avevi premuto «Sorprendimi» o «Per te»; altrimenti all'ultima domanda"]},
   {d:"25 ottobre 2026",t:["Scheda del titolo più semplice: niente più «Sorprendimi», e «Un altro» segue come ci sei arrivato (stesse risposte, sorpresa totale o un mix)","Toccando REELAX mentre rispondi è la barra delle domande stessa ad arrivare in fondo e ritirarsi; altrove la linea compare esattamente al suo posto","Migliorie e correzioni"]},
   {d:"24 ottobre 2026",t:["Nuova intro all'apertura: le luci si spengono e REELAX si accende come l'insegna al neon di un vecchio cinema","Trascinando giù dalla home, intorno alla lente di ricerca si disegna un anello: quando il cerchio è pieno, rilasciando diventa il campo di ricerca","Cambi pagina più calmi: le pagine si scambiano con una dissolvenza, senza scorrere di lato","Accesso: la proposta delle password salvate compare solo dopo l'animazione di apertura","La barra in alto ha lo sfumato steso su tutta la larghezza, come la linea che compare toccando REELAX"]},
