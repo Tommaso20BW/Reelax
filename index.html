@@ -271,53 +271,6 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .seg button{flex:1;height:48px;border-radius:14px;border:1px solid var(--line2);background:var(--s2);font-weight:700;font-size:.95rem;transition:transform .1s,border-color .15s,background .15s}
 .seg button:active{transform:scale(.96)}
 .seg button.on{border-color:var(--red);background:linear-gradient(135deg,rgba(255,61,82,.26),rgba(143,98,248,.22));box-shadow:0 0 0 1px var(--red) inset}
-/* Guida TV */
-.tvl{display:flex;flex-direction:column;gap:16px}
-.seg.tvs{gap:2px;padding:4px;border-radius:16px;background:var(--s2);border:1px solid var(--line)}
-.seg.tvs button{height:38px;border:0;border-radius:12px;background:transparent;box-shadow:none;font-size:.84rem;padding:0 2px;min-width:0;color:var(--mut)}
-.seg.tvs button.on{background:linear-gradient(135deg,rgba(255,61,82,.9),rgba(143,98,248,.9));color:#fff;box-shadow:0 4px 14px rgba(255,61,82,.28)}
-.tva{position:relative;overflow:hidden;flex:none;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font:800 .78rem var(--fd);font-style:normal;letter-spacing:-.02em;color:#fff;background:linear-gradient(135deg,hsl(var(--h) 72% 56%),hsl(calc(var(--h) + 42) 72% 44%));box-shadow:0 2px 8px rgba(0,0,0,.18)}
-.tva.lg{background:#fff;color:transparent}
-.tva img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:5px;box-sizing:border-box;background:#fff}
-.tvc{border:1px solid var(--line);border-radius:22px;background:linear-gradient(165deg,var(--s2),var(--s1));overflow:hidden;padding-bottom:6px}
-.tvh{width:100%;display:flex;align-items:center;gap:12px;padding:14px 14px 12px;font:800 1.05rem var(--fd);letter-spacing:-.02em;text-align:left;color:var(--fg)}
-.tvh .tvhn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tvh svg{width:18px;height:18px;color:var(--dim);flex:none}
-.tvhero{position:relative;margin:0 12px 8px;border-radius:16px;overflow:hidden;aspect-ratio:16/8.5;background:linear-gradient(135deg,hsl(var(--h) 55% 32%),hsl(calc(var(--h) + 50) 55% 20%));display:flex;align-items:flex-end}
-.tvhero.q{cursor:pointer}
-.tvhero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.tvhero::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.82),rgba(0,0,0,.15) 62%,transparent)}
-.tvhi{position:relative;z-index:1;padding:12px 14px;color:#fff;display:flex;flex-direction:column;gap:3px;min-width:0}
-.tvhi b{font:800 1.12rem/1.15 var(--fd);letter-spacing:-.02em;text-shadow:0 1px 8px rgba(0,0,0,.4)}
-.tvhi small{font-size:.8rem;opacity:.85;font-weight:600}
-.tvbadge{align-self:flex-start;font:800 .64rem var(--fb);letter-spacing:.12em;padding:3px 8px;border-radius:999px;background:var(--red);color:#fff;margin-bottom:2px}
-.tvtl{display:flex;flex-direction:column}
-.tvp{display:grid;grid-template-columns:44px 14px minmax(0,1fr) auto;column-gap:10px;padding:0 16px}
-.tvp.q{cursor:pointer}
-.tvp .tvt{padding:10px 0;font-weight:700;font-variant-numeric:tabular-nums;color:var(--mut);font-size:.86rem;line-height:1.3}
-.tvth{width:0;transition:width .25s}.tvth.on{width:50px;height:72px;margin:10px 0 10px 10px;border-radius:8px;background-size:cover;background-position:center;box-shadow:0 2px 8px rgba(0,0,0,.25)}
-.tvd{position:relative}
-.tvd::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--line2)}
-.tvp:first-child .tvd::before{top:18px}.tvp:last-child .tvd::before{bottom:auto;height:18px}
-.tvd::after{content:"";position:absolute;left:50%;top:18px;width:9px;height:9px;transform:translate(-50%,-50%);border-radius:50%;background:var(--s2);border:2px solid var(--dim)}
-.tvp.now .tvd::after{background:var(--red);border-color:var(--red);box-shadow:0 0 0 4px rgba(255,61,82,.22)}
-.tvp.now .tvt{color:var(--red)}
-.tvn{padding:10px 0;min-width:0;display:flex;flex-direction:column;gap:2px;font-weight:700;font-size:.95rem;line-height:1.25}
-.tvn small{color:var(--mut);font-weight:500;font-size:.78rem}
-.tvnow{align-self:flex-start;font:800 .62rem var(--fb);font-style:normal;letter-spacing:.12em;text-transform:uppercase;color:var(--red);margin-bottom:1px}
-.tvpr{display:block;height:3px;border-radius:3px;background:var(--line2);margin-top:6px;overflow:hidden}
-.tvpr::after{content:"";display:block;height:100%;width:var(--p);background:var(--red);border-radius:3px}
-.tvm{padding:40px 0;text-align:center;color:var(--mut);display:flex;flex-direction:column;align-items:center;gap:12px}
-.tvcat{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}.tvcat::-webkit-scrollbar{display:none}
-.tvcat button{flex:none;height:34px;padding:0 14px;border-radius:999px;border:1px solid var(--line2);background:var(--s2);font-weight:700;font-size:.82rem;white-space:nowrap}
-.tvcat.sub button{height:30px;font-size:.78rem;padding:0 12px}
-.tvcat button.on{border-color:transparent;background:linear-gradient(135deg,rgba(255,61,82,.9),rgba(143,98,248,.9));color:#fff}
-.tvcl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.tvcl .tvm{grid-column:1/-1}
-.tvch{display:flex;align-items:center;gap:10px;width:100%;padding:10px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(165deg,var(--s2),var(--s1));font:700 .9rem var(--fb);text-align:left;color:var(--fg);transition:transform .1s}
-.tvch:active{transform:scale(.97)}
-.tvch .tva{width:40px;height:40px}
-.tvch span:last-child{min-width:0;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.2}
-@media (min-width:900px){.tvcl{grid-template-columns:repeat(4,minmax(0,1fr))}.tvl.g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}}
 
 /* caricamento / errore */
 .load{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;text-align:center}
@@ -1227,7 +1180,6 @@ function routeFromHash(force){
   try{
     if(a==="impostazioni"){if(b==="piattaforme")return pfPage();if(b==="regione")return regionPage();if(b==="novita")return newsPage();if(b==="gia-visti")return seenPage();if(b==="username")return accountPage("user");if(b==="password")return accountPage("pass");return settingsPage();}
     if(a==="recenti")return recentPage();
-    if(a==="guida-tv"){if(b==="canale"&&/^\d+$/.test(seg[3]||""))return tvChanPage(seg[2]||"",seg[3],"",seg[4],seg[5]);return tvPage(b);}
     if(a==="cerca"){SQ=b;return searchPage();}
     if(a==="t"||a==="r")return restoreTitle(b,seg[2]==="cast"?"cast":seg[2]==="saga"?"saga":seg[2]==="stagioni"?"stagioni":"",seg[3]);
     if(a==="p"&&/^\d+$/.test(b)){const c=PCACHE.get(+b);return personPage({id:+b,name:c?c.name:"",img:c&&c.profile_path||""},()=>{S.step=0;home();});}
@@ -1291,7 +1243,7 @@ function swap(h,anim){
   }else if(ghost)ghost.remove();
 }
 let ACT={};
-const FWD={tv:1,tvc:1,news:1,cast:1,seasons:1,saga:1,recent:1,seenp:1,pfpick:1,reg:1,acuser:1,acpass:1};   // azioni che aprono una pagina "più in profondità": entra da destra
+const FWD={news:1,cast:1,seasons:1,saga:1,recent:1,seenp:1,pfpick:1,reg:1,acuser:1,acpass:1};   // azioni che aprono una pagina "più in profondità": entra da destra
 const trTb=d=>d&&d.ytKey?'<a class="tb" href="https://www.youtube.com/watch?v='+esc(d.ytKey)+'" data-yt="'+esc(d.ytKey)+'" target="_blank" rel="noopener" aria-label="Trailer">'+IC.play+'</a>':'';
 const tbtn=(act,ic,label)=>'<button type="button" class="tb" data-act="'+act+'" aria-label="'+label+'">'+IC[ic]+'</button>';
 const bb=(act,label,cls)=>'<button type="button" class="btn'+(cls?' '+cls:'')+'" data-act="'+act+'">'+label+'</button>';
@@ -1532,11 +1484,11 @@ function home(anim){
   const seg=st.k==="cat"?'<div class="segw'+(isAnim()?' show':'')+'" id="segw"><div class="segi"><span class="segq">Film o serie?</span><div class="seg">'+FMT.map(f=>'<button type="button" class="'+(S.fmt===f[0]?'on':'')+'" data-f="'+f[0]+'">'+({movie:"Film",tv:"Serie",any:"Indifferente"})[f[0]]+'</button>').join('')+'</div></div></div>':'';
   TDX=(stage.querySelector(".opts")&&LASTSTEP>=0&&S.step!==LASTSTEP)?(S.step>LASTSTEP?1:-1):0;LASTSTEP=S.step;
   swap('<div class="page"><h1>'+esc(q)+'</h1>'+(st.multi?'<p class="sub">Puoi sceglierne più di una</p>':'')+'<div class="opts g2 n'+n+(st.multi?' av':'')+'" role="group" aria-label="'+esc(q)+'">'+items.map((o,i)=>opt(st.k,o,st.multi?S.avoid.indexOf(o[0])>=0:S[st.k]===o[0],i)).join('')+'</div>'+seg+'</div>',anim);
-  const acts={back:()=>{if(S.step>0){if((steps()[S.step]||{}).multi)clearStep(S.step);S.step--;clearStep(S.step);home();}},sur:surpriseAll,tp:tasteAll,logout:doLogout,search:searchPage,tv:()=>tvPage(),settings:()=>settingsPage(),go:()=>{S.seen=[];S.cands=[];run(false,true);}};
+  const acts={back:()=>{if(S.step>0){if((steps()[S.step]||{}).multi)clearStep(S.step);S.step--;clearStep(S.step);home();}},sur:surpriseAll,tp:tasteAll,logout:doLogout,search:searchPage,settings:()=>settingsPage(),go:()=>{S.seen=[];S.cands=[];run(false,true);}};
   if(S.step===0)delete acts.back;else acts.back.pre=()=>{if(S.step>0)clearStep(S.step-1);};
   ui({
     l:S.step>0?tbtn('back','back','Indietro'):tbtn('settings','gear','Impostazioni'),
-    r:(S.step===0&&tmdbOn())?tbtn('tv','tv','Guida TV')+tbtn('search','search','Cerca un titolo'):'',
+    r:(S.step===0&&tmdbOn())?tbtn('search','search','Cerca un titolo'):'',
     d:st.multi?bb('go',avLabel(),'primary'):(starsOn()?bb('tp',IC.star+'Per te'):'')+bb('sur',IC.dice+'Sorprendimi','primary'),
     p:[STEPS.length+1,Math.max(0,STEPS.indexOf(st))],
     a:acts
@@ -2380,152 +2332,6 @@ function recentPage(){
   box.onclick=e=>{const b=e.target.closest&&e.target.closest("[data-i]");if(!b)return;tap();TDX=1;openItem(RECENT[+b.dataset.i],()=>recentPage());};
 }
 
-/* ---------- Guida TV ---------- */
-/* I programmi arrivano dal Worker (/tv/...), che legge superguidatv.it: se il sito non risponde o cambia aspetto la pagina lo dice e basta. */
-const TVC=new Map(),TVTABS=[["serata","Stasera"],["ora","Ora"],["pomeriggio","Pomeriggio"],["canali","Canali"]],TVDAYS=[["ieri","Ieri"],["oggi","Oggi"],["domani","Domani"],["dopodomani","Dopodomani"]];
-const TVGRPS=[["","Nazionali"],["sky","Sky"],["dazn","DAZN"]],TVSKY=[["sky-sport","Sport"],["sky-intrattenimento","Intrattenimento"],["sky-cinema","Cinema"],["sky-doc-e-lifestyle","Doc e Lifestyle"],["sky-news","News"],["sky-bambini","Bambini"],["sky-musica","Musica"],["sky-primafila","Primafila"]];
-let TVRUN=0,TVNAMES={},TVGRP="",TVSUB="sky-sport",TVLAST="serata";
-function tvGet(path,ttl){
-  const c=TVC.get(path);if(c&&Date.now()-c.t<ttl)return Promise.resolve(c.d);
-  return fj(PX()+path,12000,{headers:{Authorization:"Bearer "+getTok()}}).then(d=>{if(d&&!d.empty)TVC.set(path,{t:Date.now(),d});return d;}).catch(e=>{if(e&&e.message==="HTTP 401")doLogout();throw e;});
-}
-const tvFilm=p=>/film|cinema|telefilm|fiction|serie|cartoni|animazione|anime/i.test(p.g||"");
-const tvHue=n=>{let h=0;for(const c of String(n))h=(h*31+c.charCodeAt(0))%360;return h;};
-const tvLogo=u=>/^https:\/\//.test(u||"")?u:"";
-const tvAv=(n,lg)=>{lg=tvLogo(lg);const w=String(n).replace(/[^A-Za-z0-9À-ÿ ]/g," ").trim().split(/\s+/).filter(Boolean);const t=(w.length>1?w[0][0]+w[1][0]:(w[0]||"?").slice(0,2)).toUpperCase();return '<i class="tva'+(lg?' lg':'')+'" style="--h:'+tvHue(n)+'" aria-hidden="true">'+esc(t)+(lg?'<img src="'+esc(lg)+'" alt="" loading="lazy" onerror="this.parentNode.classList.remove(\'lg\');this.remove()">':'')+'</i>';};
-/* programma in onda adesso (e a che punto è): le ore dopo mezzanotte (00:00 dopo 23:xx) contano come giorno dopo */
-function tvCur(ps){
-  const d=new Date(),now=d.getHours()*60+d.getMinutes();let last=-1,add=0,idx=-1;
-  const m=ps.map(p=>{const q=p.t.split(":");let v=+q[0]*60+ +q[1]+add;if(last>=0&&v<last){add+=1440;v+=1440;}last=v;return v;});
-  for(let i=0;i<m.length;i++)if(m[i]<=now&&(i===m.length-1||m[i+1]>now))idx=i;
-  let pr=0;if(idx>=0){const len=ps[idx].d||(idx<m.length-1?m[idx+1]-m[idx]:0);if(len>0)pr=Math.max(0,Math.min(100,(now-m[idx])/len*100));}
-  return {i:idx,pr:pr};
-}
-const tvRow=(p,cur,pr)=>{const q=tvFilm(p);return '<div class="tvp'+(cur?' now':'')+(q?' q':'')+'"'+(q?' data-q="'+esc(p.n)+'" role="button" tabindex="0"':'')+'><span class="tvt">'+esc(p.t)+'</span><span class="tvd"></span><span class="tvn">'+(cur?'<em class="tvnow">In onda</em>':'')+esc(p.n)+'<small>'+esc([p.g,p.d?p.d+" min":""].filter(Boolean).join(" · "))+'</small>'+(cur&&pr>0?'<i class="tvpr" style="--p:'+pr.toFixed(0)+'%"></i>':'')+'</span>'+(q?'<span class="tvth" data-im="'+esc(p.n)+'" data-fz="1"></span>':'')+'</div>';};
-const tvImg=u=>/^https:\/\/api\.superguidatv\.it\//.test(u||"")?'<img src="'+esc(u)+'" alt="" loading="lazy" onerror="this.remove()">':'';
-const tvHero=(p,live,h)=>{const q=tvFilm(p),im=tvImg(p.i);return '<div class="tvhero'+(q?' q':'')+'" style="--h:'+h+'"'+(q?' data-q="'+esc(p.n)+'" role="button" tabindex="0"':'')+(im?'':' data-im="'+esc(p.n)+'"'+(q?' data-fz="1"':''))+'>'+im+'<div class="tvhi">'+(live?'<span class="tvbadge">IN ONDA</span>':'')+'<b>'+esc(p.n)+'</b><small>'+esc([p.t,p.g,p.d?p.d+" min":""].filter(Boolean).join(" · "))+'</small></div></div>';};
-/* locandine e sfondi di film e serie: si cercano su TMDB solo quando il programma compare sullo schermo */
-const TVIM=new Map();let TVIO=null;
-const tvNrm=x=>String(x||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g," ").trim();
-function tvTm(title,fz){
-  const k=tvNrm(title)+(fz?"|f":"");if(TVIM.has(k))return TVIM.get(k);
-  const t=tvNrm(title);
-  const pr=(tmdbOn()&&t?tm("/3/search/multi",{query:title}).then(d=>{
-    const rs=((d&&d.results)||[]).filter(r=>(r.media_type==="movie"||r.media_type==="tv")&&(r.backdrop_path||r.poster_path));
-    const hit=rs.find(r=>tvNrm(r.title||r.name)===t||tvNrm(r.original_title||r.original_name)===t)||(fz&&t.length>3?rs.find(r=>{const a=tvNrm(r.title||r.name);return a.length>3&&(a.startsWith(t)||t.startsWith(a));}):null);
-    return hit?{b:hit.backdrop_path||"",p:hit.poster_path||""}:null;
-  }).catch(()=>null):Promise.resolve(null));
-  TVIM.set(k,pr);return pr;
-}
-function tvFill(el){
-  const t=el.dataset.im,fz=!!el.dataset.fz;el.removeAttribute("data-im");
-  tvTm(t,fz).then(r=>{
-    if(!r||!el.isConnected)return;
-    if(el.classList.contains("tvhero")){
-      const u=r.b||r.p;if(!u)return;const im=new Image();im.alt="";im.src="https://image.tmdb.org/t/p/w780"+u;
-      im.onload=()=>{if(el.isConnected&&!el.querySelector("img"))el.insertBefore(im,el.firstChild);};
-    }else if(r.p){el.style.backgroundImage="url(https://image.tmdb.org/t/p/w185"+r.p+")";el.classList.add("on");}
-  });
-}
-function tvImgs(scope){
-  const els=scope.querySelectorAll("[data-im]");if(!els.length||!tmdbOn())return;
-  if(!TVIO&&"IntersectionObserver" in window)TVIO=new IntersectionObserver(es=>es.forEach(en=>{if(en.isIntersecting){TVIO.unobserve(en.target);tvFill(en.target);}}),{rootMargin:"300px"});
-  els.forEach(el=>TVIO?TVIO.observe(el):tvFill(el));
-}
-const tvMsg=(t,retry)=>'<div class="tvm"><span>'+esc(t)+'</span>'+(retry?'<button type="button" class="btn" data-r="1">Riprova</button>':'')+'</div>';
-function tvBind(box,my,retry){
-  box.onclick=e=>{
-    if(my!==TVRUN)return;
-    if(e.target.closest&&e.target.closest("[data-r]")){retry();return;}
-    const cc=e.target.closest&&e.target.closest("[data-c]");
-    if(cc){tap();TVSUB=cc.dataset.c;retry();return;}
-    const gg=e.target.closest&&e.target.closest("[data-g]");
-    if(gg){tap();TVGRP=gg.dataset.g;retry();return;}
-    const h=e.target.closest&&e.target.closest(".tvh");
-    if(h){tap();TDX=1;tvChanPage(h.dataset.s,h.dataset.id,h.dataset.n,"oggi",h.dataset.k);return;}
-    const q=e.target.closest&&e.target.closest("[data-q]");
-    if(q){tap();TDX=1;SQ=q.dataset.q;searchPage();}
-  };
-}
-function tvPage(tab){
-  tab=TVTABS.some(x=>x[0]===tab)?tab:"serata";
-  RUN++;SRUN++;setBd(null);setRoute("/guida-tv"+(tab==="serata"?"":"/"+tab));
-  const my=++TVRUN;
-  swap('<div class="page"><h1>Guida TV</h1><div class="seg tvs" id="tvs">'+TVTABS.map(x=>'<button type="button" data-t="'+x[0]+'" class="'+(x[0]===tab?'on':'')+'">'+x[1]+'</button>').join('')+'</div><div class="tvl g" id="tvb">'+tvMsg("Carico la guida…")+'</div></div>',true);
-  ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>home()}});
-  const box=$("tvb");
-  const load=t=>{
-    TVLAST=t;
-    if(t==="canali"){
-      box.classList.remove("g");
-      const chips='<div class="tvcat">'+TVGRPS.map(x=>'<button type="button" data-g="'+x[0]+'" class="'+(x[0]===TVGRP?'on':'')+'">'+x[1]+'</button>').join('')+'</div>'+(TVGRP==="sky"?'<div class="tvcat sub">'+TVSKY.map(x=>'<button type="button" data-c="'+x[0]+'" class="'+(x[0]===TVSUB?'on':'')+'">'+x[1]+'</button>').join('')+'</div>':'');
-      const cat=TVGRP==="sky"?TVSUB:TVGRP;
-      box.innerHTML=chips+'<div class="tvcl">'+tvMsg("Carico i canali…")+'</div>';
-      const on=box.querySelector(".tvcat .on");if(on&&on.scrollIntoView)on.scrollIntoView({inline:"center",block:"nearest"});
-      tvGet("/tv/canali"+(cat?"?c="+cat:""),3600000).then(d=>{
-        if(my!==TVRUN)return;
-        const ch=((d&&d.ch)||[]).filter(c=>!/^Sky\s+(?:Sport|Calcio|Cinema)\s+\d{3}$/i.test(c.n)),cl=box.querySelector(".tvcl");if(!cl)return;
-        if(!ch.length){cl.innerHTML=tvMsg("Canali non disponibili al momento.",true);return;}
-        ch.forEach(c=>{TVNAMES[c.id]=c.n;});
-        cl.innerHTML=ch.map(c=>'<button type="button" class="tvh tvch" data-s="'+esc(c.s)+'" data-k="'+esc(c.k||"")+'" data-id="'+esc(c.id)+'" data-n="'+esc(c.n)+'">'+tvAv(c.n,c.lg)+'<span>'+esc(c.n)+'</span></button>').join('');
-      }).catch(()=>{if(my!==TVRUN)return;const cl=box.querySelector(".tvcl");if(cl)cl.innerHTML=tvMsg("Canali non disponibili al momento.",true);});
-      return;
-    }
-    box.classList.add("g");box.innerHTML=tvMsg("Carico la guida…");
-    tvGet("/tv/grid?w="+t,t==="ora"?120000:600000).then(d=>{
-      if(my!==TVRUN)return;
-      const ch=(d&&d.ch)||[];
-      if(!ch.length){box.classList.remove("g");box.innerHTML=tvMsg("Guida non disponibile al momento.",true);return;}
-      ch.forEach(c=>{TVNAMES[c.id]=c.n;});
-      box.innerHTML=ch.map(c=>{const h=tvHue(c.n),ps=c.p.slice(0,8);
-        return '<section class="tvc"><button type="button" class="tvh" data-s="'+esc(c.s)+'" data-k="'+esc(c.k||"")+'" data-id="'+esc(c.id)+'" data-n="'+esc(c.n)+'">'+tvAv(c.n,c.lg)+'<span class="tvhn">'+esc(c.n)+'</span>'+IC.chev+'</button>'+tvHero(ps[0],t==="ora",h)+(ps.length>1?'<div class="tvtl">'+ps.slice(1).map(p=>tvRow(p,false,0)).join('')+'</div>':'')+'</section>';}).join('');
-      tvImgs(box);
-    }).catch(()=>{if(my!==TVRUN)return;box.classList.remove("g");box.innerHTML=tvMsg("Guida non disponibile al momento.",true);});
-  };
-  let cur=tab;
-  tvBind(box,my,()=>load(cur));
-  $("tvs").onclick=e=>{
-    const b=e.target.closest&&e.target.closest("button[data-t]");if(!b||b.dataset.t===cur)return;tap();
-    cur=b.dataset.t;REPL=true;setRoute("/guida-tv"+(cur==="serata"?"":"/"+cur));
-    $("tvs").querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));
-    load(cur);
-  };
-  load(tab);
-}
-function tvChanPage(s,id,name,day,k){
-  k=k||"";
-  if(!/^[a-z0-9-]{1,60}$/.test(s)||!/^\d{1,12}$/.test(id)||!/^[a-z0-9-]{0,40}$/.test(k)){tvPage();return;}
-  const rt=d=>"/guida-tv/canale/"+s+"/"+id+((d==="oggi"&&!k)?"":"/"+d)+(k?"/"+k:"");
-  day=TVDAYS.some(x=>x[0]===day)?day:"oggi";
-  const nm=name||TVNAMES[id]||s.replace(/-/g," ").replace(/\b\w/g,c=>c.toUpperCase());
-  RUN++;SRUN++;setBd(null);setRoute(rt(day));
-  const my=++TVRUN;
-  swap('<div class="page"><h1>'+esc(nm)+'</h1><div class="seg tvs" id="tvs">'+TVDAYS.map(x=>'<button type="button" data-t="'+x[0]+'" class="'+(x[0]===day?'on':'')+'">'+x[1]+'</button>').join('')+'</div><div class="tvl" id="tvb">'+tvMsg("Carico la guida…")+'</div></div>',true);
-  ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>tvPage(TVLAST)}});
-  const box=$("tvb");
-  const load=dd=>{
-    box.innerHTML=tvMsg("Carico la guida…");
-    tvGet("/tv/channel?s="+s+"&id="+id+"&day="+dd+(k?"&k="+k:""),dd==="oggi"?300000:900000).then(d=>{
-      if(my!==TVRUN)return;
-      const ps=(d&&d.p)||[];
-      if(!ps.length){box.innerHTML=tvMsg("Programmi non disponibili al momento.",true);return;}
-      const c=dd==="oggi"?tvCur(ps):{i:-1,pr:0};
-      box.innerHTML='<section class="tvc"><div class="tvtl" style="padding-top:6px">'+ps.map((p,i)=>tvRow(p,i===c.i,i===c.i?c.pr:0)).join('')+'</div></section>';
-      tvImgs(box);
-      if(c.i>0){const r=box.querySelector(".now");if(r&&r.scrollIntoView)setTimeout(()=>{if(my===TVRUN)r.scrollIntoView({block:"center"});},60);}
-    }).catch(()=>{if(my!==TVRUN)return;box.innerHTML=tvMsg("Programmi non disponibili al momento.",true);});
-  };
-  let cur=day;
-  tvBind(box,my,()=>load(cur));
-  $("tvs").onclick=e=>{
-    const b=e.target.closest&&e.target.closest("button[data-t]");if(!b||b.dataset.t===cur)return;tap();
-    cur=b.dataset.t;REPL=true;setRoute(rt(cur));
-    $("tvs").querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));
-    load(cur);
-  };
-  load(day);
-}
-
 /* ---------- Impostazioni ---------- */
 /* ---------- Filtro per piattaforme ---------- */
 /* L.platforms (sincronizzato col Worker) contiene oggetti {k,n,l,ids:[provider_id...]}; l'interruttore e' solo su questo dispositivo */
@@ -2794,7 +2600,6 @@ async function doRevokeAll(){   // dopo la conferma nel popup: questo dispositiv
    Ogni voce: d (data), t (elenco di novità in italiano, brevi). La versione (v) e APP_VER si calcolano da sole: vedi "VERSIONE AUTOMATICA" sotto CHANGELOG. La pagina Impostazioni > Novità le mostra da sola. */
 let APP_VER="";   // si calcola da sola dal CHANGELOG (vedi sotto): non va scritta a mano
 const CHANGELOG=[
-  {d:"7 novembre 2026",t:["Nuova Guida TV: stasera, ora in onda e pomeriggio dei canali, con il palinsesto completo di ogni canale (ieri, oggi, domani)","Dalla guida, toccando un film o una serie si apre la ricerca di Reelax per trovarlo","Nuova scheda Canali: tutti i canali, anche Sky (Sport, Cinema, Intrattenimento e altri) e DAZN, ognuno con il suo palinsesto"]},
   {d:"29 ottobre 2026",t:["Le domande si adattano all'altezza dello schermo: nessuna scelta resta più tagliata sotto il tasto"]},
   {d:"26 ottobre 2026",t:["Dalla scheda del film, «Indietro» torna dove avevi premuto «Sorprendimi» o «Per te»; altrimenti all'ultima domanda"]},
   {d:"25 ottobre 2026",t:["Scheda del titolo più semplice: niente più «Sorprendimi», e «Un altro» segue come ci sei arrivato (stesse risposte, sorpresa totale o un mix)","Toccando REELAX mentre rispondi è la barra delle domande stessa ad arrivare in fondo e ritirarsi; altrove la linea compare esattamente al suo posto","Migliorie e correzioni"]},
