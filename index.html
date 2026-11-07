@@ -276,7 +276,9 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .seg.tvs{gap:2px;padding:4px;border-radius:16px;background:var(--s2);border:1px solid var(--line)}
 .seg.tvs button{height:38px;border:0;border-radius:12px;background:transparent;box-shadow:none;font-size:.84rem;padding:0 2px;min-width:0;color:var(--mut)}
 .seg.tvs button.on{background:linear-gradient(135deg,rgba(255,61,82,.9),rgba(143,98,248,.9));color:#fff;box-shadow:0 4px 14px rgba(255,61,82,.28)}
-.tva{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font:800 .78rem var(--fd);font-style:normal;letter-spacing:-.02em;color:#fff;background:linear-gradient(135deg,hsl(var(--h) 72% 56%),hsl(calc(var(--h) + 42) 72% 44%));box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.tva{position:relative;overflow:hidden;flex:none;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font:800 .78rem var(--fd);font-style:normal;letter-spacing:-.02em;color:#fff;background:linear-gradient(135deg,hsl(var(--h) 72% 56%),hsl(calc(var(--h) + 42) 72% 44%));box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.tva.lg{background:#fff;color:transparent}
+.tva img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:5px;box-sizing:border-box;background:#fff}
 .tvc{border:1px solid var(--line);border-radius:22px;background:linear-gradient(165deg,var(--s2),var(--s1));overflow:hidden;padding-bottom:6px}
 .tvh{width:100%;display:flex;align-items:center;gap:12px;padding:14px 14px 12px;font:800 1.05rem var(--fd);letter-spacing:-.02em;text-align:left;color:var(--fg)}
 .tvh .tvhn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -311,7 +313,7 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .tvcl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.tvcl .tvm{grid-column:1/-1}
 .tvch{display:flex;align-items:center;gap:10px;width:100%;padding:10px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(165deg,var(--s2),var(--s1));font:700 .9rem var(--fb);text-align:left;color:var(--fg);transition:transform .1s}
 .tvch:active{transform:scale(.97)}
-.tvch .tva{width:36px;height:36px}
+.tvch .tva{width:40px;height:40px}
 .tvch span:last-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media (min-width:900px){.tvcl{grid-template-columns:repeat(4,minmax(0,1fr))}.tvl.g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}}
 
@@ -2387,7 +2389,8 @@ function tvGet(path,ttl){
 }
 const tvFilm=p=>/film|cinema|telefilm|fiction|serie|cartoni|animazione|anime/i.test(p.g||"");
 const tvHue=n=>{let h=0;for(const c of String(n))h=(h*31+c.charCodeAt(0))%360;return h;};
-const tvAv=n=>{const w=String(n).replace(/[^A-Za-z0-9À-ÿ ]/g," ").trim().split(/\s+/).filter(Boolean);const t=(w.length>1?w[0][0]+w[1][0]:(w[0]||"?").slice(0,2)).toUpperCase();return '<i class="tva" style="--h:'+tvHue(n)+'" aria-hidden="true">'+esc(t)+'</i>';};
+const tvLogo=u=>/^https:\/\//.test(u||"")?u:"";
+const tvAv=(n,lg)=>{lg=tvLogo(lg);const w=String(n).replace(/[^A-Za-z0-9À-ÿ ]/g," ").trim().split(/\s+/).filter(Boolean);const t=(w.length>1?w[0][0]+w[1][0]:(w[0]||"?").slice(0,2)).toUpperCase();return '<i class="tva'+(lg?' lg':'')+'" style="--h:'+tvHue(n)+'" aria-hidden="true">'+esc(t)+(lg?'<img src="'+esc(lg)+'" alt="" loading="lazy" onerror="this.parentNode.classList.remove(\'lg\');this.remove()">':'')+'</i>';};
 /* programma in onda adesso (e a che punto è): le ore dopo mezzanotte (00:00 dopo 23:xx) contano come giorno dopo */
 function tvCur(ps){
   const d=new Date(),now=d.getHours()*60+d.getMinutes();let last=-1,add=0,idx=-1;
@@ -2431,7 +2434,7 @@ function tvPage(tab){
         const ch=(d&&d.ch)||[],cl=box.querySelector(".tvcl");if(!cl)return;
         if(!ch.length){cl.innerHTML=tvMsg("Canali non disponibili al momento.",true);return;}
         ch.forEach(c=>{TVNAMES[c.id]=c.n;});
-        cl.innerHTML=ch.map(c=>'<button type="button" class="tvh tvch" data-s="'+esc(c.s)+'" data-id="'+esc(c.id)+'" data-n="'+esc(c.n)+'">'+tvAv(c.n)+'<span>'+esc(c.n)+'</span></button>').join('');
+        cl.innerHTML=ch.map(c=>'<button type="button" class="tvh tvch" data-s="'+esc(c.s)+'" data-id="'+esc(c.id)+'" data-n="'+esc(c.n)+'">'+tvAv(c.n,c.lg)+'<span>'+esc(c.n)+'</span></button>').join('');
       }).catch(()=>{if(my!==TVRUN)return;const cl=box.querySelector(".tvcl");if(cl)cl.innerHTML=tvMsg("Canali non disponibili al momento.",true);});
       return;
     }
@@ -2442,7 +2445,7 @@ function tvPage(tab){
       if(!ch.length){box.classList.remove("g");box.innerHTML=tvMsg("Guida non disponibile al momento.",true);return;}
       ch.forEach(c=>{TVNAMES[c.id]=c.n;});
       box.innerHTML=ch.map(c=>{const h=tvHue(c.n),ps=c.p.slice(0,8);
-        return '<section class="tvc"><button type="button" class="tvh" data-s="'+esc(c.s)+'" data-id="'+esc(c.id)+'" data-n="'+esc(c.n)+'">'+tvAv(c.n)+'<span class="tvhn">'+esc(c.n)+'</span>'+IC.chev+'</button>'+tvHero(ps[0],t==="ora",h)+(ps.length>1?'<div class="tvtl">'+ps.slice(1).map(p=>tvRow(p,false,0)).join('')+'</div>':'')+'</section>';}).join('');
+        return '<section class="tvc"><button type="button" class="tvh" data-s="'+esc(c.s)+'" data-id="'+esc(c.id)+'" data-n="'+esc(c.n)+'">'+tvAv(c.n,c.lg)+'<span class="tvhn">'+esc(c.n)+'</span>'+IC.chev+'</button>'+tvHero(ps[0],t==="ora",h)+(ps.length>1?'<div class="tvtl">'+ps.slice(1).map(p=>tvRow(p,false,0)).join('')+'</div>':'')+'</section>';}).join('');
     }).catch(()=>{if(my!==TVRUN)return;box.classList.remove("g");box.innerHTML=tvMsg("Guida non disponibile al momento.",true);});
   };
   let cur=tab;
