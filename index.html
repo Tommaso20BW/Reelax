@@ -285,6 +285,12 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .tvn{min-width:0;display:flex;flex-direction:column;gap:1px;font-weight:600;font-size:.95rem;line-height:1.25}
 .tvn small{color:var(--mut);font-weight:500;font-size:.78rem}
 .tvm{padding:40px 0;text-align:center;color:var(--mut);display:flex;flex-direction:column;align-items:center;gap:12px}
+.tvcat{display:flex;gap:8px;overflow-x:auto;padding-bottom:10px;scrollbar-width:none}.tvcat::-webkit-scrollbar{display:none}
+.tvcat button{flex:none;height:34px;padding:0 14px;border-radius:999px;border:1px solid var(--line2);background:var(--s2);font-weight:700;font-size:.82rem;white-space:nowrap}
+.tvcat button.on{border-color:var(--red);background:linear-gradient(135deg,rgba(255,61,82,.26),rgba(143,98,248,.22))}
+.tvcl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.tvcl .tvm{grid-column:1/-1}
+.tvch{border:1px solid var(--line);border-radius:14px;background:var(--s2);padding:12px;font-size:.92rem}
+@media (min-width:900px){.tvcl{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media (min-width:900px){.tvl.g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}}
 
 /* caricamento / errore */
@@ -2350,8 +2356,9 @@ function recentPage(){
 
 /* ---------- Guida TV ---------- */
 /* I programmi arrivano dal Worker (/tv/...), che legge superguidatv.it: se il sito non risponde o cambia aspetto la pagina lo dice e basta. */
-const TVC=new Map(),TVTABS=[["serata","Stasera"],["ora","Ora"],["pomeriggio","Pomeriggio"]],TVDAYS=[["ieri","Ieri"],["oggi","Oggi"],["domani","Domani"],["dopodomani","Dopodomani"]];
-let TVRUN=0,TVNAMES={};
+const TVC=new Map(),TVTABS=[["serata","Stasera"],["ora","Ora"],["pomeriggio","Pomeriggio"],["canali","Canali"]],TVDAYS=[["ieri","Ieri"],["oggi","Oggi"],["domani","Domani"],["dopodomani","Dopodomani"]];
+const TVCATS=[["","Nazionali"],["sky-intrattenimento","Sky Intrattenimento"],["sky-sport","Sky Sport"],["sky-cinema","Sky Cinema"],["sky-doc-e-lifestyle","Sky Doc e Lifestyle"],["sky-news","Sky News"],["sky-bambini","Sky Bambini"],["sky-musica","Sky Musica"],["sky-primafila","Sky Primafila"],["dazn","DAZN"],["rsi","RSI"]];
+let TVRUN=0,TVNAMES={},TVCAT="",TVLAST="serata";
 function tvGet(path,ttl){
   const c=TVC.get(path);if(c&&Date.now()-c.t<ttl)return Promise.resolve(c.d);
   return fj(PX()+path,12000,{headers:{Authorization:"Bearer "+getTok()}}).then(d=>{if(d&&!d.empty)TVC.set(path,{t:Date.now(),d});return d;}).catch(e=>{if(e&&e.message==="HTTP 401")doLogout();throw e;});
@@ -2370,6 +2377,8 @@ function tvBind(box,my,retry){
   box.onclick=e=>{
     if(my!==TVRUN)return;
     if(e.target.closest&&e.target.closest("[data-r]")){retry();return;}
+    const cc=e.target.closest&&e.target.closest("[data-c]");
+    if(cc){tap();TVCAT=cc.dataset.c;retry();return;}
     const h=e.target.closest&&e.target.closest(".tvh");
     if(h){tap();TDX=1;tvChanPage(h.dataset.s,h.dataset.id,h.dataset.n,"oggi");return;}
     const q=e.target.closest&&e.target.closest("[data-q]");
@@ -2384,6 +2393,21 @@ function tvPage(tab){
   ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>home()}});
   const box=$("tvb");
   const load=t=>{
+    TVLAST=t;
+    if(t==="canali"){
+      box.classList.remove("g");
+      const chips='<div class="tvcat">'+TVCATS.map(x=>'<button type="button" data-c="'+x[0]+'" class="'+(x[0]===TVCAT?'on':'')+'">'+x[1]+'</button>').join('')+'</div>';
+      box.innerHTML=chips+'<div class="tvcl">'+tvMsg("Carico i canali…")+'</div>';
+      const on=box.querySelector(".tvcat .on");if(on&&on.scrollIntoView)on.scrollIntoView({inline:"center",block:"nearest"});
+      tvGet("/tv/canali"+(TVCAT?"?c="+TVCAT:""),3600000).then(d=>{
+        if(my!==TVRUN)return;
+        const ch=(d&&d.ch)||[],cl=box.querySelector(".tvcl");if(!cl)return;
+        if(!ch.length){cl.innerHTML=tvMsg("Canali non disponibili al momento.",true);return;}
+        ch.forEach(c=>{TVNAMES[c.id]=c.n;});
+        cl.innerHTML=ch.map(c=>'<button type="button" class="tvh tvch" data-s="'+esc(c.s)+'" data-id="'+esc(c.id)+'" data-n="'+esc(c.n)+'"><span>'+esc(c.n)+'</span>'+IC.chev+'</button>').join('');
+      }).catch(()=>{if(my!==TVRUN)return;const cl=box.querySelector(".tvcl");if(cl)cl.innerHTML=tvMsg("Canali non disponibili al momento.",true);});
+      return;
+    }
     box.classList.add("g");box.innerHTML=tvMsg("Carico la guida…");
     tvGet("/tv/grid?w="+t,t==="ora"?120000:600000).then(d=>{
       if(my!==TVRUN)return;
@@ -2410,7 +2434,7 @@ function tvChanPage(s,id,name,day){
   RUN++;SRUN++;setBd(null);setRoute("/guida-tv/canale/"+s+"/"+id+(day==="oggi"?"":"/"+day));
   const my=++TVRUN;
   swap('<div class="page"><h1>'+esc(nm)+'</h1><div class="seg tvs" id="tvs">'+TVDAYS.map(x=>'<button type="button" data-t="'+x[0]+'" class="'+(x[0]===day?'on':'')+'">'+x[1]+'</button>').join('')+'</div><div class="tvl" id="tvb">'+tvMsg("Carico la guida…")+'</div></div>',true);
-  ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>tvPage()}});
+  ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>tvPage(TVLAST)}});
   const box=$("tvb");
   const load=dd=>{
     box.innerHTML=tvMsg("Carico la guida…");
@@ -2702,7 +2726,7 @@ async function doRevokeAll(){   // dopo la conferma nel popup: questo dispositiv
    Ogni voce: d (data), t (elenco di novità in italiano, brevi). La versione (v) e APP_VER si calcolano da sole: vedi "VERSIONE AUTOMATICA" sotto CHANGELOG. La pagina Impostazioni > Novità le mostra da sola. */
 let APP_VER="";   // si calcola da sola dal CHANGELOG (vedi sotto): non va scritta a mano
 const CHANGELOG=[
-  {d:"7 novembre 2026",t:["Nuova Guida TV: stasera, ora in onda e pomeriggio dei canali, con il palinsesto completo di ogni canale (ieri, oggi, domani)","Dalla guida, toccando un film o una serie si apre la ricerca di Reelax per trovarlo"]},
+  {d:"7 novembre 2026",t:["Nuova Guida TV: stasera, ora in onda e pomeriggio dei canali, con il palinsesto completo di ogni canale (ieri, oggi, domani)","Dalla guida, toccando un film o una serie si apre la ricerca di Reelax per trovarlo","Nuova scheda Canali: tutti i canali, anche Sky (Sport, Cinema, Intrattenimento e altri), DAZN e RSI, ognuno con il suo palinsesto"]},
   {d:"29 ottobre 2026",t:["Le domande si adattano all'altezza dello schermo: nessuna scelta resta più tagliata sotto il tasto"]},
   {d:"26 ottobre 2026",t:["Dalla scheda del film, «Indietro» torna dove avevi premuto «Sorprendimi» o «Per te»; altrimenti all'ultima domanda"]},
   {d:"25 ottobre 2026",t:["Scheda del titolo più semplice: niente più «Sorprendimi», e «Un altro» segue come ci sei arrivato (stesse risposte, sorpresa totale o un mix)","Toccando REELAX mentre rispondi è la barra delle domande stessa ad arrivare in fondo e ritirarsi; altrove la linea compare esattamente al suo posto","Migliorie e correzioni"]},
