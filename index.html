@@ -271,6 +271,21 @@ body::after{right:-60vmax;bottom:-75vmax;background:radial-gradient(closest-side
 .seg button{flex:1;height:48px;border-radius:14px;border:1px solid var(--line2);background:var(--s2);font-weight:700;font-size:.95rem;transition:transform .1s,border-color .15s,background .15s}
 .seg button:active{transform:scale(.96)}
 .seg button.on{border-color:var(--red);background:linear-gradient(135deg,rgba(255,61,82,.26),rgba(143,98,248,.22));box-shadow:0 0 0 1px var(--red) inset}
+/* Guida TV */
+.tvl{display:flex;flex-direction:column;gap:14px}
+.tvs button{height:42px;font-size:.86rem;padding:0 4px;min-width:0}
+.tvc{border:1px solid var(--line);border-radius:var(--r2);background:linear-gradient(160deg,var(--s2),var(--s1));overflow:hidden}
+.tvh{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;font:800 1rem var(--fd);letter-spacing:-.01em;text-align:left;color:var(--fg);border-bottom:1px solid var(--line)}
+.tvh svg{width:18px;height:18px;color:var(--mut);flex:none}
+.tvp{display:flex;gap:12px;padding:9px 14px;align-items:baseline}
+.tvp+.tvp{border-top:1px solid var(--line)}
+.tvp.now{background:rgba(255,61,82,.1)}.tvp.now .tvt{color:var(--red)}
+.tvp.q{cursor:pointer}
+.tvt{flex:none;width:44px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--mut);font-size:.88rem}
+.tvn{min-width:0;display:flex;flex-direction:column;gap:1px;font-weight:600;font-size:.95rem;line-height:1.25}
+.tvn small{color:var(--mut);font-weight:500;font-size:.78rem}
+.tvm{padding:40px 0;text-align:center;color:var(--mut);display:flex;flex-direction:column;align-items:center;gap:12px}
+@media (min-width:900px){.tvl.g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}}
 
 /* caricamento / errore */
 .load{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;text-align:center}
@@ -1180,6 +1195,7 @@ function routeFromHash(force){
   try{
     if(a==="impostazioni"){if(b==="piattaforme")return pfPage();if(b==="regione")return regionPage();if(b==="novita")return newsPage();if(b==="gia-visti")return seenPage();if(b==="username")return accountPage("user");if(b==="password")return accountPage("pass");return settingsPage();}
     if(a==="recenti")return recentPage();
+    if(a==="guida-tv"){if(b==="canale"&&/^\d+$/.test(seg[3]||""))return tvChanPage(seg[2]||"",seg[3],"",seg[4]);return tvPage(b);}
     if(a==="cerca"){SQ=b;return searchPage();}
     if(a==="t"||a==="r")return restoreTitle(b,seg[2]==="cast"?"cast":seg[2]==="saga"?"saga":seg[2]==="stagioni"?"stagioni":"",seg[3]);
     if(a==="p"&&/^\d+$/.test(b)){const c=PCACHE.get(+b);return personPage({id:+b,name:c?c.name:"",img:c&&c.profile_path||""},()=>{S.step=0;home();});}
@@ -1243,7 +1259,7 @@ function swap(h,anim){
   }else if(ghost)ghost.remove();
 }
 let ACT={};
-const FWD={news:1,cast:1,seasons:1,saga:1,recent:1,seenp:1,pfpick:1,reg:1,acuser:1,acpass:1};   // azioni che aprono una pagina "più in profondità": entra da destra
+const FWD={tv:1,tvc:1,news:1,cast:1,seasons:1,saga:1,recent:1,seenp:1,pfpick:1,reg:1,acuser:1,acpass:1};   // azioni che aprono una pagina "più in profondità": entra da destra
 const trTb=d=>d&&d.ytKey?'<a class="tb" href="https://www.youtube.com/watch?v='+esc(d.ytKey)+'" data-yt="'+esc(d.ytKey)+'" target="_blank" rel="noopener" aria-label="Trailer">'+IC.play+'</a>':'';
 const tbtn=(act,ic,label)=>'<button type="button" class="tb" data-act="'+act+'" aria-label="'+label+'">'+IC[ic]+'</button>';
 const bb=(act,label,cls)=>'<button type="button" class="btn'+(cls?' '+cls:'')+'" data-act="'+act+'">'+label+'</button>';
@@ -1484,11 +1500,11 @@ function home(anim){
   const seg=st.k==="cat"?'<div class="segw'+(isAnim()?' show':'')+'" id="segw"><div class="segi"><span class="segq">Film o serie?</span><div class="seg">'+FMT.map(f=>'<button type="button" class="'+(S.fmt===f[0]?'on':'')+'" data-f="'+f[0]+'">'+({movie:"Film",tv:"Serie",any:"Indifferente"})[f[0]]+'</button>').join('')+'</div></div></div>':'';
   TDX=(stage.querySelector(".opts")&&LASTSTEP>=0&&S.step!==LASTSTEP)?(S.step>LASTSTEP?1:-1):0;LASTSTEP=S.step;
   swap('<div class="page"><h1>'+esc(q)+'</h1>'+(st.multi?'<p class="sub">Puoi sceglierne più di una</p>':'')+'<div class="opts g2 n'+n+(st.multi?' av':'')+'" role="group" aria-label="'+esc(q)+'">'+items.map((o,i)=>opt(st.k,o,st.multi?S.avoid.indexOf(o[0])>=0:S[st.k]===o[0],i)).join('')+'</div>'+seg+'</div>',anim);
-  const acts={back:()=>{if(S.step>0){if((steps()[S.step]||{}).multi)clearStep(S.step);S.step--;clearStep(S.step);home();}},sur:surpriseAll,tp:tasteAll,logout:doLogout,search:searchPage,settings:()=>settingsPage(),go:()=>{S.seen=[];S.cands=[];run(false,true);}};
+  const acts={back:()=>{if(S.step>0){if((steps()[S.step]||{}).multi)clearStep(S.step);S.step--;clearStep(S.step);home();}},sur:surpriseAll,tp:tasteAll,logout:doLogout,search:searchPage,tv:()=>tvPage(),settings:()=>settingsPage(),go:()=>{S.seen=[];S.cands=[];run(false,true);}};
   if(S.step===0)delete acts.back;else acts.back.pre=()=>{if(S.step>0)clearStep(S.step-1);};
   ui({
     l:S.step>0?tbtn('back','back','Indietro'):tbtn('settings','gear','Impostazioni'),
-    r:(S.step===0&&tmdbOn())?tbtn('search','search','Cerca un titolo'):'',
+    r:(S.step===0&&tmdbOn())?tbtn('tv','tv','Guida TV')+tbtn('search','search','Cerca un titolo'):'',
     d:st.multi?bb('go',avLabel(),'primary'):(starsOn()?bb('tp',IC.star+'Per te'):'')+bb('sur',IC.dice+'Sorprendimi','primary'),
     p:[STEPS.length+1,Math.max(0,STEPS.indexOf(st))],
     a:acts
@@ -2332,6 +2348,92 @@ function recentPage(){
   box.onclick=e=>{const b=e.target.closest&&e.target.closest("[data-i]");if(!b)return;tap();TDX=1;openItem(RECENT[+b.dataset.i],()=>recentPage());};
 }
 
+/* ---------- Guida TV ---------- */
+/* I programmi arrivano dal Worker (/tv/...), che legge superguidatv.it: se il sito non risponde o cambia aspetto la pagina lo dice e basta. */
+const TVC=new Map(),TVTABS=[["serata","Stasera"],["ora","Ora"],["pomeriggio","Pomeriggio"]],TVDAYS=[["ieri","Ieri"],["oggi","Oggi"],["domani","Domani"],["dopodomani","Dopodomani"]];
+let TVRUN=0,TVNAMES={};
+function tvGet(path,ttl){
+  const c=TVC.get(path);if(c&&Date.now()-c.t<ttl)return Promise.resolve(c.d);
+  return fj(PX()+path,12000,{headers:{Authorization:"Bearer "+getTok()}}).then(d=>{if(d&&!d.empty)TVC.set(path,{t:Date.now(),d});return d;}).catch(e=>{if(e&&e.message==="HTTP 401")doLogout();throw e;});
+}
+const tvFilm=p=>/film|cinema|telefilm|fiction|serie|cartoni|animazione|anime/i.test(p.g||"");
+/* programma in onda adesso: le ore dopo mezzanotte (00:00 dopo 23:xx) contano come giorno dopo */
+function tvCur(ps){
+  const d=new Date(),now=d.getHours()*60+d.getMinutes();let last=-1,add=0,idx=-1;
+  const m=ps.map(p=>{const q=p.t.split(":");let v=+q[0]*60+ +q[1]+add;if(last>=0&&v<last){add+=1440;v+=1440;}last=v;return v;});
+  for(let i=0;i<m.length;i++)if(m[i]<=now&&(i===m.length-1||m[i+1]>now))idx=i;
+  return idx;
+}
+const tvRow=(p,cur)=>{const q=tvFilm(p);return '<div class="tvp'+(cur?' now':'')+(q?' q':'')+'"'+(q?' data-q="'+esc(p.n)+'" role="button" tabindex="0"':'')+'><span class="tvt">'+esc(p.t)+'</span><span class="tvn">'+esc(p.n)+'<small>'+esc([p.g,p.d?p.d+" min":""].filter(Boolean).join(" · "))+'</small></span></div>';};
+const tvMsg=(t,retry)=>'<div class="tvm"><span>'+esc(t)+'</span>'+(retry?'<button type="button" class="btn" data-r="1">Riprova</button>':'')+'</div>';
+function tvBind(box,my,retry){
+  box.onclick=e=>{
+    if(my!==TVRUN)return;
+    if(e.target.closest&&e.target.closest("[data-r]")){retry();return;}
+    const h=e.target.closest&&e.target.closest(".tvh");
+    if(h){tap();TDX=1;tvChanPage(h.dataset.s,h.dataset.id,h.dataset.n,"oggi");return;}
+    const q=e.target.closest&&e.target.closest("[data-q]");
+    if(q){tap();TDX=1;SQ=q.dataset.q;searchPage();}
+  };
+}
+function tvPage(tab){
+  tab=TVTABS.some(x=>x[0]===tab)?tab:"serata";
+  RUN++;SRUN++;setBd(null);setRoute("/guida-tv"+(tab==="serata"?"":"/"+tab));
+  const my=++TVRUN;
+  swap('<div class="page"><h1>Guida TV</h1><div class="seg tvs" id="tvs">'+TVTABS.map(x=>'<button type="button" data-t="'+x[0]+'" class="'+(x[0]===tab?'on':'')+'">'+x[1]+'</button>').join('')+'</div><div class="tvl g" id="tvb">'+tvMsg("Carico la guida…")+'</div></div>',true);
+  ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>home()}});
+  const box=$("tvb");
+  const load=t=>{
+    box.classList.add("g");box.innerHTML=tvMsg("Carico la guida…");
+    tvGet("/tv/grid?w="+t,t==="ora"?120000:600000).then(d=>{
+      if(my!==TVRUN)return;
+      const ch=(d&&d.ch)||[];
+      if(!ch.length){box.classList.remove("g");box.innerHTML=tvMsg("Guida non disponibile al momento.",true);return;}
+      ch.forEach(c=>{TVNAMES[c.id]=c.n;});
+      box.innerHTML=ch.map(c=>'<section class="tvc"><button type="button" class="tvh" data-s="'+esc(c.s)+'" data-id="'+esc(c.id)+'" data-n="'+esc(c.n)+'"><span>'+esc(c.n)+'</span>'+IC.chev+'</button>'+c.p.slice(0,8).map(p=>tvRow(p,false)).join('')+'</section>').join('');
+    }).catch(()=>{if(my!==TVRUN)return;box.classList.remove("g");box.innerHTML=tvMsg("Guida non disponibile al momento.",true);});
+  };
+  let cur=tab;
+  tvBind(box,my,()=>load(cur));
+  $("tvs").onclick=e=>{
+    const b=e.target.closest&&e.target.closest("button[data-t]");if(!b||b.dataset.t===cur)return;tap();
+    cur=b.dataset.t;REPL=true;setRoute("/guida-tv"+(cur==="serata"?"":"/"+cur));
+    $("tvs").querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));
+    load(cur);
+  };
+  load(tab);
+}
+function tvChanPage(s,id,name,day){
+  if(!/^[a-z0-9-]{1,60}$/.test(s)||!/^\d{1,12}$/.test(id)){tvPage();return;}
+  day=TVDAYS.some(x=>x[0]===day)?day:"oggi";
+  const nm=name||TVNAMES[id]||s.replace(/-/g," ").replace(/\b\w/g,c=>c.toUpperCase());
+  RUN++;SRUN++;setBd(null);setRoute("/guida-tv/canale/"+s+"/"+id+(day==="oggi"?"":"/"+day));
+  const my=++TVRUN;
+  swap('<div class="page"><h1>'+esc(nm)+'</h1><div class="seg tvs" id="tvs">'+TVDAYS.map(x=>'<button type="button" data-t="'+x[0]+'" class="'+(x[0]===day?'on':'')+'">'+x[1]+'</button>').join('')+'</div><div class="tvl" id="tvb">'+tvMsg("Carico la guida…")+'</div></div>',true);
+  ui({l:tbtn('back','back','Indietro'),r:'',d:'',p:null,a:{back:()=>tvPage()}});
+  const box=$("tvb");
+  const load=dd=>{
+    box.innerHTML=tvMsg("Carico la guida…");
+    tvGet("/tv/channel?s="+s+"&id="+id+"&day="+dd,dd==="oggi"?300000:900000).then(d=>{
+      if(my!==TVRUN)return;
+      const ps=(d&&d.p)||[];
+      if(!ps.length){box.innerHTML=tvMsg("Programmi non disponibili al momento.",true);return;}
+      const ci=dd==="oggi"?tvCur(ps):-1;
+      box.innerHTML='<section class="tvc">'+ps.map((p,i)=>tvRow(p,i===ci)).join('')+'</section>';
+      if(ci>0){const r=box.querySelector(".now");if(r&&r.scrollIntoView)setTimeout(()=>{if(my===TVRUN)r.scrollIntoView({block:"center"});},60);}
+    }).catch(()=>{if(my!==TVRUN)return;box.innerHTML=tvMsg("Programmi non disponibili al momento.",true);});
+  };
+  let cur=day;
+  tvBind(box,my,()=>load(cur));
+  $("tvs").onclick=e=>{
+    const b=e.target.closest&&e.target.closest("button[data-t]");if(!b||b.dataset.t===cur)return;tap();
+    cur=b.dataset.t;REPL=true;setRoute("/guida-tv/canale/"+s+"/"+id+(cur==="oggi"?"":"/"+cur));
+    $("tvs").querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));
+    load(cur);
+  };
+  load(day);
+}
+
 /* ---------- Impostazioni ---------- */
 /* ---------- Filtro per piattaforme ---------- */
 /* L.platforms (sincronizzato col Worker) contiene oggetti {k,n,l,ids:[provider_id...]}; l'interruttore e' solo su questo dispositivo */
@@ -2600,6 +2702,7 @@ async function doRevokeAll(){   // dopo la conferma nel popup: questo dispositiv
    Ogni voce: d (data), t (elenco di novità in italiano, brevi). La versione (v) e APP_VER si calcolano da sole: vedi "VERSIONE AUTOMATICA" sotto CHANGELOG. La pagina Impostazioni > Novità le mostra da sola. */
 let APP_VER="";   // si calcola da sola dal CHANGELOG (vedi sotto): non va scritta a mano
 const CHANGELOG=[
+  {d:"7 novembre 2026",t:["Nuova Guida TV: stasera, ora in onda e pomeriggio dei canali, con il palinsesto completo di ogni canale (ieri, oggi, domani)","Dalla guida, toccando un film o una serie si apre la ricerca di Reelax per trovarlo"]},
   {d:"29 ottobre 2026",t:["Le domande si adattano all'altezza dello schermo: nessuna scelta resta più tagliata sotto il tasto"]},
   {d:"26 ottobre 2026",t:["Dalla scheda del film, «Indietro» torna dove avevi premuto «Sorprendimi» o «Per te»; altrimenti all'ultima domanda"]},
   {d:"25 ottobre 2026",t:["Scheda del titolo più semplice: niente più «Sorprendimi», e «Un altro» segue come ci sei arrivato (stesse risposte, sorpresa totale o un mix)","Toccando REELAX mentre rispondi è la barra delle domande stessa ad arrivare in fondo e ritirarsi; altrove la linea compare esattamente al suo posto","Migliorie e correzioni"]},
